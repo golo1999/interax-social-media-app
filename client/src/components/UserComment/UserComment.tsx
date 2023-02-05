@@ -4,8 +4,9 @@ import { CSSProperties, useState } from "react";
 import { MdMoreHoriz } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-import { UserPhoto, WriteComment } from "../../components";
+import { ReactionEmojis, UserPhoto, WriteComment } from "../../components";
 import { getTimeFromDate } from "../../helpers";
+import { useCommentReplies } from "../../hooks";
 import { Comment, ReactionType, User } from "../../models";
 import { GET_FRIENDS_POSTS_BY_USER_ID } from "../../sections/Posts/Posts";
 
@@ -13,7 +14,14 @@ import {
   getInitialHasReacted,
   getReactionText,
   getReactionTextColor,
+  getUserCommentReaction,
 } from "./UserComment.helpers";
+import {
+  InnerContainer,
+  OuterContainer,
+  OwnerDetails,
+  Reactions,
+} from "./UserComment.style";
 
 const ADD_COMMENT_REACTION = gql`
   mutation AddCommentReaction($input: AddCommentReactionInput!) {
@@ -47,38 +55,27 @@ const REMOVE_COMMENT_REACTION = gql`
   }
 `;
 
-const detailsContainerStyle: CSSProperties = {
-  backgroundColor: "#3a3b3c",
-  borderRadius: "20px",
-  display: "flex",
-  flex: 1,
-  flexDirection: "column",
-  padding: "5px 10px",
-};
-
-const innerContainerStyle: CSSProperties = {
-  alignItems: "center",
-  display: "flex",
-  gap: "0.5em",
-  marginTop: "0.5em",
-};
-
-const outerContainerStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-};
-
-const reactionsContainerStyle: CSSProperties = {
-  display: "flex",
-  fontSize: "0.7em",
-  gap: "0.5em",
-  userSelect: "none",
-};
+const UPDATE_COMMENT_REACTION = gql`
+  mutation UpdateCommentReaction($input: UpdateCommentReactionInput!) {
+    updateCommentReaction(input: $input) {
+      id
+      owner {
+        email
+        firstName
+        id
+        lastName
+        username
+      }
+      type
+    }
+  }
+`;
 
 interface Props {
   authenticatedUser?: User;
   comment: Comment;
   postOwnerId: string;
+  replyLevel?: number;
   onDeleteClick: () => void;
 }
 
@@ -86,6 +83,7 @@ export function UserComment({
   authenticatedUser,
   comment,
   postOwnerId,
+  replyLevel = 0,
   onDeleteClick,
 }: Props) {
   const [addCommentReaction] = useMutation(ADD_COMMENT_REACTION, {
@@ -104,16 +102,35 @@ export function UserComment({
       },
     ],
   });
+  const [updateCommentReaction] = useMutation(UPDATE_COMMENT_REACTION, {
+    refetchQueries: [
+      {
+        query: GET_FRIENDS_POSTS_BY_USER_ID,
+        variables: { ownerId: authenticatedUser?.id },
+      },
+    ],
+  });
 
-  const { dateTime, id: commentId, owner, reactions, text } = comment;
+  const { dateTime, id: commentId, owner, reactions, replies, text } = comment;
 
   const [hasReacted, setHasReacted] = useState<boolean>(
     getInitialHasReacted({ currentUserId: authenticatedUser?.id, reactions })
   );
+  const [isHoveringOverEmojis, setIsHoveringOverEmojis] = useState(false);
+  const [isHoveringOverReactionText, setIsHoveringOverReactionText] =
+    useState(false);
   const [isMoreOptionsVisible, setIsMoreOptionsVisible] = useState(false);
   const [isWriteReplyVisible, setIsWriteReplyVisible] = useState(false);
 
   const navigate = useNavigate();
+
+  let commentReactionTimer: ReturnType<typeof setTimeout>;
+
+  function getOuterContainerStyle(): CSSProperties {
+    return {
+      marginLeft: `calc(${replyLevel} * 2em + ${replyLevel} * 5px)`,
+    };
+  }
 
   function getReactionTextStyle(): CSSProperties {
     return {
@@ -152,75 +169,154 @@ export function UserComment({
     }
 
     setHasReacted((prev) => !prev);
+
+    if (commentReactionTimer) {
+      clearTimeout(commentReactionTimer);
+      return;
+    }
+
+    if (isHoveringOverEmojis) {
+      setIsHoveringOverEmojis((prev) => !prev);
+    }
+    if (isHoveringOverReactionText) {
+      setIsHoveringOverReactionText((prev) => !prev);
+    }
+  }
+
+  function handleReactionEmojisClick(reactionType: ReactionType) {
+    const currentReaction = getUserCommentReaction({
+      currentUserId: authenticatedUser?.id,
+      reactions,
+    });
+
+    if (!currentReaction) {
+      addCommentReaction({
+        variables: {
+          input: {
+            commentId,
+            reactionOwnerId: authenticatedUser?.id,
+            reactionType,
+          },
+        },
+      });
+      if (!hasReacted) {
+        setHasReacted((prev) => !prev);
+      }
+    } else if (currentReaction.type !== reactionType) {
+      updateCommentReaction({
+        variables: {
+          input: { commentId, ownerId: authenticatedUser?.id, reactionType },
+        },
+      });
+    } else {
+      removeCommentReaction({
+        variables: {
+          input: { commentId, reactionOwnerId: authenticatedUser?.id },
+        },
+      });
+      if (hasReacted) {
+        setHasReacted((prev) => !prev);
+      }
+    }
   }
 
   function handleReplyClick() {
     setIsWriteReplyVisible((prev) => !prev);
   }
 
-  function iterate(comment: Comment) {
-    console.log(`***** ${comment.id}`);
-    Object.keys(comment).forEach((key) => {
-      console.log(`${key}: ${comment[key as keyof Comment]}`);
-      // if (typeof comment[key as keyof Comment] === "object") {
-      //   console.log("object");
-      // }
-      if (key === "replies") {
-        // console.log("replies found");
-        // iterate(comment[key as keyof Comment]);
-        // const repliesList: Comment[] = comment[key as keyof Comment];
-        console.log("***** replies");
-        console.log(comment[key as keyof Comment]);
-      }
-    });
-  }
-
   function toggleIsMoreOptionsVisible() {
     setIsMoreOptionsVisible((prev) => !prev);
   }
 
+  const commentReplies = useCommentReplies({
+    authenticatedUser,
+    level: replyLevel,
+    postOwnerId,
+    replies,
+  });
+
   const isCommentOwner = comment.owner.id === authenticatedUser?.id;
   const isPostOwner = postOwnerId === owner.id;
 
-  // iterate(comment);
-
   return (
-    <div style={outerContainerStyle}>
-      <div
-        style={innerContainerStyle}
+    <OuterContainer style={getOuterContainerStyle()}>
+      <InnerContainer
         onMouseOver={toggleIsMoreOptionsVisible}
         onMouseOut={toggleIsMoreOptionsVisible}
       >
         <div style={{ display: "flex", gap: "0.5em" }}>
           <UserPhoto
             user={owner}
-            onPhotoClick={() => navigate(`/${owner.id}`)}
+            onPhotoClick={() => navigate(`/${owner.username}`)}
           />
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={detailsContainerStyle}>
-              {isPostOwner && <p style={{ fontSize: "0.6em" }}>Author</p>}
-              <p
-                style={{ fontWeight: "bold", userSelect: "none" }}
-                onClick={() => navigate(`/${owner.id}`)}
-              >
+            <OwnerDetails.Container>
+              {isPostOwner && <OwnerDetails.Badge>Author</OwnerDetails.Badge>}
+              <OwnerDetails.Name onClick={() => navigate(`/${owner.username}`)}>
                 {owner.firstName} {owner.lastName}
-              </p>
+              </OwnerDetails.Name>
               <p>{text}</p>
-            </div>
-            <div style={reactionsContainerStyle}>
-              <p style={getReactionTextStyle()} onClick={handleReactionClick}>
+            </OwnerDetails.Container>
+            <Reactions.Container>
+              <p
+                style={getReactionTextStyle()}
+                onClick={handleReactionClick}
+                onMouseEnter={() => {
+                  commentReactionTimer = setTimeout(() => {
+                    setIsHoveringOverReactionText((prev) => !prev);
+                  }, 500);
+                }}
+                onMouseLeave={() => {
+                  if (commentReactionTimer) {
+                    clearTimeout(commentReactionTimer);
+                    return;
+                  }
+
+                  if (isHoveringOverReactionText) {
+                    setTimeout(() => {
+                      setIsHoveringOverReactionText((prev) => !prev);
+                    }, 500);
+                  }
+                }}
+              >
                 {getReactionText({
                   hasReacted,
                   reactions,
                   currentUserId: authenticatedUser?.id,
                 })}
               </p>
-              <p style={{ fontWeight: "bold" }} onClick={handleReplyClick}>
+              {(isHoveringOverEmojis || isHoveringOverReactionText) && (
+                <ReactionEmojis
+                  size={32}
+                  style={{
+                    left: "-5px",
+                    top: "-48px",
+                  }}
+                  onMouseEnter={() => {
+                    setIsHoveringOverEmojis((prev) => !prev);
+                  }}
+                  onMouseLeave={() => {
+                    setTimeout(() => {
+                      setIsHoveringOverEmojis((prev) => !prev);
+                    }, 500);
+                  }}
+                  onReactionClick={(reactionType) => {
+                    handleReactionEmojisClick(reactionType);
+                    if (isHoveringOverEmojis) {
+                      setIsHoveringOverEmojis((prev) => !prev);
+                    }
+                  }}
+                />
+              )}
+              <p
+                style={{ color: "#8d8f93", fontWeight: "bold" }}
+                onClick={handleReplyClick}
+              >
                 Reply
               </p>
               <p>{getTimeFromDate(dateTime)}</p>
               {reactions && <p>{reactions.length}</p>}
-            </div>
+            </Reactions.Container>
           </div>
         </div>
         {isCommentOwner && (
@@ -232,11 +328,13 @@ export function UserComment({
             onClick={handleMoreOptionsClick}
           />
         )}
-      </div>
+      </InnerContainer>
       {isWriteReplyVisible && (
         <WriteComment
           placeholder="Write a reply..."
-          style={{ marginLeft: "calc(2em + 5px)" }}
+          style={{
+            marginLeft: "calc(2em + 5px)",
+          }}
           user={authenticatedUser}
           onCancelClick={handleReplyClick}
           onSendClick={() => {
@@ -244,6 +342,7 @@ export function UserComment({
           }}
         />
       )}
-    </div>
+      {commentReplies}
+    </OuterContainer>
   );
 }

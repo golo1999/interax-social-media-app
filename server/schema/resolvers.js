@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const _ = require("lodash");
 
 const { AUTHENTICATED_USER, PostsList, UsersList } = require("../MockedData");
@@ -31,11 +32,33 @@ const resolvers = {
 
       return posts.length > 0 ? posts : null;
     },
-    user: (parent, args) => {
+    userById: (parent, args) => {
       const { id } = args;
       const user = _.find(UsersList, { id });
 
       return user;
+    },
+    userByUsername: (parent, args) => {
+      const { username } = args;
+      const matchedUser = _.find(
+        UsersList,
+        (user) => user.username === username
+      );
+
+      return matchedUser;
+    },
+    userFriendsById: (parent, args) => {
+      const { id } = args;
+      const matchedUser = _.find(UsersList, (user) => user.id === id);
+      return matchedUser.friends;
+    },
+    userFriendsByUsername: (parent, args) => {
+      const { username } = args;
+      const matchedUser = _.find(
+        UsersList,
+        (user) => user.username === username
+      );
+      return matchedUser.friends;
     },
     userPostReaction: (parent, args) => {
       const { postId, userId } = args.input;
@@ -80,11 +103,11 @@ const resolvers = {
 
       if (!matchedComment.reactions) {
         matchedComment.reactions = [];
-        newReaction.id = "0";
-      } else {
-        newReaction.id = matchedComment.reactions.length;
       }
 
+      newReaction.id = `${
+        matchedPost.id
+      }-${commentId}-reaction-${crypto.randomUUID()}`;
       matchedComment.reactions.push(newReaction);
 
       return newReaction;
@@ -113,11 +136,9 @@ const resolvers = {
 
       if (!matchedPost.comments) {
         matchedPost.comments = [];
-        newComment.id = "post-comment-1";
-      } else {
-        newComment.id = `post-comment-${matchedPost.comments.length}`;
       }
 
+      newComment.id = `${postId}-comment-${crypto.randomUUID()}`;
       matchedPost.comments.push(newComment);
 
       return newComment;
@@ -144,11 +165,9 @@ const resolvers = {
 
       if (!matchedPost.reactions) {
         matchedPost.reactions = [];
-        newReaction.id = "0";
-      } else {
-        newReaction.id = matchedPost.reactions.length;
       }
 
+      newReaction.id = `${postId}-reaction-${crypto.randomUUID()}`;
       matchedPost.reactions.push(newReaction);
 
       return newReaction;
@@ -221,6 +240,23 @@ const resolvers = {
       }
 
       return removedReaction;
+    },
+    updateCommentReaction: (parent, args) => {
+      const { commentId, ownerId, reactionType } = args.input;
+      const matchedPost = _.find(PostsList, (post) =>
+        _.some(post.comments, (comment) => comment.id === commentId)
+      );
+      const matchedComment = _.find(
+        matchedPost.comments,
+        (comment) => comment.id === commentId
+      );
+      const matchedReaction = _.find(
+        matchedComment.reactions,
+        (reaction) => reaction.owner.id === ownerId
+      );
+      matchedReaction.type = reactionType;
+
+      return matchedReaction;
     },
     updatePostReaction: (parent, args) => {
       const { ownerId, postId, reactionType } = args.input;

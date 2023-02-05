@@ -55,7 +55,10 @@ export function WriteComment({
 
   return (
     <div style={{ ...containerStyle, ...style }}>
-      <UserPhoto user={user} onPhotoClick={() => navigate(`/${user?.id}`)} />
+      <UserPhoto
+        user={user}
+        onPhotoClick={() => navigate(`/${user?.username}`)}
+      />
       <input
         autoFocus
         placeholder={placeholder}

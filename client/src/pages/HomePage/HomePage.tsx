@@ -1,9 +1,56 @@
-import { Posts } from "../../sections";
+import { gql, useLazyQuery } from "@apollo/client";
+
+import { useEffect } from "react";
+
+import { UserFriend } from "../../components";
+import { User } from "../../models";
+import { Friends, Posts } from "../../sections";
+
+const GET_AUTHENTICATED_USER = gql`
+  query GetAuthenticatedUser {
+    authenticatedUser {
+      email
+      firstName
+      id
+      lastName
+      username
+    }
+  }
+`;
+
+interface GetAuthenticatedUserData {
+  authenticatedUser: User;
+}
 
 export function HomePage() {
+  const [fetchAuthenticatedUser, { data: authenticatedUserData }] =
+    useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
+
+  useEffect(() => {
+    fetchAuthenticatedUser();
+  }, [fetchAuthenticatedUser]);
+
   return (
-    <div style={{ display: "flex", flex: 1, flexDirection: "column" }}>
-      <Posts />
+    <div
+      style={{
+        backgroundColor: "inherit",
+        display: "flex",
+        flex: 1,
+        flexDirection: "column",
+      }}
+    >
+      <div>Navbar</div>
+      <div style={{ display: "flex", gap: "5em", padding: "1em 0" }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {authenticatedUserData?.authenticatedUser && (
+            <UserFriend friend={authenticatedUserData?.authenticatedUser} />
+          )}
+          <p>Friends</p>
+          <p>Groups</p>
+        </div>
+        <Posts style={{ flex: 1 }} />
+        <Friends />
+      </div>
     </div>
   );
 }

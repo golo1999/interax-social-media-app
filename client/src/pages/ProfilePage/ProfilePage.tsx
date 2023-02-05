@@ -1,164 +1,106 @@
 import { gql, useLazyQuery } from "@apollo/client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router";
 
-import { Post, User } from "../../models";
+import { User } from "../../models";
 
-const GET_POSTS_BY_USER_ID = gql`
-  query GetPostByOwnerId($ownerId: ID!) {
-    postsByOwnerId(ownerId: $ownerId) {
-      canComment
-      canReact
-      canShare
-      canView
-      comments {
-        owner {
-          username
-        }
-        reactions {
-          owner {
-            username
-          }
-          type
-        }
-        replies {
-          id
-          owner {
-            email
-            firstName
-            id
-            lastName
-            username
-          }
-          replies {
-            dateTime
-            id
-            owner {
-              firstName
-              id
-              lastName
-              username
-            }
-            reactions {
-              id
-              owner {
-                firstName
-                id
-                lastName
-                username
-              }
-              type
-            }
-            replies {
-              text
-            }
-            text
-          }
-          text
-        }
-        text
-      }
-      dateTime
-      id
-      owner {
-        username
-      }
-      photo
-      reactions {
-        owner {
-          username
-        }
-        type
-      }
-      shares {
-        owner {
-          username
-        }
-      }
-      text
-      video
-    }
-  }
-`;
-
-const GET_USER_BY_ID = gql`
-  query GetUser($userId: ID!) {
-    user(id: $userId) {
-      id
-      biography
-      birthDate
+const GET_AUTHENTICATED_USER = gql`
+  query GetAuthenticatedUser {
+    authenticatedUser {
       email
       firstName
       friends {
-        id
-        email
         firstName
+        id
         lastName
         username
       }
+      id
       lastName
       username
     }
   }
 `;
 
-interface GetPostsByUserIdData {
-  postsByOwnerId: Post[];
+const GET_USER_BY_USERNAME = gql`
+  query GetUserByUsername($username: String!) {
+    userByUsername(username: $username) {
+      biography
+      birthDate
+      email
+      firstName
+      friends {
+        firstName
+        id
+        lastName
+        username
+      }
+      id
+      lastName
+      username
+    }
+  }
+`;
+
+interface GetAuthenticatedUserData {
+  authenticatedUser: User;
 }
 
-interface FetchUserData {
-  user: User;
+interface GetUserByUsernameData {
+  userByUsername: User;
 }
 
 export function ProfilePage() {
-  const [fetchPostsByUserId, { data: postsByUserIdData }] =
-    useLazyQuery<GetPostsByUserIdData>(GET_POSTS_BY_USER_ID);
-  const [fetchUser, { data: userData, loading: fetchingUser }] =
-    useLazyQuery<FetchUserData>(GET_USER_BY_ID);
+  const [fetchAuthenticatedUser, { data: authenticatedUserData }] =
+    useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
+  const [fetchUser, { data: userData }] =
+    useLazyQuery<GetUserByUsernameData>(GET_USER_BY_USERNAME);
 
   const location = useLocation();
 
   const { pathname } = location;
 
-  const userId = pathname.split("/")[1];
+  const username = pathname.split("/")[1];
 
   useEffect(() => {
-    fetchPostsByUserId({ variables: { ownerId: userId } });
-    fetchUser({ variables: { userId } });
-  }, []);
+    fetchAuthenticatedUser();
+    fetchUser({ variables: { username } });
+  }, [username, fetchAuthenticatedUser, fetchUser]);
 
-  if (postsByUserIdData) {
-    console.log("postsByUserIdData");
-    console.log(postsByUserIdData.postsByOwnerId);
-  }
+  const status = !userData?.userByUsername
+    ? "NOT_EXISTS"
+    : username === authenticatedUserData?.authenticatedUser.username
+    ? "ME"
+    : authenticatedUserData?.authenticatedUser.friends?.some(
+        (friend) => friend.username === username
+      )
+    ? "FRIEND"
+    : "NOT_FRIEND";
 
-  if (fetchingUser) {
+  if (status === "NOT_EXISTS") {
     return (
       <div>
-        <p>Loading...</p>
+        <p>User does not exist</p>
       </div>
     );
   }
 
-  if (!fetchingUser && !userData?.user) {
-    console.log("NOT FOUND!!");
-  } else {
-    console.log(userData?.user);
-  }
-
-  //   if (fetchingUser) {
-  //     console.log("fetching user");
-  //   } else if (userData?.user) {
-  //     console.log(userData.user);
-  //   } else {
-  //     console.log("not found");
-  //   }
-
   return (
     <div>
       <p>ProfilePage</p>
-      {userData?.user ? <p>{userData.user.username}</p> : <p>User not found</p>}
+      {userData?.userByUsername ? (
+        <p>{userData.userByUsername.username}</p>
+      ) : (
+        <p>User not found</p>
+      )}
+      {status === "ME" ? (
+        <p>Me</p>
+      ) : status === "FRIEND" ? (
+        <p>Friend</p>
+      ) : (
+        <p>Add friend</p>
+      )}
     </div>
   );
 }

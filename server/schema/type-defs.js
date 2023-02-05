@@ -19,49 +19,9 @@ const typeDefs = gql`
     reactionType: ReactionType!
   }
 
-  type Comment {
-    id: ID!
-    dateTime: String!
-    owner: User!
-    reactions: [Reaction!]
-    replies: [CommentReply!]
-    text: String!
-  }
-
-  type CommentReply {
-    id: ID!
-    dateTime: String!
-    owner: User!
-    reactions: [Reaction!]
-    replies: [CommentReply!]
-    text: String!
-  }
-
   input GetUserPostReactionInput {
     postId: ID!
     userId: ID!
-  }
-
-  type Reaction {
-    id: ID!
-    owner: User!
-    type: ReactionType!
-  }
-
-  type Post {
-    id: ID!
-    canComment: Permission!
-    canReact: Permission!
-    canShare: Permission!
-    canView: Permission!
-    comments: [Comment!]
-    dateTime: String!
-    owner: User!
-    photo: String
-    reactions: [Reaction!]
-    shares: [Share!]
-    text: String
-    video: String
   }
 
   input RemoveCommentReactionInput {
@@ -79,10 +39,58 @@ const typeDefs = gql`
     postId: ID!
   }
 
+  input UpdateCommentReactionInput {
+    commentId: ID!
+    ownerId: ID!
+    reactionType: ReactionType!
+  }
+
   input UpdatePostReactionInput {
     ownerId: ID!
     postId: ID!
     reactionType: ReactionType!
+  }
+
+  type Comment {
+    id: ID!
+    dateTime: String!
+    owner: User!
+    reactions: [Reaction!]
+    replies: [Comment!]
+    text: String!
+  }
+
+  type Photo {
+    id: ID!
+    comments: [Comment!]
+    ownerID: ID!
+    postID: ID!
+    reactions: [Reaction!]
+    shares: [Share!]
+    text: String
+    url: String!
+  }
+
+  type Post {
+    id: ID!
+    canComment: Permission!
+    canReact: Permission!
+    canShare: Permission!
+    canView: Permission!
+    comments: [Comment!]
+    dateTime: String!
+    owner: User!
+    photos: [Photo!]
+    reactions: [Reaction!]
+    shares: [Share!]
+    text: String
+    video: String
+  }
+
+  type Reaction {
+    id: ID!
+    owner: User!
+    type: ReactionType!
   }
 
   type Share {
@@ -97,7 +105,7 @@ const typeDefs = gql`
     birthDate: String
     email: String!
     firstName: String!
-    friends: [User!]!
+    friends: [User!]
     lastName: String!
     username: String!
   }
@@ -107,7 +115,10 @@ const typeDefs = gql`
     friendsPostsByOwnerId(ownerId: ID!): [Post!]
     posts: [Post!]
     postsByOwnerId(ownerId: ID!): [Post!]
-    user(id: ID!): User
+    userById(id: ID!): User
+    userByUsername(username: String!): User
+    userFriendsById(id: ID!): [User!]
+    userFriendsByUsername(username: String!): [User!]
     userPostReaction(input: GetUserPostReactionInput!): Reaction
     users: [User!]
   }
@@ -119,6 +130,7 @@ const typeDefs = gql`
     removeCommentReaction(input: RemoveCommentReactionInput!): Reaction
     removePostComment(input: RemovePostCommentInput!): Comment
     removePostReaction(input: RemovePostReactionInput!): Reaction
+    updateCommentReaction(input: UpdateCommentReactionInput): Reaction!
     updatePostReaction(input: UpdatePostReactionInput!): Reaction!
   }
 

@@ -2,18 +2,23 @@ import { Reaction, ReactionType } from "../../models";
 
 interface InitialHasReactedProps {
   currentUserId?: string;
-  reactions: Reaction[];
+  reactions: Reaction[] | null;
 }
 
 interface ReactionTextProps {
   currentUserId?: string;
   hasReacted: boolean;
-  reactions: Reaction[];
+  reactions: Reaction[] | null;
 }
 
 interface ReactionTextColorProps {
   currentUserId?: string;
-  reactions: Reaction[];
+  reactions: Reaction[] | null;
+}
+
+interface UserCommentReactionProps {
+  currentUserId?: string;
+  reactions: Reaction[] | null;
 }
 
 export function getInitialHasReacted({
@@ -63,4 +68,14 @@ export function getReactionTextColor({
     default:
       return "#f9ce58";
   }
+}
+
+export function getUserCommentReaction({
+  currentUserId,
+  reactions,
+}: UserCommentReactionProps) {
+  const userReaction = reactions?.find(
+    (reaction) => reaction.owner.id === currentUserId
+  );
+  return userReaction;
 }
