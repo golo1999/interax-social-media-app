@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 import {
   Divider,
+  PostPhotos,
   ReactionEmojis,
   UserComment,
   UserPhoto,
@@ -250,6 +251,7 @@ export function UserPost({ authenticatedUser, post }: Props) {
   const emojisAndReactionsContainerRef =
     useRef() as MutableRefObject<HTMLInputElement>;
   const emojisContainerRef = useRef() as MutableRefObject<HTMLInputElement>;
+  const textContainerRef = useRef() as MutableRefObject<HTMLDivElement>;
 
   const [hasReacted, setHasReacted] = useState<boolean>(
     getInitialHasReacted({ currentUserId: authenticatedUser?.id, reactions })
@@ -257,10 +259,21 @@ export function UserPost({ authenticatedUser, post }: Props) {
   const [isHoveringOverEmojis, setIsHoveringOverEmojis] = useState(false);
   const [isHoveringOverReactionButton, setIsHoveringOverReactionButton] =
     useState(false);
+  const [isTextCompletelyVisible, setIsTextCompletelyVisible] = useState(false);
   const [isWriteCommentVisible, setIsWriteCommentVisible] = useState(false);
   const [postReactionsCount, setPostReactionsCount] = useState<
     PostReactionCount[]
   >([]);
+
+  useEffect(() => {
+    const textContainerHeight = textContainerRef.current.offsetHeight;
+    const textContainerLineHeight = parseInt(
+      textContainerRef.current.style.lineHeight
+    );
+    const numberOfLines = textContainerHeight / textContainerLineHeight;
+
+    setIsTextCompletelyVisible(numberOfLines <= 5);
+  }, []);
 
   useEffect(() => {
     const count = getPostReactionsCount(reactions);
@@ -384,49 +397,6 @@ export function UserPost({ authenticatedUser, post }: Props) {
     ));
   }, [authenticatedUser, comments, owner.id, postId, removePostComment]);
 
-  const postPhotos = useMemo(() => {
-    return photos?.map((photo, index) => {
-      if (index > 4) {
-        return <Fragment key={index} />;
-      } else if (index === 4) {
-        const photosNumber = photos?.length;
-
-        return (
-          <div key={index} style={{ position: "relative" }}>
-            <p
-              style={{
-                color: "#cfd1d5",
-                fontSize: "3em",
-                fontWeight: "bold",
-                left: "50%",
-                position: "absolute",
-                top: "50%",
-                transform: "translate(-50%, -50%)",
-                userSelect: "none",
-              }}
-            >
-              {`+${photosNumber - index}`}
-            </p>
-            <img
-              alt={index.toString()}
-              src={photo.url}
-              style={{ maxWidth: "100%", opacity: "25%" }}
-            />
-          </div>
-        );
-      }
-
-      return (
-        <img
-          key={index}
-          alt={index.toString()}
-          src={photo.url}
-          style={{ maxWidth: "100%" }}
-        />
-      );
-    });
-  }, [photos]);
-
   const postReactionsEmojis = useMemo(() => {
     return postReactionsCount.map((postReaction, index) => {
       if (index > 2) {
@@ -472,18 +442,32 @@ export function UserPost({ authenticatedUser, post }: Props) {
           onClick={handleMoreOptionsClick}
         />
       </Header>
-      <PostText>{text}</PostText>
-      {photos && (
-        <div
-          style={{
-            display: "grid",
-            gap: "2px",
-            gridTemplateColumns: "repeat(2, 1fr)",
-          }}
+      <div ref={textContainerRef} style={{ lineHeight: "21px" }}>
+        <PostText
+          style={
+            !isTextCompletelyVisible
+              ? {
+                  overflow: "hidden",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 5,
+                  WebkitBoxOrient: "vertical",
+                }
+              : undefined
+          }
         >
-          {postPhotos}
-        </div>
-      )}
+          {text}
+        </PostText>
+        {!isTextCompletelyVisible && (
+          <span
+            onClick={() => {
+              setIsTextCompletelyVisible((prev) => !prev);
+            }}
+          >
+            See more
+          </span>
+        )}
+      </div>
+      {photos && <PostPhotos photos={photos} />}
       {((comments && comments?.length > 0) ||
         (reactions && reactions?.length > 0) ||
         (shares && shares?.length > 0)) && (

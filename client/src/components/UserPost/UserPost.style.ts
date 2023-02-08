@@ -51,6 +51,6 @@ export const PostOwnerName = styled.p`
   user-select: none;
 `;
 
-export const PostText = styled.p`
+export const PostText = styled.span`
   color: #cfd1d5;
 `;

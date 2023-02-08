@@ -1,4 +1,5 @@
 export { Divider } from "./Divider";
+export { PostPhotos } from "./PostPhotos";
 export { ReactionEmojis } from "./ReactionEmojis";
 export { UserComment } from "./UserComment";
 export { UserFriend } from "./UserFriend";

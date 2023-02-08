@@ -160,6 +160,16 @@ const PostsList = [
         text: null,
         url: "https://wise.com/imaginary/pros-and-cons-living-in-italy.jpg",
       },
+      {
+        id: "post-0-photo-5",
+        comments: null,
+        ownerID: "0",
+        postID: "post-0",
+        reactions: null,
+        shares: null,
+        text: null,
+        url: "https://i0.wp.com/www.nothingfamiliar.com/wp-content/uploads/2022/02/Things-to-do-in-Venice-Italy.jpg",
+      },
     ],
     reactions: [
       {
