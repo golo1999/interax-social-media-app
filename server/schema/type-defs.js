@@ -7,6 +7,12 @@ const typeDefs = gql`
     reactionType: ReactionType!
   }
 
+  input AddCommentReplyInput {
+    commentId: ID!
+    ownerId: ID!
+    text: String!
+  }
+
   input AddPostCommentInput {
     commentOwnerId: ID!
     postId: ID!
@@ -29,9 +35,13 @@ const typeDefs = gql`
     reactionOwnerId: ID!
   }
 
+  input RemoveCommentReplyInput {
+    commentId: ID!
+    replyId: ID!
+  }
+
   input RemovePostCommentInput {
     commentId: ID!
-    postId: ID!
   }
 
   input RemovePostReactionInput {
@@ -42,6 +52,7 @@ const typeDefs = gql`
   input UpdateCommentReactionInput {
     commentId: ID!
     ownerId: ID!
+    postId: ID!
     reactionType: ReactionType!
   }
 
@@ -55,6 +66,7 @@ const typeDefs = gql`
     id: ID!
     dateTime: String!
     owner: User!
+    postId: ID!
     reactions: [Reaction!]
     replies: [Comment!]
     text: String!
@@ -63,8 +75,8 @@ const typeDefs = gql`
   type Photo {
     id: ID!
     comments: [Comment!]
-    ownerID: ID!
-    postID: ID!
+    ownerId: ID!
+    postId: ID!
     reactions: [Reaction!]
     shares: [Share!]
     text: String
@@ -89,6 +101,7 @@ const typeDefs = gql`
 
   type Reaction {
     id: ID!
+    dateTime: String!
     owner: User!
     type: ReactionType!
   }
@@ -112,7 +125,13 @@ const typeDefs = gql`
 
   type Query {
     authenticatedUser: User
+    comment(id: ID!): Comment
+    comments: [Comment!]
+    commentReactions(commentId: ID!): [Reaction!]
+    commentReplies(commentId: ID!): [Comment!]
     friendsPostsByOwnerId(ownerId: ID!): [Post!]
+    postComments(postId: ID!): [Comment!]
+    post(id: ID!): Post
     posts: [Post!]
     postsByOwnerId(ownerId: ID!): [Post!]
     userById(id: ID!): User
@@ -125,12 +144,15 @@ const typeDefs = gql`
 
   type Mutation {
     addCommentReaction(input: AddCommentReactionInput!): Reaction
+    addCommentReply(input: AddCommentReplyInput!): Comment
     addPostComment(input: AddPostCommentInput!): Comment!
     addPostReaction(input: AddPostReactionInput!): Reaction
+    removeComment(id: ID!): Comment
     removeCommentReaction(input: RemoveCommentReactionInput!): Reaction
+    removeCommentReply(input: RemoveCommentReplyInput!): Comment
     removePostComment(input: RemovePostCommentInput!): Comment
     removePostReaction(input: RemovePostReactionInput!): Reaction
-    updateCommentReaction(input: UpdateCommentReactionInput): Reaction!
+    updateCommentReaction(input: UpdateCommentReactionInput): Reaction
     updatePostReaction(input: UpdatePostReactionInput!): Reaction!
   }
 

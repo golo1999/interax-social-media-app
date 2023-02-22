@@ -15,21 +15,22 @@ export enum ReactionType {
 }
 
 export interface Comment {
-  __typename: "Comment";
+  __typename?: "Comment";
   id: string;
   dateTime: string;
   owner: User;
+  postId: string;
   reactions: Reaction[] | null;
   replies: Comment[] | null;
   text: string;
 }
 
 export interface Photo {
-  __typename: "Photo";
+  __typename?: "Photo";
   id: string;
   comments: Comment[] | null;
-  ownerID: string;
-  postID: string;
+  ownerId: string;
+  postId: string;
   reactions: Reaction[] | null;
   shares: Share[] | null;
   text: string | null;
@@ -37,7 +38,7 @@ export interface Photo {
 }
 
 export interface Post {
-  __typename: "Post";
+  __typename?: "Post";
   id: string;
   canComment: Permission;
   canReact: Permission;
@@ -54,21 +55,22 @@ export interface Post {
 }
 
 export interface Reaction {
-  __typename: "Reaction";
+  __typename?: "Reaction";
+  dateTime: string;
   id: string;
   owner: User;
   type: ReactionType;
 }
 
 export interface Share {
-  __typename: "Share";
+  __typename?: "Share";
   id: string;
   dateTime: string;
   owner: User;
 }
 
 export interface User {
-  __typename: "User";
+  __typename?: "User";
   id: string;
   biography?: string | null;
   birthDate?: string | null;
@@ -99,8 +101,8 @@ type Comment {
   type Photo {
     id: ID!
     comments: [Comment!]
-    ownerID: ID!
-    postID: ID!
+    ownerId: ID!
+    postId: ID!
     reactions: [Reaction!]
     shares: [Share!]
     text: String

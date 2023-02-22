@@ -64,10 +64,6 @@ export function Friends({ style }: Props) {
     }
   }, [authenticatedUserData, fetchAuthenticatedUser, fetchUserFriends]);
 
-  if (userFriendsData) {
-    console.log(userFriendsData.userFriendsByUsername);
-  }
-
   return (
     <section
       style={{

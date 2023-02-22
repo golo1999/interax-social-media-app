@@ -1,11 +1,6 @@
 import { Icons as AppIcons } from "../../environment";
 import { Reaction, ReactionType } from "../../models";
 
-interface InitialHasReactedProps {
-  currentUserId?: string;
-  reactions: Reaction[] | null;
-}
-
 interface ReactionButtonTextProps {
   currentUserId?: string;
   hasReacted: boolean;
@@ -28,15 +23,6 @@ interface UserPostReactionProps {
 
 export function getCommentsText(commentsCount: number) {
   return commentsCount > 1 ? `${commentsCount} comments` : "1 comment";
-}
-
-export function getInitialHasReacted({
-  currentUserId,
-  reactions,
-}: InitialHasReactedProps) {
-  return reactions
-    ? reactions.some((reaction) => reaction.owner.id === currentUserId)
-    : false;
 }
 
 export function getPostReactionsCount(reactions: Reaction[] | null) {
