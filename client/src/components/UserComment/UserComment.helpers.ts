@@ -1,8 +1,8 @@
-import { Reaction, ReactionType } from "../../models";
+import { Comment, Reaction, ReactionType } from "../../models";
 
-interface InitialHasReactedProps {
-  currentUserId?: string;
-  reactions: Reaction[] | null;
+interface FindMatchedCommentProps {
+  commentId: string;
+  comments: Comment[] | null;
 }
 
 interface ReactionTextProps {
@@ -21,13 +21,30 @@ interface UserCommentReactionProps {
   reactions: Reaction[] | null;
 }
 
-export function getInitialHasReacted({
-  currentUserId,
-  reactions,
-}: InitialHasReactedProps) {
-  return reactions
-    ? reactions.some((reaction) => reaction.owner.id === currentUserId)
-    : false;
+export function findMatchedComment({
+  commentId,
+  comments,
+}: FindMatchedCommentProps): Comment | undefined {
+  if (!comments || comments.length === 0) {
+    return undefined;
+  }
+
+  for (let index = 0; index < comments.length; ++index) {
+    const comment = comments[index];
+
+    if (comment.id === commentId) {
+      return comment;
+    } else if (comment.replies) {
+      const found = findMatchedComment({
+        commentId,
+        comments: comment.replies,
+      });
+
+      if (found) {
+        return found;
+      }
+    }
+  }
 }
 
 export function getReactionText({
@@ -35,13 +52,18 @@ export function getReactionText({
   hasReacted,
   reactions,
 }: ReactionTextProps) {
-  if (!reactions) {
+  if (!reactions || reactions.length === 0) {
     return "Like";
   }
 
   const userReaction = reactions.find(
     (reaction) => reaction.owner.id === currentUserId
   );
+
+  if (!userReaction) {
+    return "Like";
+  }
+
   const formattedReactionType = userReaction?.type
     .toString()
     .slice(0, 1)
@@ -65,8 +87,13 @@ export function getReactionTextColor({
       return "#2d86ff";
     case ReactionType.LOVE:
       return "#ee3553";
-    default:
+    case ReactionType.CARE:
+    case ReactionType.HAHA:
+    case ReactionType.SAD:
+    case ReactionType.WOW:
       return "#f9ce58";
+    default:
+      return undefined;
   }
 }
 

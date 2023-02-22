@@ -1,4 +1,8 @@
-export function getTimeFromDate(date: string): string {
+export function getTimeFromDate(date: string | null): string | null {
+  if (!date) {
+    return null;
+  }
+
   const currentDate = new Date();
   const givenDate = new Date(date);
   const timeDifference = Math.abs(currentDate.getTime() - givenDate.getTime());

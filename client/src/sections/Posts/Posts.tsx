@@ -24,6 +24,44 @@ const GET_AUTHENTICATED_USER = gql`
 `;
 
 export const GET_FRIENDS_POSTS_BY_USER_ID = gql`
+  fragment CommentData on Comment {
+    dateTime
+    id
+    owner {
+      email
+      firstName
+      id
+      lastName
+      username
+    }
+    postId
+    reactions {
+      dateTime
+      id
+      owner {
+        email
+        firstName
+        id
+        lastName
+        username
+      }
+      type
+    }
+    replies {
+      dateTime
+      id
+      owner {
+        email
+        firstName
+        id
+        lastName
+        username
+      }
+      text
+    }
+    text
+  }
+
   query GetFriendsPostsByOwnerId($ownerId: ID!) {
     friendsPostsByOwnerId(ownerId: $ownerId) {
       canComment
@@ -31,72 +69,7 @@ export const GET_FRIENDS_POSTS_BY_USER_ID = gql`
       canShare
       canView
       comments {
-        id
-        dateTime
-        owner {
-          email
-          firstName
-          id
-          lastName
-          username
-        }
-        reactions {
-          owner {
-            email
-            firstName
-            id
-            lastName
-            username
-          }
-          type
-        }
-        replies {
-          dateTime
-          id
-          owner {
-            email
-            firstName
-            id
-            lastName
-            username
-          }
-          reactions {
-            id
-            owner {
-              firstName
-              id
-              lastName
-              username
-            }
-            type
-          }
-          replies {
-            dateTime
-            id
-            owner {
-              firstName
-              id
-              lastName
-              username
-            }
-            reactions {
-              id
-              owner {
-                firstName
-                id
-                lastName
-                username
-              }
-              type
-            }
-            replies {
-              text
-            }
-            text
-          }
-          text
-        }
-        text
+        ...CommentData
       }
       dateTime
       id
@@ -108,8 +81,8 @@ export const GET_FRIENDS_POSTS_BY_USER_ID = gql`
       }
       photos {
         id
-        ownerID
-        postID
+        ownerId
+        postId
         text
         url
       }
@@ -150,15 +123,20 @@ interface Props {
 export function Posts({ style }: Props) {
   const [fetchAuthenticatedUser, { data: authenticatedUserData }] =
     useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
-  const [fetchFriendsPostsByUserId, { data: friendsPostsByUserIdData }] =
-    useLazyQuery<GetFriendsPostsByUserIdData>(GET_FRIENDS_POSTS_BY_USER_ID);
+  const [
+    fetchFriendsPostsByUserId,
+    { called, data: friendsPostsByUserIdData, loading },
+  ] = useLazyQuery<GetFriendsPostsByUserIdData>(GET_FRIENDS_POSTS_BY_USER_ID);
 
   useEffect(() => {
     fetchAuthenticatedUser();
 
     if (authenticatedUserData) {
+      const { id: authenticatedUserId } =
+        authenticatedUserData.authenticatedUser;
+
       fetchFriendsPostsByUserId({
-        variables: { ownerId: authenticatedUserData?.authenticatedUser.id },
+        variables: { ownerId: authenticatedUserId },
       });
     }
   }, [
@@ -167,24 +145,36 @@ export function Posts({ style }: Props) {
     fetchFriendsPostsByUserId,
   ]);
 
+  if (called && loading) {
+    return (
+      <section style={style}>
+        <p style={{ color: "#cfd1d5" }}>Loading...</p>
+      </section>
+    );
+  }
+
+  if (!friendsPostsByUserIdData?.friendsPostsByOwnerId) {
+    return (
+      <section style={style}>
+        <p style={{ color: "#cfd1d5" }}>No posts found...</p>
+      </section>
+    );
+  }
+
+  const friendsPosts = friendsPostsByUserIdData.friendsPostsByOwnerId;
+
   return (
     <section style={style}>
-      {friendsPostsByUserIdData?.friendsPostsByOwnerId ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1em" }}>
-          {friendsPostsByUserIdData.friendsPostsByOwnerId.length > 0 &&
-            friendsPostsByUserIdData.friendsPostsByOwnerId.map(
-              (post, index) => (
-                <UserPost
-                  key={index}
-                  authenticatedUser={authenticatedUserData?.authenticatedUser}
-                  post={post}
-                />
-              )
-            )}
-        </div>
-      ) : (
-        <p>No posts found...</p>
-      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: "1em" }}>
+        {friendsPosts.length > 0 &&
+          friendsPosts.map((post, index) => (
+            <UserPost
+              key={index}
+              authenticatedUser={authenticatedUserData?.authenticatedUser}
+              id={post.id}
+            />
+          ))}
+      </div>
     </section>
   );
 }

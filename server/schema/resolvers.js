@@ -1,9 +1,51 @@
 const crypto = require("crypto");
 const _ = require("lodash");
 
-const { AUTHENTICATED_USER, PostsList, UsersList } = require("../MockedData");
+// TODO: This should be converted to TS and moved to a "helpers" file
+function findMatchedComment(comments, commentId) {
+  if (!comments) {
+    return undefined;
+  }
+
+  for (let index = 0; index < comments.length; ++index) {
+    const comment = comments[index];
+
+    if (comment.id === commentId) {
+      return comment;
+    } else if (comment.replies) {
+      const found = findMatchedComment(comment.replies, commentId);
+
+      if (found) {
+        return found;
+      }
+    }
+  }
+}
+
+const {
+  AUTHENTICATED_USER,
+  CommentsList,
+  PostsList,
+  UsersList,
+  PostPhotosList,
+} = require("../MockedData");
 
 const resolvers = {
+  Post: {
+    comments: ({ id }) => {
+      const comments = _.filter(
+        CommentsList,
+        (comment) => comment.postId === id
+      );
+
+      return comments;
+    },
+    photos: ({ id }) => {
+      const photos = _.filter(PostPhotosList, (photo) => photo.postId === id);
+
+      return photos;
+    },
+  },
   Query: {
     authenticatedUser: () => {
       const matchedUser = _.find(UsersList, {
@@ -12,8 +54,37 @@ const resolvers = {
 
       return matchedUser;
     },
-    friendsPostsByOwnerId: (parent, args) => {
-      const { ownerId } = args;
+    comment: (parent, { id }) => {
+      const matchedComment = findMatchedComment(CommentsList, id);
+
+      if (!matchedComment) {
+        return null;
+      }
+
+      return matchedComment;
+    },
+    comments: () => {
+      return CommentsList;
+    },
+    commentReactions: (parent, { commentId }) => {
+      const matchedComment = findMatchedComment(CommentsList, commentId);
+
+      if (!matchedComment) {
+        return null;
+      }
+
+      return matchedComment.reactions;
+    },
+    commentReplies: (parent, { commentId }) => {
+      const matchedComment = findMatchedComment(CommentsList, commentId);
+
+      if (!matchedComment) {
+        return null;
+      }
+
+      return matchedComment.replies;
+    },
+    friendsPostsByOwnerId: (parent, { ownerId }) => {
       const ownerFriendsList = _.filter(UsersList, (user) =>
         _.some(user.friends, (friend) => friend.id === ownerId)
       );
@@ -23,23 +94,29 @@ const resolvers = {
 
       return friendsPostsList.length > 0 ? friendsPostsList : null;
     },
+    post: (parent, { id }) => {
+      const matchedPost = _.find(PostsList, (post) => post.id === id);
+
+      if (!matchedPost) {
+        return null;
+      }
+
+      return matchedPost;
+    },
     posts: () => {
       return PostsList;
     },
-    postsByOwnerId: (parent, args) => {
-      const { ownerId } = args;
+    postsByOwnerId: (parent, { ownerId }) => {
       const posts = _.filter(PostsList, (post) => post.owner.id === ownerId);
 
       return posts.length > 0 ? posts : null;
     },
-    userById: (parent, args) => {
-      const { id } = args;
+    userById: (parent, { id }) => {
       const user = _.find(UsersList, { id });
 
       return user;
     },
-    userByUsername: (parent, args) => {
-      const { username } = args;
+    userByUsername: (parent, { username }) => {
       const matchedUser = _.find(
         UsersList,
         (user) => user.username === username
@@ -47,21 +124,18 @@ const resolvers = {
 
       return matchedUser;
     },
-    userFriendsById: (parent, args) => {
-      const { id } = args;
+    userFriendsById: (parent, { id }) => {
       const matchedUser = _.find(UsersList, (user) => user.id === id);
       return matchedUser.friends;
     },
-    userFriendsByUsername: (parent, args) => {
-      const { username } = args;
+    userFriendsByUsername: (parent, { username }) => {
       const matchedUser = _.find(
         UsersList,
         (user) => user.username === username
       );
       return matchedUser.friends;
     },
-    userPostReaction: (parent, args) => {
-      const { postId, userId } = args.input;
+    userPostReaction: (parent, { input: { postId, userId } }) => {
       const matchedPost = _.find(PostsList, (post) => post.id === postId);
       const matchedReaction = _.find(
         matchedPost.reactions,
@@ -75,15 +149,16 @@ const resolvers = {
     },
   },
   Mutation: {
-    addCommentReaction: (parent, args) => {
-      const { commentId, reactionOwnerId, reactionType } = args.input;
-      const matchedPost = _.find(PostsList, (post) =>
-        _.some(post.comments, (comment) => comment.id === commentId)
-      );
-      const matchedComment = _.find(
-        matchedPost.comments,
-        (comment) => comment.id === commentId
-      );
+    addCommentReaction: (
+      parent,
+      { input: { commentId, reactionOwnerId, reactionType } }
+    ) => {
+      const matchedComment = findMatchedComment(CommentsList, commentId);
+
+      if (!matchedComment) {
+        return null;
+      }
+
       const matchedOwner = _.find(
         UsersList,
         (user) => user.id === reactionOwnerId
@@ -97,6 +172,7 @@ const resolvers = {
       };
       const newReaction = {
         id: null,
+        dateTime: new Date().toUTCString(),
         owner: newReactionOwner,
         type: reactionType,
       };
@@ -105,16 +181,46 @@ const resolvers = {
         matchedComment.reactions = [];
       }
 
-      newReaction.id = `${
-        matchedPost.id
-      }-${commentId}-reaction-${crypto.randomUUID()}`;
+      newReaction.id = `${commentId}-reaction-${crypto.randomUUID()}`;
       matchedComment.reactions.push(newReaction);
 
       return newReaction;
     },
-    addPostComment: (parent, args) => {
-      const { commentOwnerId, postId, text } = args.input;
-      const matchedPost = _.find(PostsList, (post) => post.id === postId);
+    addCommentReply: (parent, { input: { commentId, ownerId, text } }) => {
+      const matchedComment = findMatchedComment(CommentsList, commentId);
+
+      if (!matchedComment) {
+        return null;
+      }
+
+      const matchedOwner = _.find(UsersList, (user) => user.id === ownerId);
+      const postId = matchedComment.postId;
+      const newComment = {
+        id: null,
+        dateTime: new Date().toUTCString(),
+        owner: {
+          id: matchedOwner.id,
+          email: matchedOwner.email,
+          firstName: matchedOwner.firstName,
+          lastName: matchedOwner.lastName,
+          username: matchedOwner.username,
+        },
+        postId,
+        reactions: null,
+        replies: null,
+        text,
+      };
+
+      if (!matchedComment.replies) {
+        matchedComment.replies = [];
+      }
+
+      newComment.id = `${postId}-comment-${crypto.randomUUID()}`;
+      matchedComment.replies.push(newComment);
+
+      return newComment;
+    },
+    addPostComment: (parent, { input: { commentOwnerId, postId, text } }) => {
       const matchedOwner = _.find(
         UsersList,
         (user) => user.id === commentOwnerId
@@ -129,22 +235,25 @@ const resolvers = {
           lastName: matchedOwner.lastName,
           username: matchedOwner.username,
         },
+        postId,
         reactions: null,
         replies: null,
         text,
       };
 
-      if (!matchedPost.comments) {
-        matchedPost.comments = [];
+      if (!CommentsList) {
+        CommentsList = [];
       }
 
       newComment.id = `${postId}-comment-${crypto.randomUUID()}`;
-      matchedPost.comments.push(newComment);
+      CommentsList.push(newComment);
 
       return newComment;
     },
-    addPostReaction: (parent, args) => {
-      const { postId, reactionOwnerId, reactionType } = args.input;
+    addPostReaction: (
+      parent,
+      { input: { postId, reactionOwnerId, reactionType } }
+    ) => {
       const matchedPost = _.find(PostsList, (post) => post.id === postId);
       const matchedOwner = _.find(
         UsersList,
@@ -172,16 +281,40 @@ const resolvers = {
 
       return newReaction;
     },
-    removeCommentReaction: (parent, args) => {
-      const { commentId, reactionOwnerId } = args.input;
-      let removedReaction;
-      const matchedPost = _.find(PostsList, (post) =>
-        _.some(post.comments, (comment) => comment.id === commentId)
-      );
+    removeComment: (parent, { id }) => {
+      let removedComment;
       const matchedComment = _.find(
-        matchedPost.comments,
-        (comment) => comment.id === commentId
+        CommentsList,
+        (comment) => comment.id === id
       );
+
+      if (!matchedComment) {
+        return null;
+      }
+
+      _.remove(CommentsList, (comment) => {
+        if (comment.id === id) {
+          removedComment = comment;
+        }
+        return comment.id === id;
+      });
+
+      if (CommentsList.length === 0) {
+        CommentsList = null;
+      }
+
+      return removedComment;
+    },
+    removeCommentReaction: (
+      parent,
+      { input: { commentId, reactionOwnerId } }
+    ) => {
+      let removedReaction;
+      const matchedComment = findMatchedComment(CommentsList, commentId);
+
+      if (!matchedComment) {
+        return null;
+      }
 
       _.remove(matchedComment.reactions, (reaction) => {
         if (reaction.owner.id === reactionOwnerId) {
@@ -196,22 +329,43 @@ const resolvers = {
 
       return removedReaction;
     },
-    removePostComment: (parent, args) => {
-      const { commentId, postId } = args.input;
-      let removedComment;
-      const matchedPost = _.find(PostsList, (post) => post.id === postId);
-      const matchedComment = _.find(
-        matchedPost.comments,
-        (comment) => comment.id === commentId
-      );
+    removeCommentReply: (parent, { input: { commentId, replyId } }) => {
+      let removedReply;
+      const matchedComment = findMatchedComment(CommentsList, commentId);
 
-      _.remove(matchedPost.comments, (comment) => {
+      if (!matchedComment) {
+        return null;
+      }
+
+      _.remove(matchedComment.replies, (reply) => {
+        if (reply.id === replyId) {
+          removedReply = reply;
+        }
+
+        return reply.id === replyId;
+      });
+
+      if (matchedComment.replies.length === 0) {
+        matchedComment.replies = null;
+      }
+
+      return removedReply;
+    },
+    removePostComment: (parent, { input: { commentId } }) => {
+      let removedComment;
+      const matchedComment = findMatchedComment(CommentsList, commentId);
+
+      if (!matchedComment) {
+        return null;
+      }
+
+      _.remove(CommentsList, (comment) => {
         if (comment.id === matchedComment.id) {
           removedComment = comment;
         }
 
-        if (matchedPost.comments.length === 0) {
-          matchedPost.comments = null;
+        if (CommentsList.length === 0) {
+          CommentsList = null;
         }
 
         return comment.id === matchedComment.id;
@@ -219,8 +373,7 @@ const resolvers = {
 
       return removedComment;
     },
-    removePostReaction: (parent, args) => {
-      const { ownerId, postId } = args.input;
+    removePostReaction: (parent, { input: { ownerId, postId } }) => {
       let removedReaction;
       const matchedPost = _.find(PostsList, (post) => post.id === postId);
       const matchedReaction = _.find(
@@ -241,15 +394,16 @@ const resolvers = {
 
       return removedReaction;
     },
-    updateCommentReaction: (parent, args) => {
-      const { commentId, ownerId, reactionType } = args.input;
-      const matchedPost = _.find(PostsList, (post) =>
-        _.some(post.comments, (comment) => comment.id === commentId)
-      );
-      const matchedComment = _.find(
-        matchedPost.comments,
-        (comment) => comment.id === commentId
-      );
+    updateCommentReaction: (
+      parent,
+      { input: { commentId, ownerId, postId, reactionType } }
+    ) => {
+      const matchedComment = findMatchedComment(CommentsList, commentId);
+
+      if (!matchedComment) {
+        return null;
+      }
+
       const matchedReaction = _.find(
         matchedComment.reactions,
         (reaction) => reaction.owner.id === ownerId
@@ -258,8 +412,10 @@ const resolvers = {
 
       return matchedReaction;
     },
-    updatePostReaction: (parent, args) => {
-      const { ownerId, postId, reactionType } = args.input;
+    updatePostReaction: (
+      parent,
+      { input: { ownerId, postId, reactionType } }
+    ) => {
       const matchedPost = _.find(PostsList, (post) => post.id === postId);
       const matchedReaction = _.find(
         matchedPost.reactions,

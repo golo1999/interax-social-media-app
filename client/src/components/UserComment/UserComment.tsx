@@ -1,17 +1,17 @@
-import { gql, useMutation } from "@apollo/client";
+import { gql, useLazyQuery, useMutation } from "@apollo/client";
 
-import { CSSProperties, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 import { MdMoreHoriz } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+
+import { GET_FRIENDS_POSTS_BY_USER_ID } from "../../sections/Posts/Posts";
 
 import { ReactionEmojis, UserPhoto, WriteComment } from "../../components";
 import { getTimeFromDate } from "../../helpers";
 import { useCommentReplies } from "../../hooks";
-import { Comment, ReactionType, User } from "../../models";
-import { GET_FRIENDS_POSTS_BY_USER_ID } from "../../sections/Posts/Posts";
+import { Comment, Reaction, ReactionType, User } from "../../models";
 
 import {
-  getInitialHasReacted,
   getReactionText,
   getReactionTextColor,
   getUserCommentReaction,
@@ -27,6 +27,7 @@ const ADD_COMMENT_REACTION = gql`
   mutation AddCommentReaction($input: AddCommentReactionInput!) {
     addCommentReaction(input: $input) {
       id
+      dateTime
       owner {
         email
         firstName
@@ -39,10 +40,119 @@ const ADD_COMMENT_REACTION = gql`
   }
 `;
 
+const ADD_COMMENT_REPLY = gql`
+  mutation AddCommentReply($input: AddCommentReplyInput!) {
+    addCommentReply(input: $input) {
+      dateTime
+      id
+      owner {
+        firstName
+        id
+        lastName
+        username
+      }
+      text
+    }
+  }
+`;
+
+const GET_COMMENT = gql`
+  fragment CommentData on Comment {
+    dateTime
+    id
+    owner {
+      email
+      firstName
+      id
+      lastName
+      username
+    }
+    postId
+    reactions {
+      dateTime
+      id
+      owner {
+        email
+        firstName
+        id
+        lastName
+        username
+      }
+      type
+    }
+    replies {
+      dateTime
+      id
+      owner {
+        email
+        firstName
+        id
+        lastName
+        username
+      }
+      text
+    }
+    text
+  }
+
+  query GetComment($id: ID!) {
+    comment(id: $id) {
+      ...CommentData
+    }
+  }
+`;
+
+const GET_COMMENT_REPLIES = gql`
+  fragment CommentData on Comment {
+    dateTime
+    id
+    owner {
+      email
+      firstName
+      id
+      lastName
+      username
+    }
+    postId
+    reactions {
+      dateTime
+      id
+      owner {
+        email
+        firstName
+        id
+        lastName
+        username
+      }
+      type
+    }
+    replies {
+      dateTime
+      id
+      owner {
+        email
+        firstName
+        id
+        lastName
+        username
+      }
+      text
+    }
+    text
+  }
+
+  query GetCommentReplies($commentId: ID!) {
+    commentReplies(commentId: $commentId) {
+      ...CommentData
+    }
+  }
+`;
+
 const REMOVE_COMMENT_REACTION = gql`
   mutation RemoveCommentReaction($input: RemoveCommentReactionInput!) {
     removeCommentReaction(input: $input) {
       id
+      dateTime
       owner {
         email
         firstName
@@ -59,6 +169,7 @@ const UPDATE_COMMENT_REACTION = gql`
   mutation UpdateCommentReaction($input: UpdateCommentReactionInput!) {
     updateCommentReaction(input: $input) {
       id
+      dateTime
       owner {
         email
         firstName
@@ -71,51 +182,94 @@ const UPDATE_COMMENT_REACTION = gql`
   }
 `;
 
+interface AddCommentReactionProps {
+  addCommentReaction: Reaction | null;
+}
+
+interface GetCommentProps {
+  comment: Comment | null;
+}
+
+interface GetCommentRepliesProps {
+  commentReplies: Comment[] | null;
+}
+
+interface RemoveCommentReactionProps {
+  removeCommentReaction: Reaction | null;
+}
+
+interface UpdateCommentReactionProps {
+  updateCommentReaction: Reaction | null;
+}
+
 interface Props {
   authenticatedUser?: User;
-  comment: Comment;
+  id: string;
   postOwnerId: string;
   replyLevel?: number;
-  onDeleteClick: () => void;
+  onDeleteClick: (id: string) => void;
 }
 
 export function UserComment({
   authenticatedUser,
-  comment,
+  id: commentId,
   postOwnerId,
   replyLevel = 0,
   onDeleteClick,
 }: Props) {
-  const [addCommentReaction] = useMutation(ADD_COMMENT_REACTION, {
-    refetchQueries: [
-      {
-        query: GET_FRIENDS_POSTS_BY_USER_ID,
-        variables: { ownerId: authenticatedUser?.id },
-      },
-    ],
-  });
-  const [removeCommentReaction] = useMutation(REMOVE_COMMENT_REACTION, {
-    refetchQueries: [
-      {
-        query: GET_FRIENDS_POSTS_BY_USER_ID,
-        variables: { ownerId: authenticatedUser?.id },
-      },
-    ],
-  });
-  const [updateCommentReaction] = useMutation(UPDATE_COMMENT_REACTION, {
-    refetchQueries: [
-      {
-        query: GET_FRIENDS_POSTS_BY_USER_ID,
-        variables: { ownerId: authenticatedUser?.id },
-      },
-    ],
-  });
+  const [fetchComment, { data: comment = { comment: null } }] =
+    useLazyQuery<GetCommentProps>(GET_COMMENT);
+  const [fetchCommentReplies] =
+    useLazyQuery<GetCommentRepliesProps>(GET_COMMENT_REPLIES);
 
-  const { dateTime, id: commentId, owner, reactions, replies, text } = comment;
-
-  const [hasReacted, setHasReacted] = useState<boolean>(
-    getInitialHasReacted({ currentUserId: authenticatedUser?.id, reactions })
+  const [addCommentReaction] = useMutation<AddCommentReactionProps>(
+    ADD_COMMENT_REACTION,
+    {
+      refetchQueries: [
+        {
+          query: GET_FRIENDS_POSTS_BY_USER_ID,
+          variables: { ownerId: authenticatedUser?.id },
+        },
+      ],
+    }
   );
+  const [addCommentReply] = useMutation(ADD_COMMENT_REPLY, {
+    refetchQueries: [
+      {
+        query: GET_FRIENDS_POSTS_BY_USER_ID,
+        variables: { ownerId: authenticatedUser?.id },
+      },
+      { query: GET_COMMENT_REPLIES, variables: { commentId } },
+    ],
+  });
+  const [removeCommentReaction] = useMutation<RemoveCommentReactionProps>(
+    REMOVE_COMMENT_REACTION,
+    {
+      refetchQueries: [
+        {
+          query: GET_FRIENDS_POSTS_BY_USER_ID,
+          variables: { ownerId: authenticatedUser?.id },
+        },
+      ],
+    }
+  );
+  const [updateCommentReaction] = useMutation<UpdateCommentReactionProps>(
+    UPDATE_COMMENT_REACTION,
+    {
+      refetchQueries: [
+        {
+          query: GET_FRIENDS_POSTS_BY_USER_ID,
+          variables: { ownerId: authenticatedUser?.id },
+        },
+      ],
+    }
+  );
+
+  useEffect(() => {
+    fetchComment({ variables: { id: commentId } });
+  }, [commentId, fetchComment]);
+
+  const [hasReacted, setHasReacted] = useState(false);
   const [isHoveringOverEmojis, setIsHoveringOverEmojis] = useState(false);
   const [isHoveringOverReactionText, setIsHoveringOverReactionText] =
     useState(false);
@@ -124,29 +278,37 @@ export function UserComment({
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const commentHasUserReaction =
+      comment.comment?.reactions?.some(
+        (reaction) => reaction.owner.id === authenticatedUser?.id
+      ) || false;
+
+    setHasReacted(commentHasUserReaction);
+  }, [authenticatedUser, comment.comment]);
+
   let commentReactionTimer: ReturnType<typeof setTimeout>;
 
   function getOuterContainerStyle(): CSSProperties {
     return {
-      marginLeft: `calc(${replyLevel} * 2em + ${replyLevel} * 5px)`,
+      marginLeft: replyLevel > 0 ? "calc(2em + 5px)" : undefined,
     };
   }
 
   function getReactionTextStyle(): CSSProperties {
+    const color = getReactionTextColor({
+      reactions: comment.comment?.reactions || null,
+      currentUserId: authenticatedUser?.id,
+    });
+
     return {
-      color: hasReacted
-        ? getReactionTextColor({
-            reactions,
-            currentUserId: authenticatedUser?.id,
-          })
-        : "#8d8f93",
+      color: hasReacted ? color : "#8d8f93",
       fontWeight: "bold",
     };
   }
 
   function handleMoreOptionsClick() {
-    onDeleteClick();
-    console.log("more options clicked");
+    onDeleteClick(commentId);
   }
 
   function handleReactionClick() {
@@ -168,8 +330,6 @@ export function UserComment({
       });
     }
 
-    setHasReacted((prev) => !prev);
-
     if (commentReactionTimer) {
       clearTimeout(commentReactionTimer);
       return;
@@ -183,10 +343,10 @@ export function UserComment({
     }
   }
 
-  function handleReactionEmojisClick(reactionType: ReactionType) {
+  function handleReactionEmojisClick(newReactionType: ReactionType) {
     const currentReaction = getUserCommentReaction({
       currentUserId: authenticatedUser?.id,
-      reactions,
+      reactions: comment.comment?.reactions || null,
     });
 
     if (!currentReaction) {
@@ -195,17 +355,19 @@ export function UserComment({
           input: {
             commentId,
             reactionOwnerId: authenticatedUser?.id,
-            reactionType,
+            reactionType: newReactionType,
           },
         },
       });
-      if (!hasReacted) {
-        setHasReacted((prev) => !prev);
-      }
-    } else if (currentReaction.type !== reactionType) {
+    } else if (currentReaction.type !== newReactionType) {
       updateCommentReaction({
         variables: {
-          input: { commentId, ownerId: authenticatedUser?.id, reactionType },
+          input: {
+            commentId,
+            ownerId: authenticatedUser?.id,
+            postId: comment?.comment?.postId,
+            reactionType: newReactionType,
+          },
         },
       });
     } else {
@@ -214,35 +376,34 @@ export function UserComment({
           input: { commentId, reactionOwnerId: authenticatedUser?.id },
         },
       });
-      if (hasReacted) {
-        setHasReacted((prev) => !prev);
-      }
     }
-  }
-
-  function handleReplyClick() {
-    setIsWriteReplyVisible((prev) => !prev);
-  }
-
-  function toggleIsMoreOptionsVisible() {
-    setIsMoreOptionsVisible((prev) => !prev);
   }
 
   const commentReplies = useCommentReplies({
     authenticatedUser,
+    commentId,
     level: replyLevel,
     postOwnerId,
-    replies,
   });
 
-  const isCommentOwner = comment.owner.id === authenticatedUser?.id;
+  if (!comment.comment) {
+    return <></>;
+  }
+
+  const { dateTime, owner, reactions, text } = comment.comment;
+
+  const isCommentOwner = owner.id === authenticatedUser?.id;
   const isPostOwner = postOwnerId === owner.id;
 
   return (
     <OuterContainer style={getOuterContainerStyle()}>
       <InnerContainer
-        onMouseOver={toggleIsMoreOptionsVisible}
-        onMouseOut={toggleIsMoreOptionsVisible}
+        onMouseOver={() => {
+          setIsMoreOptionsVisible((prev) => !prev);
+        }}
+        onMouseOut={() => {
+          setIsMoreOptionsVisible((prev) => !prev);
+        }}
       >
         <div style={{ display: "flex", gap: "0.5em" }}>
           <UserPhoto
@@ -264,7 +425,7 @@ export function UserComment({
                 onMouseEnter={() => {
                   commentReactionTimer = setTimeout(() => {
                     setIsHoveringOverReactionText((prev) => !prev);
-                  }, 500);
+                  }, 750);
                 }}
                 onMouseLeave={() => {
                   if (commentReactionTimer) {
@@ -275,7 +436,7 @@ export function UserComment({
                   if (isHoveringOverReactionText) {
                     setTimeout(() => {
                       setIsHoveringOverReactionText((prev) => !prev);
-                    }, 500);
+                    }, 750);
                   }
                 }}
               >
@@ -298,7 +459,7 @@ export function UserComment({
                   onMouseLeave={() => {
                     setTimeout(() => {
                       setIsHoveringOverEmojis((prev) => !prev);
-                    }, 500);
+                    }, 750);
                   }}
                   onReactionClick={(reactionType) => {
                     handleReactionEmojisClick(reactionType);
@@ -310,7 +471,9 @@ export function UserComment({
               )}
               <p
                 style={{ color: "#8d8f93", fontWeight: "bold" }}
-                onClick={handleReplyClick}
+                onClick={() => {
+                  setIsWriteReplyVisible((prev) => !prev);
+                }}
               >
                 Reply
               </p>
@@ -336,9 +499,25 @@ export function UserComment({
             marginLeft: "calc(2em + 5px)",
           }}
           user={authenticatedUser}
-          onCancelClick={handleReplyClick}
-          onSendClick={() => {
-            console.log("send clicked");
+          onCancelClick={() => {
+            setIsWriteReplyVisible((prev) => !prev);
+          }}
+          onSendClick={(commentText) => {
+            addCommentReply({
+              variables: {
+                input: {
+                  commentId,
+                  ownerId: authenticatedUser?.id,
+                  text: commentText,
+                },
+              },
+              onCompleted: () => {
+                fetchCommentReplies({
+                  variables: { commentId },
+                });
+                setIsWriteReplyVisible((prev) => !prev);
+              },
+            });
           }}
         />
       )}
