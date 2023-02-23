@@ -1,6 +1,6 @@
 import { Fragment, useMemo } from "react";
 
-import { Photo } from "../../models";
+import { Photo } from "../../../models";
 
 import { Blurred, Normal, PhotosContainer } from "./PostPhotos.style";
 

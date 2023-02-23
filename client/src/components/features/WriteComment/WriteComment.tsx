@@ -2,14 +2,13 @@ import { CSSProperties, MutableRefObject, useRef } from "react";
 import { MdCancel, MdSend } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-import { UserPhoto } from "../../components";
-import { User } from "../../models";
+import { UserPhoto } from "../..";
+import { User } from "../../../models";
 
 const containerStyle: CSSProperties = {
   alignItems: "center",
   display: "flex",
   gap: "0.5em",
-  marginTop: "0.5em",
 };
 
 const iconStyle: CSSProperties = { userSelect: "none" };
@@ -23,14 +22,16 @@ const inputStyle: CSSProperties = {
 };
 
 interface Props {
+  autoFocus?: boolean;
   placeholder: string;
   user?: User;
   style?: CSSProperties;
-  onCancelClick: () => void;
+  onCancelClick?: () => void;
   onSendClick: (text: string) => void;
 }
 
 export function WriteComment({
+  autoFocus = false,
   placeholder,
   user,
   style,
@@ -60,18 +61,20 @@ export function WriteComment({
         onPhotoClick={() => navigate(`/${user?.username}`)}
       />
       <input
-        autoFocus
+        autoFocus={autoFocus}
         placeholder={placeholder}
         ref={inputRef}
         style={inputStyle}
         type="text"
       />
-      <MdCancel
-        color="#8d8f93"
-        size="1.5em"
-        style={iconStyle}
-        onClick={onCancelClick}
-      />
+      {onCancelClick && (
+        <MdCancel
+          color="#8d8f93"
+          size="1.5em"
+          style={iconStyle}
+          onClick={onCancelClick}
+        />
+      )}
       <MdSend
         color="#8d8f93"
         size="1.5em"

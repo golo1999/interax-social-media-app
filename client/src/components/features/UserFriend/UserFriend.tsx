@@ -1,5 +1,5 @@
-import { UserPhoto } from "../../components";
-import { User } from "../../models";
+import { UserPhoto } from "../../../components";
+import { User } from "../../../models";
 
 interface Props {
   friend: User;

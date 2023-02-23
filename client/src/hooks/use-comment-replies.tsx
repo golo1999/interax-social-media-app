@@ -1,72 +1,11 @@
-import { gql, useLazyQuery, useMutation } from "@apollo/client";
+import { useLazyQuery, useMutation } from "@apollo/client";
 
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import { UserComment } from "../components";
+import { GET_COMMENT_REPLIES, REMOVE_COMMENT_REPLY } from "../helpers";
 import { Comment, User } from "../models";
-
-export const GET_COMMENT_REPLIES = gql`
-  fragment CommentData on Comment {
-    dateTime
-    id
-    owner {
-      email
-      firstName
-      id
-      lastName
-      username
-    }
-    postId
-    reactions {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-    replies {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      text
-    }
-    text
-  }
-
-  query GetCommentReplies($commentId: ID!) {
-    commentReplies(commentId: $commentId) {
-      ...CommentData
-    }
-  }
-`;
-
-const REMOVE_COMMENT_REPLY = gql`
-  mutation RemoveCommentReply($input: RemoveCommentReplyInput!) {
-    removeCommentReply(input: $input) {
-      dateTime
-      id
-      owner {
-        firstName
-        id
-        lastName
-        username
-      }
-      text
-    }
-  }
-`;
 
 const Paragraph = styled.p`
   margin: 5px 0 5px 37px;

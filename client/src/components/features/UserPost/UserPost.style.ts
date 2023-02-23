@@ -28,16 +28,6 @@ export const ButtonsContainer = styled.div`
   position: relative;
 `;
 
-export const MainContainer = styled.div`
-  background-color: #242526;
-  border-radius: 5px;
-  color: #abadb1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-  padding: 1em;
-`;
-
 export const PostOwnerContainer = styled.div`
   align-items: center;
   display: flex;

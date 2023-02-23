@@ -1,22 +1,11 @@
-import { gql, useLazyQuery } from "@apollo/client";
+import { useLazyQuery } from "@apollo/client";
 
 import { useEffect } from "react";
 
 import { UserFriend } from "../../components";
+import { GET_AUTHENTICATED_USER } from "../../helpers";
 import { User } from "../../models";
 import { Friends, Posts } from "../../sections";
-
-const GET_AUTHENTICATED_USER = gql`
-  query GetAuthenticatedUser {
-    authenticatedUser {
-      email
-      firstName
-      id
-      lastName
-      username
-    }
-  }
-`;
 
 interface GetAuthenticatedUserData {
   authenticatedUser: User;

@@ -1,13 +1,6 @@
-const AUTHENTICATED_USER = {
-  __typename: "User",
-  id: "1",
-  email: "darius.fieraru@mail.com",
-  firstName: "Darius",
-  lastName: "Fieraru",
-  username: "darius.fieraru",
-};
+const AUTHENTICATED_USER_ID = "1";
 
-const CommentsList = [
+const COMMENTS_LIST = [
   {
     id: "post-0-comment-0",
     dateTime: "Sun, 22 Jan 2023 18:02:47 GMT",
@@ -100,7 +93,7 @@ const CommentsList = [
   },
 ];
 
-const PostPhotosList = [
+const POST_PHOTOS_LIST = [
   {
     id: "post-0-photo-0",
     comments: null,
@@ -163,7 +156,7 @@ const PostPhotosList = [
   },
 ];
 
-const PostsList = [
+const POSTS_LIST = [
   {
     id: "post-0",
     canComment: "FRIENDS",
@@ -178,6 +171,7 @@ const PostsList = [
       lastName: "Constantin",
       username: "olivia.constantin",
     },
+    parentId: null,
     reactions: [
       {
         id: "post-0-reaction-0",
@@ -221,6 +215,7 @@ const PostsList = [
       lastName: "Constantin",
       username: "olivia.constantin",
     },
+    parentId: null,
     photos: null,
     reactions: null,
     shares: null,
@@ -229,7 +224,7 @@ const PostsList = [
   },
 ];
 
-const UsersList = [
+const USERS_LIST = [
   {
     id: "0",
     biography:
@@ -343,9 +338,9 @@ const UsersList = [
 ];
 
 module.exports = {
-  AUTHENTICATED_USER,
-  CommentsList,
-  PostPhotosList,
-  PostsList,
-  UsersList,
+  AUTHENTICATED_USER_ID,
+  COMMENTS_LIST,
+  POST_PHOTOS_LIST,
+  POSTS_LIST,
+  USERS_LIST,
 };
