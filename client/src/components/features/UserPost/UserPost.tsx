@@ -1,4 +1,4 @@
-import { gql, useLazyQuery, useMutation } from "@apollo/client";
+import { useLazyQuery, useMutation } from "@apollo/client";
 
 import {
   Fragment,
@@ -14,18 +14,25 @@ import { RiShareForwardLine } from "react-icons/ri";
 import { MdMoreHoriz } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-import { GET_FRIENDS_POSTS_BY_USER_ID } from "../../sections/Posts/Posts";
-
 import {
+  Container,
   Divider,
   PostComments,
   PostPhotos,
   ReactionEmojis,
   UserPhoto,
   WriteComment,
-} from "../../components";
-import { getTimeFromDate } from "../../helpers";
-import { Post, ReactionType, User } from "../../models";
+} from "../..";
+import {
+  ADD_POST_COMMENT,
+  ADD_POST_REACTION,
+  GET_FRIENDS_POSTS_BY_USER_ID,
+  GET_POST,
+  REMOVE_POST_REACTION,
+  UPDATE_POST_REACTION,
+  getTimeFromDate,
+} from "../../../helpers";
+import { Post, ReactionType, User } from "../../../models";
 
 import {
   getCommentsText,
@@ -40,168 +47,10 @@ import {
   Button,
   ButtonsContainer,
   Header,
-  MainContainer,
   PostOwnerContainer,
   PostOwnerName,
   PostText,
 } from "./UserPost.style";
-
-const ADD_POST_COMMENT = gql`
-  mutation AddPostComment($input: AddPostCommentInput!) {
-    addPostComment(input: $input) {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      reactions {
-        type
-      }
-      replies {
-        text
-      }
-      text
-    }
-  }
-`;
-
-const ADD_POST_REACTION = gql`
-  mutation AddPostReaction($input: AddPostReactionInput!) {
-    addPostReaction(input: $input) {
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-  }
-`;
-
-export const GET_POST = gql`
-  fragment CommentData on Comment {
-    dateTime
-    id
-    owner {
-      email
-      firstName
-      id
-      lastName
-      username
-    }
-    postId
-    reactions {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-    replies {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      text
-    }
-    text
-  }
-
-  fragment PostData on Post {
-    canComment
-    canReact
-    canShare
-    canView
-    comments {
-      ...CommentData
-    }
-    dateTime
-    id
-    owner {
-      firstName
-      id
-      lastName
-      username
-    }
-    photos {
-      id
-      ownerId
-      postId
-      text
-      url
-    }
-    reactions {
-      id
-      owner {
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-    shares {
-      owner {
-        firstName
-        lastName
-        username
-      }
-    }
-    text
-    video
-  }
-
-  query GetPost($id: ID!) {
-    post(id: $id) {
-      ...PostData
-    }
-  }
-`;
-
-const REMOVE_POST_REACTION = gql`
-  mutation RemovePostReaction($input: RemovePostReactionInput!) {
-    removePostReaction(input: $input) {
-      id
-      owner {
-        username
-      }
-      type
-    }
-  }
-`;
-
-const UPDATE_POST_REACTION = gql`
-  mutation UpdatePostReaction($input: UpdatePostReactionInput!) {
-    updatePostReaction(input: $input) {
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-  }
-`;
 
 enum ButtonTypes {
   COMMENT,
@@ -297,7 +146,7 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
     const numberOfLines = textContainerHeight / textContainerLineHeight;
 
     setIsTextCompletelyVisible(numberOfLines <= 5);
-  }, []);
+  }, [post.post?.text]);
 
   useEffect(() => {
     const count = getPostReactionsCount(post.post?.reactions || null);
@@ -425,7 +274,7 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
   const postOwnerNameText = `${owner.firstName} ${owner.lastName}`;
 
   return (
-    <MainContainer>
+    <Container>
       <Header>
         <PostOwnerContainer>
           <UserPhoto
@@ -589,8 +438,10 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
       )}
       {isWriteCommentVisible && (
         <WriteComment
+          autoFocus
           placeholder="Write a comment..."
           user={authenticatedUser}
+          style={{ marginTop: "0.5em" }}
           onCancelClick={() => {
             setIsWriteCommentVisible((prev) => !prev);
           }}
@@ -617,6 +468,6 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
         postId={postId}
         postOwnerId={owner.id}
       />
-    </MainContainer>
+    </Container>
   );
 }

@@ -1,38 +1,13 @@
-import { gql, useLazyQuery } from "@apollo/client";
+import { useLazyQuery } from "@apollo/client";
 
 import { CSSProperties, useEffect } from "react";
 
 import { UserFriend } from "../../components";
+import {
+  GET_AUTHENTICATED_USER_WITH_FRIENDS,
+  GET_USER_FRIENDS_BY_USERNAME,
+} from "../../helpers";
 import { User } from "../../models";
-
-const GET_AUTHENTICATED_USER = gql`
-  query GetAuthenticatedUser {
-    authenticatedUser {
-      email
-      firstName
-      friends {
-        firstName
-        id
-        lastName
-        username
-      }
-      id
-      lastName
-      username
-    }
-  }
-`;
-
-const GET_USER_FRIENDS_BY_USERNAME = gql`
-  query GetUserFriendsByUsername($username: String!) {
-    userFriendsByUsername(username: $username) {
-      firstName
-      id
-      lastName
-      username
-    }
-  }
-`;
 
 interface GetAuthenticatedUserData {
   authenticatedUser: User;
@@ -48,7 +23,7 @@ interface Props {
 
 export function Friends({ style }: Props) {
   const [fetchAuthenticatedUser, { data: authenticatedUserData }] =
-    useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
+    useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER_WITH_FRIENDS);
   const [fetchUserFriends, { data: userFriendsData }] =
     useLazyQuery<GetUserFriendsByUsernameData>(GET_USER_FRIENDS_BY_USERNAME);
 

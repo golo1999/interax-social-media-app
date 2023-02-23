@@ -1,4 +1,4 @@
-import { Comment, Reaction, ReactionType } from "../../models";
+import { Comment, Reaction, ReactionType } from "../../../models";
 
 interface FindMatchedCommentProps {
   commentId: string;

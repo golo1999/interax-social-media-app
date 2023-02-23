@@ -92,6 +92,7 @@ const typeDefs = gql`
     comments: [Comment!]
     dateTime: String!
     owner: User!
+    parentId: ID
     photos: [Photo!]
     reactions: [Reaction!]
     shares: [Share!]
@@ -120,6 +121,7 @@ const typeDefs = gql`
     firstName: String!
     friends: [User!]
     lastName: String!
+    posts: [Post!]
     username: String!
   }
 

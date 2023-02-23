@@ -1,6 +1,6 @@
 import { CSSProperties } from "react";
 
-import { ReactionType } from "../../models";
+import { ReactionType } from "../../../models";
 
 import { REACTIONS } from "./ReactionEmojis.consts";
 

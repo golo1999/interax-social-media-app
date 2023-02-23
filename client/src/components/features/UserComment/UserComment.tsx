@@ -1,15 +1,22 @@
-import { gql, useLazyQuery, useMutation } from "@apollo/client";
+import { useLazyQuery, useMutation } from "@apollo/client";
 
 import { CSSProperties, useEffect, useState } from "react";
 import { MdMoreHoriz } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-import { GET_FRIENDS_POSTS_BY_USER_ID } from "../../sections/Posts/Posts";
-
-import { ReactionEmojis, UserPhoto, WriteComment } from "../../components";
-import { getTimeFromDate } from "../../helpers";
-import { useCommentReplies } from "../../hooks";
-import { Comment, Reaction, ReactionType, User } from "../../models";
+import { ReactionEmojis, UserPhoto, WriteComment } from "../..";
+import {
+  ADD_COMMENT_REACTION,
+  ADD_COMMENT_REPLY,
+  GET_COMMENT,
+  GET_COMMENT_REPLIES,
+  GET_FRIENDS_POSTS_BY_USER_ID,
+  REMOVE_COMMENT_REACTION,
+  UPDATE_COMMENT_REACTION,
+  getTimeFromDate,
+} from "../../../helpers";
+import { useCommentReplies } from "../../../hooks";
+import { Comment, Reaction, ReactionType, User } from "../../../models";
 
 import {
   getReactionText,
@@ -22,165 +29,6 @@ import {
   OwnerDetails,
   Reactions,
 } from "./UserComment.style";
-
-const ADD_COMMENT_REACTION = gql`
-  mutation AddCommentReaction($input: AddCommentReactionInput!) {
-    addCommentReaction(input: $input) {
-      id
-      dateTime
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-  }
-`;
-
-const ADD_COMMENT_REPLY = gql`
-  mutation AddCommentReply($input: AddCommentReplyInput!) {
-    addCommentReply(input: $input) {
-      dateTime
-      id
-      owner {
-        firstName
-        id
-        lastName
-        username
-      }
-      text
-    }
-  }
-`;
-
-const GET_COMMENT = gql`
-  fragment CommentData on Comment {
-    dateTime
-    id
-    owner {
-      email
-      firstName
-      id
-      lastName
-      username
-    }
-    postId
-    reactions {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-    replies {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      text
-    }
-    text
-  }
-
-  query GetComment($id: ID!) {
-    comment(id: $id) {
-      ...CommentData
-    }
-  }
-`;
-
-const GET_COMMENT_REPLIES = gql`
-  fragment CommentData on Comment {
-    dateTime
-    id
-    owner {
-      email
-      firstName
-      id
-      lastName
-      username
-    }
-    postId
-    reactions {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-    replies {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      text
-    }
-    text
-  }
-
-  query GetCommentReplies($commentId: ID!) {
-    commentReplies(commentId: $commentId) {
-      ...CommentData
-    }
-  }
-`;
-
-const REMOVE_COMMENT_REACTION = gql`
-  mutation RemoveCommentReaction($input: RemoveCommentReactionInput!) {
-    removeCommentReaction(input: $input) {
-      id
-      dateTime
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-  }
-`;
-
-const UPDATE_COMMENT_REACTION = gql`
-  mutation UpdateCommentReaction($input: UpdateCommentReactionInput!) {
-    updateCommentReaction(input: $input) {
-      id
-      dateTime
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-  }
-`;
 
 interface AddCommentReactionProps {
   addCommentReaction: Reaction | null;
@@ -494,9 +342,11 @@ export function UserComment({
       </InnerContainer>
       {isWriteReplyVisible && (
         <WriteComment
+          autoFocus
           placeholder="Write a reply..."
           style={{
             marginLeft: "calc(2em + 5px)",
+            marginTop: "0.5em",
           }}
           user={authenticatedUser}
           onCancelClick={() => {

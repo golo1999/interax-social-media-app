@@ -1,59 +1,15 @@
-import { gql, useMutation } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 
 import { useMemo } from "react";
 
-import { GET_POST } from "../UserPost/UserPost";
-
-import { Comment, User } from "../../models";
+import {
+  GET_COMMENT_REPLIES,
+  GET_POST,
+  REMOVE_COMMENT,
+} from "../../../helpers";
+import { Comment, User } from "../../../models";
 
 import { UserComment } from "../UserComment";
-import { GET_COMMENT_REPLIES } from "../../hooks/use-comment-replies";
-
-const REMOVE_COMMENT = gql`
-  fragment CommentData on Comment {
-    dateTime
-    id
-    owner {
-      email
-      firstName
-      id
-      lastName
-      username
-    }
-    postId
-    reactions {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-    replies {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      text
-    }
-    text
-  }
-
-  mutation RemoveComment($id: ID!) {
-    removeComment(id: $id) {
-      ...CommentData
-    }
-  }
-`;
 
 interface RemoveCommentData {
   removeComment: Comment | null;

@@ -1,112 +1,13 @@
-import { gql, useLazyQuery } from "@apollo/client";
+import { useLazyQuery } from "@apollo/client";
 
 import { CSSProperties, useEffect } from "react";
 
 import { UserPost } from "../../components";
+import {
+  GET_AUTHENTICATED_USER_WITH_FRIENDS,
+  GET_FRIENDS_POSTS_BY_USER_ID,
+} from "../../helpers";
 import { Post, User } from "../../models";
-
-const GET_AUTHENTICATED_USER = gql`
-  query GetAuthenticatedUser {
-    authenticatedUser {
-      email
-      firstName
-      friends {
-        firstName
-        id
-        lastName
-        username
-      }
-      id
-      lastName
-      username
-    }
-  }
-`;
-
-export const GET_FRIENDS_POSTS_BY_USER_ID = gql`
-  fragment CommentData on Comment {
-    dateTime
-    id
-    owner {
-      email
-      firstName
-      id
-      lastName
-      username
-    }
-    postId
-    reactions {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-    replies {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      text
-    }
-    text
-  }
-
-  query GetFriendsPostsByOwnerId($ownerId: ID!) {
-    friendsPostsByOwnerId(ownerId: $ownerId) {
-      canComment
-      canReact
-      canShare
-      canView
-      comments {
-        ...CommentData
-      }
-      dateTime
-      id
-      owner {
-        firstName
-        id
-        lastName
-        username
-      }
-      photos {
-        id
-        ownerId
-        postId
-        text
-        url
-      }
-      reactions {
-        owner {
-          firstName
-          id
-          lastName
-          username
-        }
-        type
-      }
-      shares {
-        owner {
-          firstName
-          lastName
-          username
-        }
-      }
-      text
-      video
-    }
-  }
-`;
 
 interface GetAuthenticatedUserData {
   authenticatedUser: User;
@@ -122,10 +23,14 @@ interface Props {
 
 export function Posts({ style }: Props) {
   const [fetchAuthenticatedUser, { data: authenticatedUserData }] =
-    useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
+    useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER_WITH_FRIENDS);
   const [
     fetchFriendsPostsByUserId,
-    { called, data: friendsPostsByUserIdData, loading },
+    {
+      called,
+      data: friendsPostsByUserIdData = { friendsPostsByOwnerId: null },
+      loading,
+    },
   ] = useLazyQuery<GetFriendsPostsByUserIdData>(GET_FRIENDS_POSTS_BY_USER_ID);
 
   useEffect(() => {
@@ -153,7 +58,7 @@ export function Posts({ style }: Props) {
     );
   }
 
-  if (!friendsPostsByUserIdData?.friendsPostsByOwnerId) {
+  if (!friendsPostsByUserIdData.friendsPostsByOwnerId) {
     return (
       <section style={style}>
         <p style={{ color: "#cfd1d5" }}>No posts found...</p>
@@ -161,20 +66,29 @@ export function Posts({ style }: Props) {
     );
   }
 
-  const friendsPosts = friendsPostsByUserIdData.friendsPostsByOwnerId;
+  function getContent() {
+    if (called && loading) {
+      return <p style={{ color: "#cfd1d5" }}>Loading...</p>;
+    }
 
-  return (
-    <section style={style}>
+    const friendsPosts = friendsPostsByUserIdData.friendsPostsByOwnerId;
+
+    if (!friendsPosts || friendsPosts.length === 0) {
+      return <p style={{ color: "#cfd1d5" }}>No posts found...</p>;
+    }
+
+    return (
       <div style={{ display: "flex", flexDirection: "column", gap: "1em" }}>
-        {friendsPosts.length > 0 &&
-          friendsPosts.map((post, index) => (
-            <UserPost
-              key={index}
-              authenticatedUser={authenticatedUserData?.authenticatedUser}
-              id={post.id}
-            />
-          ))}
+        {friendsPosts.map((post, index) => (
+          <UserPost
+            key={index}
+            authenticatedUser={authenticatedUserData?.authenticatedUser}
+            id={post.id}
+          />
+        ))}
       </div>
-    </section>
-  );
+    );
+  }
+
+  return <section style={style}>{getContent()}</section>;
 }

@@ -47,6 +47,7 @@ export interface Post {
   comments: Comment[] | null;
   dateTime: string;
   owner: User;
+  parentId: string | null;
   photos: Photo[] | null;
   reactions: Reaction[] | null;
   shares: Share[] | null;
@@ -78,6 +79,7 @@ export interface User {
   firstName: string;
   friends?: User[] | null;
   lastName: string;
+  posts: Post[] | null;
   username: string;
 }
 
