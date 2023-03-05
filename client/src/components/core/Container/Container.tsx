@@ -1,21 +1,29 @@
-import { CSSProperties } from "react";
+import { CSSProperties, ReactNode } from "react";
 import styled from "styled-components";
 
-const StyledContainer = styled.div`
+const StyledContainer = styled.div<StyleProps>`
   background-color: #242526;
   border-radius: 5px;
   color: #abadb1;
   display: flex;
-  flex-direction: column;
+  ${(props) => props.vertical && "flex-direction: column;"}
   gap: 0.5em;
-  padding: 1em;
+  padding: ${(props) => props.padding || "1em"};
 `;
 
-interface Props {
-  children: React.ReactNode;
+type CommonProps = {
+  children: ReactNode;
   style?: CSSProperties;
-}
+};
 
-export function Container({ children, style }: Props) {
-  return <StyledContainer style={style}>{children}</StyledContainer>;
+type StyleProps = { padding?: string; vertical?: boolean };
+
+type Props = CommonProps & StyleProps;
+
+export function Container({ children, padding, style, vertical }: Props) {
+  return (
+    <StyledContainer padding={padding} vertical={vertical} style={style}>
+      {children}
+    </StyledContainer>
+  );
 }

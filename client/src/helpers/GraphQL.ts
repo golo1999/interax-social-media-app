@@ -72,6 +72,105 @@ export const ADD_POST_REACTION = gql`
   }
 `;
 
+export const ADD_USER_COLLEGE_EDUCATION = gql`
+  mutation AddUserCollegeEducation($input: AddUserCollegeEducationInput!) {
+    addUserCollegeEducation(input: $input) {
+      degree
+      from {
+        day
+        month
+        year
+      }
+      graduated
+      id
+      level
+      school
+      to {
+        day
+        month
+        year
+      }
+      visibility
+    }
+  }
+`;
+
+export const ADD_USER_HIGH_SCHOOL_EDUCATION = gql`
+  mutation AddUserHighSchoolEducation(
+    $input: AddUserHighSchoolEducationInput!
+  ) {
+    addUserHighSchoolEducation(input: $input) {
+      degree
+      from {
+        day
+        month
+        year
+      }
+      graduated
+      id
+      level
+      school
+      to {
+        day
+        month
+        year
+      }
+      visibility
+    }
+  }
+`;
+
+export const ADD_USER_PLACE = gql`
+  mutation AddUserPlace($input: AddUserPlaceInput!) {
+    addUserPlace(input: $input) {
+      city
+      from {
+        day
+        month
+        year
+      }
+      id
+      isCurrent
+      to {
+        day
+        month
+        year
+      }
+      visibility
+    }
+  }
+`;
+
+export const ADD_USER_RELATIONSHIP_STATUS = gql`
+  mutation AddUserRelationshipStatus($input: AddUserRelationshipStatusInput!) {
+    addUserRelationshipStatus(input: $input) {
+      status
+      visibility
+    }
+  }
+`;
+
+export const ADD_USER_WORKPLACE = gql`
+  mutation AddUserWorkplace($input: AddUserWorkplaceInput!) {
+    addUserWorkplace(input: $input) {
+      company
+      from {
+        day
+        month
+        year
+      }
+      id
+      position
+      to {
+        day
+        month
+        year
+      }
+      visibility
+    }
+  }
+`;
+
 export const GET_AUTHENTICATED_USER = gql`
   query GetAuthenticatedUser {
     authenticatedUser {
@@ -410,6 +509,23 @@ export const GET_USER_BY_USERNAME = gql`
     text
   }
 
+  fragment PlaceData on Place {
+    city
+    from {
+      day
+      month
+      year
+    }
+    id
+    isCurrent
+    to {
+      day
+      month
+      year
+    }
+    visibility
+  }
+
   fragment PostData on Post {
     canComment
     canReact
@@ -457,6 +573,24 @@ export const GET_USER_BY_USERNAME = gql`
     userByUsername(username: $username) {
       biography
       birthDate
+      educationHistory {
+        degree
+        from {
+          day
+          month
+          year
+        }
+        graduated
+        id
+        level
+        school
+        to {
+          day
+          month
+          year
+        }
+        visibility
+      }
       email
       firstName
       friends {
@@ -467,10 +601,33 @@ export const GET_USER_BY_USERNAME = gql`
       }
       id
       lastName
+      placesHistory {
+        ...PlaceData
+      }
       posts {
         ...PostData
       }
+      relationshipStatus {
+        status
+        visibility
+      }
       username
+      workHistory {
+        company
+        from {
+          day
+          month
+          year
+        }
+        id
+        position
+        to {
+          day
+          month
+          year
+        }
+        visibility
+      }
     }
   }
 `;
@@ -606,6 +763,31 @@ export const UPDATE_POST_REACTION = gql`
         username
       }
       type
+    }
+  }
+`;
+
+export const UPDATE_USER_PLACE = gql`
+  fragment PlaceData on Place {
+    city
+    from {
+      day
+      month
+      year
+    }
+    id
+    isCurrent
+    to {
+      day
+      month
+      year
+    }
+    visibility
+  }
+
+  mutation UpdateUserPlace($input: UpdateUserPlaceInput!) {
+    updateUserPlace(input: $input) {
+      ...PlaceData
     }
   }
 `;

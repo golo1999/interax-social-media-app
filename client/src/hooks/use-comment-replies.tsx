@@ -3,9 +3,9 @@ import { useLazyQuery, useMutation } from "@apollo/client";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
-import { UserComment } from "../components";
-import { GET_COMMENT_REPLIES, REMOVE_COMMENT_REPLY } from "../helpers";
-import { Comment, User } from "../models";
+import { UserComment } from "components";
+import { GET_COMMENT_REPLIES, REMOVE_COMMENT_REPLY } from "helpers";
+import { Comment, User } from "models";
 
 const Paragraph = styled.p`
   margin: 5px 0 5px 37px;

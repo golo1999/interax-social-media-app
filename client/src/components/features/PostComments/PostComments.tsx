@@ -2,14 +2,9 @@ import { useMutation } from "@apollo/client";
 
 import { useMemo } from "react";
 
-import {
-  GET_COMMENT_REPLIES,
-  GET_POST,
-  REMOVE_COMMENT,
-} from "../../../helpers";
-import { Comment, User } from "../../../models";
-
-import { UserComment } from "../UserComment";
+import { UserComment } from "components";
+import { GET_COMMENT_REPLIES, GET_POST, REMOVE_COMMENT } from "helpers";
+import { Comment, User } from "models";
 
 interface RemoveCommentData {
   removeComment: Comment | null;

@@ -4,7 +4,7 @@ import { CSSProperties, useEffect, useState } from "react";
 import { MdMoreHoriz } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-import { ReactionEmojis, UserPhoto, WriteComment } from "../..";
+import { ReactionEmojis, UserPhoto, WriteComment } from "components";
 import {
   ADD_COMMENT_REACTION,
   ADD_COMMENT_REPLY,
@@ -14,9 +14,9 @@ import {
   REMOVE_COMMENT_REACTION,
   UPDATE_COMMENT_REACTION,
   getTimeFromDate,
-} from "../../../helpers";
-import { useCommentReplies } from "../../../hooks";
-import { Comment, Reaction, ReactionType, User } from "../../../models";
+} from "helpers";
+import { useCommentReplies } from "hooks";
+import { Comment, Reaction, ReactionType, User } from "models";
 
 import {
   getReactionText,

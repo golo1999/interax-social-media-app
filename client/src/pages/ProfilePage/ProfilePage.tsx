@@ -1,16 +1,19 @@
 import { useLazyQuery } from "@apollo/client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 
-import { UserPost } from "../../components";
-
-import { Container, WriteComment } from "../../components";
+import { Divider, Navbar, UserPhoto } from "components";
 import {
   GET_AUTHENTICATED_USER_WITH_FRIENDS,
   GET_USER_BY_USERNAME,
-} from "../../helpers";
-import { User } from "../../models";
+} from "helpers";
+import { User } from "models";
+
+import { About } from "./About";
+import { Posts } from "./Posts";
+import { NAVBAR_ITEMS } from "./ProfilePage.consts";
+import { FriendshipStatus } from "./ProfilePage.types";
 
 interface GetAuthenticatedUserData {
   authenticatedUser: User;
@@ -30,10 +33,14 @@ export function ProfilePage() {
   const [fetchUser, { data: userData = { userByUsername: null } }] =
     useLazyQuery<GetUserByUsernameData>(GET_USER_BY_USERNAME);
 
+  const [selectedNavbarItem, setSelectedNavbarItem] = useState(NAVBAR_ITEMS[0]);
+
   const location = useLocation();
 
   const { pathname } = location;
 
+  const authenticatedUser = authenticatedUserData.authenticatedUser;
+  const user = userData.userByUsername;
   const username = pathname.split("/")[1];
 
   useEffect(() => {
@@ -41,17 +48,15 @@ export function ProfilePage() {
     fetchUser({ variables: { username } });
   }, [username, fetchAuthenticatedUser, fetchUser]);
 
-  const status = !userData.userByUsername
-    ? "NOT_EXISTS"
-    : username === authenticatedUserData.authenticatedUser?.username
-    ? "ME"
-    : authenticatedUserData.authenticatedUser?.friends?.some(
-        (friend) => friend.username === username
-      )
-    ? "FRIEND"
-    : "NOT_FRIEND";
+  const status = !user
+    ? FriendshipStatus.NOT_EXISTS
+    : username === authenticatedUser?.username
+    ? FriendshipStatus.ME
+    : authenticatedUser?.friends?.some((friend) => friend.username === username)
+    ? FriendshipStatus.FRIEND
+    : FriendshipStatus.NOT_FRIEND;
 
-  if (status === "NOT_EXISTS") {
+  if (status === FriendshipStatus.NOT_EXISTS) {
     return (
       <div>
         <p>User does not exist</p>
@@ -59,81 +64,125 @@ export function ProfilePage() {
     );
   }
 
+  if (!user) {
+    return <></>;
+  }
+
+  const { firstName, friends, lastName } = user;
+
   return (
     <div style={{ backgroundColor: "inherit" }}>
-      <div>
-        <p>Header</p>
-      </div>
-      <div style={{ display: "flex", gap: "1em", margin: "1em" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "1em" }}>
-          <Container>
-            <h3>About</h3>
-            <p>Lives in MOCKED_CITY</p>
-            <p>From MOCKED_CITY</p>
-          </Container>
-          <Container>
-            <div
-              style={{
-                alignItems: "center",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
-              <h3>Photos</h3>
-              <p>See all photos</p>
-            </div>
-          </Container>
-          <Container>
-            <h3>Friends</h3>
-            <div>
-              {userData.userByUsername?.friends?.map((friend, index) => (
-                <p key={index}>{friend.username}</p>
-              ))}
-            </div>
-          </Container>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flex: 1,
-            flexDirection: "column",
-            gap: "1em",
-          }}
-        >
-          {(status === "ME" || status === "FRIEND") && (
-            <Container>
-              <WriteComment
-                placeholder={
-                  status === "ME"
-                    ? "What's on your mind?"
-                    : `Write something for ${userData.userByUsername?.firstName}...`
-                }
-                user={authenticatedUserData.authenticatedUser || undefined}
-                onSendClick={() => {
-                  // TODO
-                }}
-              />
-            </Container>
-          )}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "1em",
+      <div
+        style={{
+          backgroundColor: "#242526",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <p>Cover photo</p>
+        <div style={{ display: "flex" }}>
+          <UserPhoto
+            user={user}
+            onPhotoClick={() => {
+              // TODO
             }}
+          />
+          <div>
+            <b>
+              <p style={{ color: "#cfd1d5" }}>{`${firstName} ${lastName}`}</p>
+              <p style={{ color: "#8d8f93" }}>
+                {`${friends?.length ? friends.length : 0} friends`}
+              </p>
+            </b>
+            <div>Friends</div>
+          </div>
+          <div
+            style={{ alignItems: "flex-end", display: "flex", gap: "0.5em" }}
           >
-            {userData.userByUsername?.posts?.map((post, index) => (
-              <UserPost
-                key={index}
-                authenticatedUser={
-                  authenticatedUserData.authenticatedUser || undefined
-                }
-                id={post.id}
-              />
-            ))}
+            {status === FriendshipStatus.ME ? (
+              <button style={{ backgroundColor: "#3a3b3c", color: "#cfd1d5" }}>
+                Edit profile
+              </button>
+            ) : status === FriendshipStatus.FRIEND ? (
+              <>
+                <button
+                  style={{ backgroundColor: "#3a3b3c", color: "#cfd1d5" }}
+                >
+                  Friends
+                </button>
+                <button
+                  style={{ backgroundColor: "#3a3b3c", color: "#cfd1d5" }}
+                >
+                  Message
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  style={{ backgroundColor: "#3a3b3c", color: "#cfd1d5" }}
+                >
+                  Add friend
+                </button>
+                <button
+                  style={{ backgroundColor: "#3a3b3c", color: "#cfd1d5" }}
+                >
+                  Message
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
+      <Divider />
+      <div
+        style={{
+          alignItems: "center",
+          backgroundColor: "#242526",
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <Navbar
+          selectedItem={selectedNavbarItem}
+          onItemSelected={(item) => {
+            if (selectedNavbarItem !== item) {
+              setSelectedNavbarItem(item);
+            }
+          }}
+        />
+        <button
+          style={{
+            backgroundColor: "#3a3b3c",
+            borderRadius: "5px",
+            color: "#cfd1d5",
+            fontWeight: "bold",
+            padding: "0.5em 1em",
+          }}
+        >
+          ...
+        </button>
+      </div>
+      {selectedNavbarItem === "ABOUT" ? (
+        <About authenticatedUser={authenticatedUser} user={user} />
+      ) : selectedNavbarItem === "FRIENDS" ? (
+        <Friends />
+      ) : selectedNavbarItem === "POSTS" ? (
+        <Posts
+          authenticatedUser={authenticatedUser}
+          status={status}
+          user={user}
+        />
+      ) : (
+        <Photos />
+      )}
     </div>
   );
+}
+
+function Friends() {
+  return <div>Friends</div>;
+}
+
+function Photos() {
+  return <div>Photos</div>;
 }

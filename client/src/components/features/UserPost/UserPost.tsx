@@ -22,7 +22,7 @@ import {
   ReactionEmojis,
   UserPhoto,
   WriteComment,
-} from "../..";
+} from "components";
 import {
   ADD_POST_COMMENT,
   ADD_POST_REACTION,
@@ -31,8 +31,8 @@ import {
   REMOVE_POST_REACTION,
   UPDATE_POST_REACTION,
   getTimeFromDate,
-} from "../../../helpers";
-import { Post, ReactionType, User } from "../../../models";
+} from "helpers";
+import { Post, ReactionType, User } from "models";
 
 import {
   getCommentsText,
@@ -130,12 +130,12 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
   >([]);
 
   useEffect(() => {
-    const postHasUserReaction =
+    const hasUserReaction =
       post.post?.reactions?.some(
         (reaction) => reaction.owner.id === authenticatedUser?.id
       ) || false;
 
-    setHasReacted(postHasUserReaction);
+    setHasReacted(hasUserReaction);
   }, [authenticatedUser, post.post]);
 
   useEffect(() => {
@@ -274,7 +274,7 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
   const postOwnerNameText = `${owner.firstName} ${owner.lastName}`;
 
   return (
-    <Container>
+    <Container vertical>
       <Header>
         <PostOwnerContainer>
           <UserPhoto

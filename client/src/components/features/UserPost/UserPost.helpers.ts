@@ -1,5 +1,5 @@
-import { Icons as AppIcons } from "../../../environment";
-import { Reaction, ReactionType } from "../../../models";
+import { Icons as AppIcons } from "environment";
+import { Reaction, ReactionType } from "models";
 
 interface ReactionButtonTextProps {
   currentUserId?: string;

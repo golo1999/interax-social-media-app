@@ -2,8 +2,8 @@ import { CSSProperties, MutableRefObject, useRef } from "react";
 import { MdCancel, MdSend } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-import { UserPhoto } from "../..";
-import { User } from "../../../models";
+import { UserPhoto } from "components";
+import { User } from "models";
 
 const containerStyle: CSSProperties = {
   alignItems: "center",

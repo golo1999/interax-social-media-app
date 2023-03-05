@@ -25,6 +25,66 @@ const typeDefs = gql`
     reactionType: ReactionType!
   }
 
+  input AddUserCollegeEducationInput {
+    degree: String!
+    fromDay: Int!
+    fromMonth: Int!
+    fromYear: Int!
+    graduated: Boolean
+    school: String!
+    toDay: Int
+    toMonth: Int
+    toYear: Int
+    userId: ID!
+    visibility: Permission!
+  }
+
+  input AddUserHighSchoolEducationInput {
+    fromDay: Int!
+    fromMonth: Int!
+    fromYear: Int!
+    graduated: Boolean
+    school: String!
+    toDay: Int
+    toMonth: Int
+    toYear: Int
+    userId: ID!
+    visibility: Permission!
+  }
+
+  input AddUserPlaceInput {
+    city: String!
+    fromDay: Int!
+    fromMonth: Int!
+    fromYear: Int!
+    isCurrent: Boolean
+    toDay: Int
+    toMonth: Int
+    toYear: Int
+    userId: ID!
+    visibility: Permission!
+  }
+
+  input AddUserRelationshipStatusInput {
+    status: RelationshipStatusType!
+    userId: ID!
+    visibility: Permission!
+  }
+
+  input AddUserWorkplaceInput {
+    company: String!
+    fromDay: Int!
+    fromMonth: Int!
+    fromYear: Int!
+    isCurrent: Boolean
+    position: String!
+    toDay: Int
+    toMonth: Int
+    toYear: Int
+    userId: ID!
+    visibility: Permission!
+  }
+
   input GetUserPostReactionInput {
     postId: ID!
     userId: ID!
@@ -62,6 +122,20 @@ const typeDefs = gql`
     reactionType: ReactionType!
   }
 
+  input UpdateUserPlaceInput {
+    city: String!
+    fromDay: Int!
+    fromMonth: Int!
+    fromYear: Int!
+    isCurrent: Boolean
+    placeId: ID!
+    toDay: Int
+    toMonth: Int
+    toYear: Int
+    userId: ID!
+    visibility: Permission!
+  }
+
   type Comment {
     id: ID!
     dateTime: String!
@@ -70,6 +144,23 @@ const typeDefs = gql`
     reactions: [Reaction!]
     replies: [Comment!]
     text: String!
+  }
+
+  type Date {
+    day: Int!
+    month: Int!
+    year: Int!
+  }
+
+  type Education {
+    id: ID!
+    degree: String
+    from: Date!
+    graduated: Boolean
+    level: EducationLevel!
+    school: String!
+    to: Date
+    visibility: Permission!
   }
 
   type Photo {
@@ -81,6 +172,15 @@ const typeDefs = gql`
     shares: [Share!]
     text: String
     url: String!
+  }
+
+  type Place {
+    id: ID!
+    city: String!
+    from: Date!
+    isCurrent: Boolean
+    to: Date
+    visibility: Permission!
   }
 
   type Post {
@@ -107,6 +207,11 @@ const typeDefs = gql`
     type: ReactionType!
   }
 
+  type RelationshipStatus {
+    status: RelationshipStatusType!
+    visibility: Permission!
+  }
+
   type Share {
     id: ID!
     dateTime: String!
@@ -117,12 +222,26 @@ const typeDefs = gql`
     id: ID!
     biography: String
     birthDate: String
+    educationHistory: [Education!]
     email: String!
     firstName: String!
     friends: [User!]
     lastName: String!
+    placesHistory: [Place!]
     posts: [Post!]
+    relationshipStatus: RelationshipStatus
     username: String!
+    workHistory: [Work!]
+  }
+
+  type Work {
+    id: ID!
+    company: String!
+    from: Date!
+    isCurrent: Boolean
+    position: String!
+    to: Date
+    visibility: Permission!
   }
 
   type Query {
@@ -149,6 +268,15 @@ const typeDefs = gql`
     addCommentReply(input: AddCommentReplyInput!): Comment
     addPostComment(input: AddPostCommentInput!): Comment!
     addPostReaction(input: AddPostReactionInput!): Reaction
+    addUserCollegeEducation(input: AddUserCollegeEducationInput!): Education
+    addUserHighSchoolEducation(
+      input: AddUserHighSchoolEducationInput!
+    ): Education
+    addUserPlace(input: AddUserPlaceInput!): Place
+    addUserRelationshipStatus(
+      input: AddUserRelationshipStatusInput!
+    ): RelationshipStatus
+    addUserWorkplace(input: AddUserWorkplaceInput!): Work
     removeComment(id: ID!): Comment
     removeCommentReaction(input: RemoveCommentReactionInput!): Reaction
     removeCommentReply(input: RemoveCommentReplyInput!): Comment
@@ -156,11 +284,17 @@ const typeDefs = gql`
     removePostReaction(input: RemovePostReactionInput!): Reaction
     updateCommentReaction(input: UpdateCommentReactionInput): Reaction
     updatePostReaction(input: UpdatePostReactionInput!): Reaction!
+    updateUserPlace(input: UpdateUserPlaceInput!): Place
+  }
+
+  enum EducationLevel {
+    COLLEGE
+    HIGH_SCHOOL
   }
 
   enum Permission {
     FRIENDS
-    PERSONAL
+    ONLY_ME
     PUBLIC
   }
 
@@ -172,6 +306,20 @@ const typeDefs = gql`
     LOVE
     SAD
     WOW
+  }
+
+  enum RelationshipStatusType {
+    SINGLE
+    IN_A_RELATIONSHIP
+    ENGAGED
+    MARRIED
+    IN_A_CIVIL_UNION
+    IN_A_DOMESTIC_PARTNERSHIP
+    IN_AN_OPEN_RELATIONSHIP
+    IT_IS_COMPLICATED
+    SEPARATED
+    DIVORCED
+    WIDOWED
   }
 `;
 

@@ -1,6 +1,8 @@
 const crypto = require("crypto");
 const _ = require("lodash");
 
+const EducationLevel = { COLLEGE: "COLLEGE", HIGH_SCHOOL: "HIGH_SCHOOL" };
+
 // TODO: This should be converted to TS and moved to a "helpers" file
 function findMatchedComment(comments, commentId) {
   if (!comments) {
@@ -291,6 +293,182 @@ const resolvers = {
 
       return newReaction;
     },
+    addUserCollegeEducation: (
+      parent,
+      {
+        input: {
+          degree,
+          fromDay,
+          fromMonth,
+          fromYear,
+          graduated,
+          school,
+          toDay,
+          toMonth,
+          toYear,
+          userId,
+          visibility,
+        },
+      }
+    ) => {
+      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
+      const newEducation = {
+        id: null,
+        degree,
+        from: { day: fromDay, month: fromMonth, year: fromYear },
+        graduated: graduated || undefined,
+        level: EducationLevel.COLLEGE,
+        school,
+        to:
+          toDay && toMonth && toYear
+            ? { day: toDay, month: toMonth, year: toYear }
+            : undefined,
+        visibility,
+      };
+
+      if (!matchedUser.educationHistory) {
+        matchedUser.educationHistory = [];
+      }
+
+      newEducation.id = `education-${crypto.randomUUID()}`;
+      matchedUser.educationHistory.push(newEducation);
+
+      return newEducation;
+    },
+    addUserHighSchoolEducation: (
+      parent,
+      {
+        input: {
+          fromDay,
+          fromMonth,
+          fromYear,
+          graduated,
+          school,
+          toDay,
+          toMonth,
+          toYear,
+          userId,
+          visibility,
+        },
+      }
+    ) => {
+      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
+      const newEducation = {
+        id: null,
+        from: { day: fromDay, month: fromMonth, year: fromYear },
+        graduated: graduated || undefined,
+        level: EducationLevel.HIGH_SCHOOL,
+        school,
+        to:
+          toDay && toMonth && toYear
+            ? { day: toDay, month: toMonth, year: toYear }
+            : undefined,
+        visibility,
+      };
+
+      if (!matchedUser.educationHistory) {
+        matchedUser.educationHistory = [];
+      }
+
+      newEducation.id = `education-${crypto.randomUUID()}`;
+      matchedUser.educationHistory.push(newEducation);
+
+      return newEducation;
+    },
+    addUserPlace: (
+      parent,
+      {
+        input: {
+          city,
+          fromDay,
+          fromMonth,
+          fromYear,
+          isCurrent,
+          toDay,
+          toMonth,
+          toYear,
+          userId,
+          visibility,
+        },
+      }
+    ) => {
+      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
+      const newPlace = {
+        id: null,
+        city,
+        from: { day: fromDay, month: fromMonth, year: fromYear },
+        isCurrent: isCurrent || undefined,
+        to:
+          toDay && toMonth && toYear
+            ? { day: toDay, month: toMonth, year: toYear }
+            : undefined,
+        visibility,
+      };
+
+      if (!matchedUser.placesHistory) {
+        matchedUser.placesHistory = [];
+      }
+
+      newPlace.id = `place-${crypto.randomUUID()}`;
+      matchedUser.placesHistory.push(newPlace);
+
+      return newPlace;
+    },
+    addUserRelationshipStatus: (
+      parent,
+      { input: { status, userId, visibility } }
+    ) => {
+      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
+
+      if (!matchedUser.relationshipStatus) {
+        const newRelationshipStatus = { status, visibility };
+        matchedUser.relationshipStatus = newRelationshipStatus;
+        return newRelationshipStatus;
+      }
+
+      return null;
+    },
+    addUserWorkplace: (
+      parent,
+      {
+        input: {
+          company,
+          fromDay,
+          fromMonth,
+          fromYear,
+          isCurrent,
+          position,
+          toDay,
+          toMonth,
+          toYear,
+          userId,
+          visibility,
+        },
+      }
+    ) => {
+      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
+      const newWorkplace = {
+        id: null,
+        company,
+        from: { day: fromDay, month: fromMonth, year: fromYear },
+        isCurrent: isCurrent || undefined,
+        position,
+        to:
+          toDay && toMonth && toYear
+            ? { day: toDay, month: toMonth, year: toYear }
+            : undefined,
+        visibility,
+      };
+
+      if (!matchedUser.workHistory) {
+        matchedUser.workHistory = [];
+      }
+
+      newWorkplace.id = `work-${crypto.randomUUID()}`;
+      matchedUser.workHistory.push(newWorkplace);
+
+      return newWorkplace;
+    },
     removeComment: (parent, { id }) => {
       let removedComment;
       const matchedComment = _.find(
@@ -434,6 +612,45 @@ const resolvers = {
       matchedReaction.type = reactionType;
 
       return matchedReaction;
+    },
+    updateUserPlace: (
+      parent,
+      {
+        input: {
+          city,
+          fromDay,
+          fromMonth,
+          fromYear,
+          isCurrent,
+          placeId,
+          toDay,
+          toMonth,
+          toYear,
+          userId,
+          visibility,
+        },
+      }
+    ) => {
+      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
+      const matchedPlace = _.find(
+        matchedUser.placesHistory,
+        (place) => place.id === placeId
+      );
+
+      if (!matchedPlace) {
+        return null;
+      }
+
+      matchedPlace.city = city;
+      matchedPlace.from = { day: fromDay, month: fromMonth, year: fromYear };
+      matchedPlace.isCurrent = isCurrent || undefined;
+      matchedPlace.to =
+        toDay && toMonth && toYear
+          ? { day: toDay, month: toMonth, year: toYear }
+          : undefined;
+      matchedPlace.visibility = visibility;
+
+      return matchedPlace;
     },
   },
 };

@@ -1,3 +1,23 @@
+const EducationLevel = { COLLEGE: "COLLEGE", HIGH_SCHOOL: "HIGH_SCHOOL" };
+const Permission = {
+  FRIENDS: "FRIENDS",
+  ONLY_ME: "ONLY_ME",
+  PUBLIC: "PUBLIC",
+};
+const RelationshipStatus = {
+  SINGLE: "SINGLE",
+  IN_A_RELATIONSHIP: "IN_A_RELATIONSHIP",
+  ENGAGED: "ENGAGED",
+  MARRIED: "MARRIED",
+  IN_A_CIVIL_UNION: "IN_A_CIVIL_UNION",
+  IN_A_DOMESTIC_PARTNERSHIP: "IN_A_DOMESTIC_PARTNERSHIP",
+  IN_AN_OPEN_RELATIONSHIP: "IN_AN_OPEN_RELATIONSHIP",
+  IT_IS_COMPLICATED: "IT_IS_COMPLICATED",
+  SEPARATED: "SEPARATED",
+  DIVORCED: "DIVORCED",
+  WIDOWED: "WIDOWED",
+};
+
 const AUTHENTICATED_USER_ID = "1";
 
 const COMMENTS_LIST = [
@@ -230,6 +250,35 @@ const USERS_LIST = [
     biography:
       "She's eager, responsible, polite and perhaps a little too uncontrolled.",
     birthDate: "22/03/2002",
+    educationHistory: [
+      {
+        id: "0",
+        degree: "MOCKED_DOMAIN",
+        from: { day: 26, month: 9, year: 2022 },
+        level: EducationLevel.COLLEGE,
+        school: "MOCKED_COLLEGE",
+        visibility: Permission.PUBLIC,
+      },
+      {
+        id: "1",
+        degree: "MOCKED_DOMAIN",
+        from: { day: 24, month: 9, year: 2018 },
+        graduated: true,
+        level: EducationLevel.COLLEGE,
+        school: "MOCKED_COLLEGE",
+        to: { day: 21, month: 6, year: 2022 },
+        visibility: Permission.FRIENDS,
+      },
+      {
+        id: "2",
+        from: { day: 15, month: 9, year: 2014 },
+        graduated: true,
+        level: EducationLevel.HIGH_SCHOOL,
+        school: "MOCKED_HIGH_SCHOOL",
+        to: { day: 31, month: 5, year: 2018 },
+        visibility: Permission.ONLY_ME,
+      },
+    ],
     email: "olivia.constantin@mail.com",
     firstName: "Olivia",
     friends: [
@@ -249,11 +298,41 @@ const USERS_LIST = [
       },
     ],
     lastName: "Constantin",
+    placesHistory: [
+      {
+        id: "0",
+        city: "MOCKED_CITY",
+        from: { day: 1, month: 8, year: 2022 },
+        isCurrent: true,
+        visibility: Permission.PUBLIC,
+      },
+    ],
+    relationshipStatus: {
+      status: RelationshipStatus.IT_IS_COMPLICATED,
+      visibility: Permission.FRIENDS,
+    },
     username: "olivia.constantin",
+    workHistory: [
+      {
+        id: "0",
+        company: "MOCKED_COMPANY",
+        from: { day: 1, month: 8, year: 2022 },
+        position: "MOCKED_POSITION_1",
+        to: { day: 1, month: 2, year: 2023 },
+        visibility: Permission.FRIENDS,
+      },
+      {
+        id: "1",
+        company: "MOCKED_COMPANY",
+        from: { day: 2, month: 2, year: 2023 },
+        isCurrent: true,
+        position: "MOCKED_POSITION_2",
+        visibility: Permission.ONLY_ME,
+      },
+    ],
   },
   {
     id: "1",
-    biography: null,
     birthDate: "13/05/2002",
     email: "darius.fieraru@mail.com",
     firstName: "Darius",
@@ -275,7 +354,6 @@ const USERS_LIST = [
     birthDate: "30/01/2005",
     email: "augustina.stanca@mail.com",
     firstName: "Augustina",
-    friends: [],
     lastName: "Stanca",
     username: "augustina.stanca",
   },
@@ -331,7 +409,6 @@ const USERS_LIST = [
     birthDate: "28/09/1997",
     email: "tereza.teodorescu@mail.com",
     firstName: "Tereza",
-    friends: [],
     lastName: "Teodorescu",
     username: "tereza.teodorescu",
   },

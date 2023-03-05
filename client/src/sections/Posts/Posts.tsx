@@ -2,12 +2,12 @@ import { useLazyQuery } from "@apollo/client";
 
 import { CSSProperties, useEffect } from "react";
 
-import { UserPost } from "../../components";
+import { UserPost } from "components";
 import {
   GET_AUTHENTICATED_USER_WITH_FRIENDS,
   GET_FRIENDS_POSTS_BY_USER_ID,
-} from "../../helpers";
-import { Post, User } from "../../models";
+} from "helpers";
+import { Post, User } from "models";
 
 interface GetAuthenticatedUserData {
   authenticatedUser: User;

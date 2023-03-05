@@ -1,5 +1,5 @@
-import { Icons as AppIcons } from "../../../environment";
-import { ReactionType } from "../../../models";
+import { Icons as AppIcons } from "environment";
+import { ReactionType } from "models";
 
 export const REACTIONS = [
   { icon: AppIcons.Like, type: ReactionType.LIKE },
