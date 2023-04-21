@@ -1,5 +1,6 @@
 import { CSSProperties } from "react";
 
+import { Colors } from "environment";
 import { ReactionType } from "models";
 
 import { REACTIONS } from "./ReactionEmojis.consts";
@@ -23,8 +24,8 @@ export function ReactionEmojis({
     return {
       ...{
         alignItems: "center",
-        backgroundColor: "#242526",
-        border: "2px solid #383a3c",
+        backgroundColor: Colors.RaisinBlack,
+        border: `2px solid ${Colors.Onyx}`,
         borderRadius: "20px",
         display: "flex",
         gap: "0.5em",

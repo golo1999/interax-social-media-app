@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Divider, Dropdown, VisibilityModal } from "components";
-import { ADD_USER_RELATIONSHIP_STATUS, GET_USER_BY_USERNAME } from "helpers";
+import {
+  AddRelationshipStatusData,
+  ADD_USER_RELATIONSHIP_STATUS,
+  GET_USER_BY_USERNAME,
+} from "helpers";
 import {
   useRelationshipStatusDropdownItems,
   useVisibilityModalItems,
@@ -39,10 +43,6 @@ const resolver: Resolver<FormValues> = async (values) => {
 
   return { errors, values };
 };
-
-interface AddRelationshipStatusData {
-  addUserRelationshipStatus: RelationshipStatus | null;
-}
 
 interface Props {
   user: User;
@@ -126,7 +126,7 @@ export function AddRelationshipStatus({
           );
         }}
       />
-      <Divider />
+      <Divider thickness="2px" />
       <Container.Buttons.Element>
         <Controller
           control={control}

@@ -1,22 +1,25 @@
 import styled from "styled-components";
 
+import { Colors } from "environment";
+
 interface InputProps {
   isValid: boolean;
 }
 
 export const Button = {
   Cancel: styled.button.attrs({ type: "button" })`
-    background-color: #3a3b3c;
+    background-color: ${Colors.BlackOlive};
     border-radius: 5px;
-    color: #cfd1d5;
+    color: ${Colors.LightGray};
     font-size: medium;
     font-weight: bold;
     padding: 0.5em;
   `,
   Submit: styled.input.attrs({ type: "submit" })`
-    background-color: ${(props) => (props.disabled ? "#505151" : "#3a3b3c")};
+    background-color: ${(props) =>
+      props.disabled ? Colors.DarkLiver : Colors.BlackOlive};
     border-radius: 5px;
-    color: ${(props) => (props.disabled ? "#848585" : "#cfd1d5")};
+    color: ${(props) => (props.disabled ? Colors.OldSilver : Colors.LightGray)};
     cursor: ${(props) => (props.disabled ? "no-drop" : "default")};
     font-size: medium;
     font-weight: bold;
@@ -24,9 +27,9 @@ export const Button = {
   `,
   Visibility: styled.button.attrs({ type: "button" })`
     align-items: center;
-    background-color: #3a3b3c;
+    background-color: ${Colors.BlackOlive};
     border-radius: 5px;
-    color: #cfd1d5;
+    color: ${Colors.LightGray};
     display: flex;
     font-size: medium;
     font-weight: bold;
@@ -95,17 +98,17 @@ export const History = {
 
 export const Input = styled.input<InputProps>`
   background-color: inherit;
-  border: 2px solid ${(props) => (props.isValid ? "#383a3c" : "red")};
+  border: 2px solid ${(props) => (props.isValid ? Colors.Onyx : "red")};
   border-radius: 5px;
-  color: #cfd1d5;
+  color: ${Colors.LightGray};
   font-size: medium;
   padding: 1em;
 
   &::placeholder {
-    color: ${(props) => (props.isValid ? "#8d8f93" : "red")};
+    color: ${(props) => (props.isValid ? Colors.PhilippineGray : "red")};
   }
 `;
 
 export const Label = styled.label`
-  color: #cfd1d5;
+  color: ${Colors.LightGray};
 `;

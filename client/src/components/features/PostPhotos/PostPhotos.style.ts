@@ -1,5 +1,7 @@
 import styled from "styled-components";
 
+import { Colors } from "environment";
+
 interface PhotoContainerProps {
   photosNumber: number;
 }
@@ -18,7 +20,7 @@ export const Blurred = {
     position: relative;
   `,
   PhotoText: styled.p`
-    color: #cfd1d5;
+    color: ${Colors.LightGray};
     font-size: 3em;
     font-weight: bold;
     left: 50%;

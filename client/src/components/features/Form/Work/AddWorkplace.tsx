@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Divider, Dropdown, VisibilityModal } from "components";
-import { ADD_USER_WORKPLACE, GET_USER_BY_USERNAME } from "helpers";
+import { AddUserWorkplaceData, ADD_USER_WORKPLACE, GET_USER_BY_USERNAME } from "helpers";
 import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
-import { Date as CustomDate, Permission, User, Work } from "models";
+import { Date as CustomDate, Permission, User } from "models";
 
 import { Button, Container, Form, Input, Label } from "../Form.style";
 
@@ -97,10 +97,6 @@ const resolver: Resolver<FormValues> = async (values) => {
   return { errors, values };
 };
 
-interface AddUserWorkplaceData {
-  addUserWorkplace: Work | null;
-}
-
 interface Props {
   user: User;
   onCancelClick: () => void;
@@ -136,32 +132,43 @@ export function AddWorkplace({ user, onCancelClick, onSaveClick }: Props) {
     resolver,
   });
   const onSubmit: SubmitHandler<FormValues> = (data) => {
-    const {
-      company,
-      from: { day: fromDay, month: fromMonth, year: fromYear },
-      isCurrent,
-      position,
-      to: { day: toDay, month: toMonth, year: toYear },
-      visibility,
-    } = data;
+    const { company, from, isCurrent, position, to, visibility } = data;
     const { id: userId, username } = user;
+
+    const fromMonthAsNumber =
+      new Date(`${from.month} ${from.day}, ${from.year}`).getMonth() + 1;
+    const toMonthAsNumber = to
+      ? new Date(`${to.month} ${to.day}, ${to.year}`).getMonth() + 1
+      : null;
+    const parsedFrom = new Date(
+      new Date(
+        parseInt(from.year),
+        fromMonthAsNumber,
+        parseInt(from.day)
+      ).setUTCHours(0, 0, 0, 0)
+    )
+      .getTime()
+      .toString();
+    const parsedTo = toMonthAsNumber
+      ? new Date(
+          new Date(
+            parseInt(to.year),
+            toMonthAsNumber,
+            parseInt(to.day)
+          ).setUTCHours(0, 0, 0, 0)
+        )
+          .getTime()
+          .toString()
+      : null;
 
     addWorkplace({
       variables: {
         input: {
           company,
-          fromDay: parseInt(fromDay),
-          fromMonth:
-            new Date(`${fromMonth} ${fromDay}, ${fromYear}`).getMonth() + 1,
-          fromYear: parseInt(fromYear),
+          from: parsedFrom,
           isCurrent,
           position,
-          toDay: toDay !== "DAY" ? parseInt(toDay) : null,
-          toMonth:
-            toMonth !== "MONTH"
-              ? new Date(`${toMonth} ${toDay}, ${toYear}`).getMonth() + 1
-              : null,
-          toYear: toYear !== "YEAR" ? parseInt(toYear) : null,
+          to: parsedTo,
           userId,
           visibility,
         },
@@ -389,7 +396,7 @@ export function AddWorkplace({ user, onCancelClick, onSaveClick }: Props) {
           </>
         )}
       </Container.Dates>
-      <Divider />
+      <Divider thickness="2px" />
       <Container.Buttons.Element>
         <Controller
           control={control}

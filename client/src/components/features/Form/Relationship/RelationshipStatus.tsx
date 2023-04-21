@@ -1,6 +1,7 @@
 import { AiFillHeart } from "react-icons/ai";
 import { MdMoreHoriz } from "react-icons/md";
 
+import { Colors } from "environment";
 import { useVisibilityModalItems } from "hooks";
 import { Permission, RelationshipStatus as Status, User } from "models";
 
@@ -39,7 +40,7 @@ export function RelationshipStatus({ authenticatedUser, data, user }: Props) {
     <>
       {data && data.status && isVisibleToUser ? (
         <Container.MainHorizontal>
-          <AiFillHeart color="#8d8f93" size={24} />
+          <AiFillHeart color={Colors.PhilippineGray} size={24} />
           <div style={{ flex: 1 }}>
             <p>{text}</p>
           </div>
@@ -55,21 +56,21 @@ export function RelationshipStatus({ authenticatedUser, data, user }: Props) {
               <div
                 style={{
                   alignItems: "center",
-                  backgroundColor: "#3a3b3c",
+                  backgroundColor: Colors.BlackOlive,
                   borderRadius: "50%",
                   display: "flex",
                   justifyContent: "center",
                   padding: "0.25em",
                 }}
               >
-                <MdMoreHoriz color="#dfe1e5" size={24} />
+                <MdMoreHoriz color={Colors.Platinum} size={24} />
               </div>
             </div>
           )}
         </Container.MainHorizontal>
       ) : (
         <Container.NoData>
-          <AiFillHeart color="#8d8f93" size={24} />
+          <AiFillHeart color={Colors.PhilippineGray} size={24} />
           <NoDataText>No relationship info to show</NoDataText>
         </Container.NoData>
       )}

@@ -5,6 +5,7 @@ import { MdMoreHoriz } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
 import { ReactionEmojis, UserPhoto, WriteComment } from "components";
+import { Colors } from "environment";
 import {
   ADD_COMMENT_REACTION,
   ADD_COMMENT_REPLY,
@@ -13,10 +14,16 @@ import {
   GET_FRIENDS_POSTS_BY_USER_ID,
   REMOVE_COMMENT_REACTION,
   UPDATE_COMMENT_REACTION,
-  getTimeFromDate,
+  getTimePassedFromDateTime,
+  AddCommentReactionData,
+  GetCommentRepliesData,
+  RemoveCommentReactionData,
+  UpdateCommentReactionData,
+  GetCommentData,
+  AddCommentReplyData,
 } from "helpers";
 import { useCommentReplies } from "hooks";
-import { Comment, Reaction, ReactionType, User } from "models";
+import { ReactionType, User } from "models";
 
 import {
   getReactionText,
@@ -29,26 +36,6 @@ import {
   OwnerDetails,
   Reactions,
 } from "./UserComment.style";
-
-interface AddCommentReactionProps {
-  addCommentReaction: Reaction | null;
-}
-
-interface GetCommentProps {
-  comment: Comment | null;
-}
-
-interface GetCommentRepliesProps {
-  commentReplies: Comment[] | null;
-}
-
-interface RemoveCommentReactionProps {
-  removeCommentReaction: Reaction | null;
-}
-
-interface UpdateCommentReactionProps {
-  updateCommentReaction: Reaction | null;
-}
 
 interface Props {
   authenticatedUser?: User;
@@ -66,11 +53,11 @@ export function UserComment({
   onDeleteClick,
 }: Props) {
   const [fetchComment, { data: comment = { comment: null } }] =
-    useLazyQuery<GetCommentProps>(GET_COMMENT);
+    useLazyQuery<GetCommentData>(GET_COMMENT);
   const [fetchCommentReplies] =
-    useLazyQuery<GetCommentRepliesProps>(GET_COMMENT_REPLIES);
+    useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
 
-  const [addCommentReaction] = useMutation<AddCommentReactionProps>(
+  const [addCommentReaction] = useMutation<AddCommentReactionData>(
     ADD_COMMENT_REACTION,
     {
       refetchQueries: [
@@ -81,16 +68,19 @@ export function UserComment({
       ],
     }
   );
-  const [addCommentReply] = useMutation(ADD_COMMENT_REPLY, {
-    refetchQueries: [
-      {
-        query: GET_FRIENDS_POSTS_BY_USER_ID,
-        variables: { ownerId: authenticatedUser?.id },
-      },
-      { query: GET_COMMENT_REPLIES, variables: { commentId } },
-    ],
-  });
-  const [removeCommentReaction] = useMutation<RemoveCommentReactionProps>(
+  const [addCommentReply] = useMutation<AddCommentReplyData>(
+    ADD_COMMENT_REPLY,
+    {
+      refetchQueries: [
+        {
+          query: GET_FRIENDS_POSTS_BY_USER_ID,
+          variables: { ownerId: authenticatedUser?.id },
+        },
+        { query: GET_COMMENT_REPLIES, variables: { commentId } },
+      ],
+    }
+  );
+  const [removeCommentReaction] = useMutation<RemoveCommentReactionData>(
     REMOVE_COMMENT_REACTION,
     {
       refetchQueries: [
@@ -101,7 +91,7 @@ export function UserComment({
       ],
     }
   );
-  const [updateCommentReaction] = useMutation<UpdateCommentReactionProps>(
+  const [updateCommentReaction] = useMutation<UpdateCommentReactionData>(
     UPDATE_COMMENT_REACTION,
     {
       refetchQueries: [
@@ -150,7 +140,7 @@ export function UserComment({
     });
 
     return {
-      color: hasReacted ? color : "#8d8f93",
+      color: hasReacted ? color : Colors.PhilippineGray,
       fontWeight: "bold",
     };
   }
@@ -318,21 +308,21 @@ export function UserComment({
                 />
               )}
               <p
-                style={{ color: "#8d8f93", fontWeight: "bold" }}
+                style={{ color: Colors.PhilippineGray, fontWeight: "bold" }}
                 onClick={() => {
                   setIsWriteReplyVisible((prev) => !prev);
                 }}
               >
                 Reply
               </p>
-              <p>{getTimeFromDate(dateTime)}</p>
+              <p>{getTimePassedFromDateTime(dateTime, "COMMENT")}</p>
               {reactions && <p>{reactions.length}</p>}
             </Reactions.Container>
           </div>
         </div>
         {isCommentOwner && (
           <MdMoreHoriz
-            color="#8d8f93"
+            color={Colors.PhilippineGray}
             style={{
               visibility: isMoreOptionsVisible ? "visible" : "hidden",
             }}
@@ -342,13 +332,13 @@ export function UserComment({
       </InnerContainer>
       {isWriteReplyVisible && (
         <WriteComment
+          authenticatedUser={authenticatedUser || null}
           autoFocus
           placeholder="Write a reply..."
           style={{
             marginLeft: "calc(2em + 5px)",
             marginTop: "0.5em",
           }}
-          user={authenticatedUser}
           onCancelClick={() => {
             setIsWriteReplyVisible((prev) => !prev);
           }}

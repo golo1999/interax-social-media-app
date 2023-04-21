@@ -1,6 +1,7 @@
 import { Fragment, MutableRefObject, useEffect, useRef, useState } from "react";
 import { MdMoreHoriz, MdWork } from "react-icons/md";
 
+import { Colors } from "environment";
 import { useVisibilityModalItems } from "hooks";
 import { Permission, User, Work } from "models";
 
@@ -39,7 +40,7 @@ export function WorkHistory({ authenticatedUser, data, user }: Props) {
       {!isFilteredDataEmpty && data && data.length > 0 ? (
         <Container.Main ref={containerRef}>
           {data.map((work, index) => {
-            const { visibility } = work;
+            const { from, isCurrent, to, visibility } = work;
 
             if (
               visibility === Permission.FRIENDS &&
@@ -55,9 +56,11 @@ export function WorkHistory({ authenticatedUser, data, user }: Props) {
               return <Fragment key={index} />;
             }
 
-            const period = work.to
-              ? `From ${work.from.year} to ${work.to.year}`
-              : `From ${work.from.year} to present`;
+            const parsedFrom = new Date(Number(from));
+            const parsedTo = !isCurrent ? new Date(Number(to)) : null;
+            const period = parsedTo
+              ? `From ${parsedFrom.getUTCFullYear()} to ${parsedTo.getUTCFullYear()}`
+              : `From ${parsedFrom.getUTCFullYear()} to present`;
 
             const VisibilityIcon = visibilities.find(
               (v) => v.title === visibility
@@ -65,7 +68,7 @@ export function WorkHistory({ authenticatedUser, data, user }: Props) {
 
             return (
               <Item key={index}>
-                <MdWork color="#8d8f93" size={24} />
+                <MdWork color={Colors.PhilippineGray} size={24} />
                 <div style={{ flex: 1 }}>
                   <p>{`${work.position} at ${work.company}`}</p>
                   <p>{period}</p>
@@ -82,14 +85,14 @@ export function WorkHistory({ authenticatedUser, data, user }: Props) {
                     <div
                       style={{
                         alignItems: "center",
-                        backgroundColor: "#3a3b3c",
+                        backgroundColor: Colors.BlackOlive,
                         borderRadius: "50%",
                         display: "flex",
                         justifyContent: "center",
                         padding: "0.25em",
                       }}
                     >
-                      <MdMoreHoriz color="#dfe1e5" size={24} />
+                      <MdMoreHoriz color={Colors.Platinum} size={24} />
                     </div>
                   </div>
                 )}
@@ -99,7 +102,7 @@ export function WorkHistory({ authenticatedUser, data, user }: Props) {
         </Container.Main>
       ) : (
         <Container.NoData>
-          <MdWork color="#8d8f93" size={24} />
+          <MdWork color={Colors.PhilippineGray} size={24} />
           <NoDataText>No workplaces to show</NoDataText>
         </Container.NoData>
       )}

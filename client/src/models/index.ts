@@ -1,6 +1,33 @@
+import { IconType } from "react-icons";
+
+export enum ConversationTheme {
+  BLOOD = "BLOOD",
+  CHINESE_YELLOW = "CHINESE_YELLOW",
+  DEFAULT = "DEFAULT",
+  INDIGO = "INDIGO",
+  MAXIMUM_BLUE_PURPLE = "MAXIMUM_BLUE_PURPLE",
+  OCEAN_BLUE = "OCEAN_BLUE",
+  PURPLE_PIZZAZZ = "PURPLE_PIZZAZZ",
+  RED = "RED",
+  SUNSET_ORANGE = "SUNSET_ORANGE",
+  SWEET_BROWN = "SWEET_BROWN",
+  VERY_LIGH_BLUE = "VERY_LIGH_BLUE",
+  VIVID_MALACHITE = "VIVID_MALACHITE",
+}
+
 export enum EducationLevel {
   COLLEGE = "COLLEGE",
   HIGH_SCHOOL = "HIGH_SCHOOL",
+}
+
+export enum Emoji {
+  LIKE = "LIKE",
+  LOVE = "LOVE",
+}
+
+export enum MediaType {
+  PHOTO = "PHOTO",
+  VIDEO = "VIDEO",
 }
 
 export enum Month {
@@ -53,18 +80,44 @@ export interface Comment {
   id: string;
   dateTime: string;
   owner: User;
+  ownerId: string;
   postId: string;
   reactions: Reaction[] | null;
   replies: Comment[] | null;
   text: string;
 }
 
-export interface Date {
+export interface Conversation {
+  emoji: Emoji;
+  files: File[] | null;
+  first: string;
+  firstNickname: string | null;
+  media: Media[] | null;
+  second: string;
+  secondNickname: string | null;
+  theme: ConversationTheme;
+}
+
+export interface CoverPhoto {
+  __typename?: "CoverPhoto";
+  id: string;
+  comments: Comment[] | null;
+  dateTime: string;
+  description: string | null;
+  isCurrent: boolean | null;
+  ownerId: string;
+  reactions: Reaction[] | null;
+  shares: Share[] | null;
+  url: string;
+  visibility: Permission;
+}
+
+export type Date = {
   __typename?: "Date";
   day: string;
   month: string;
   year: string;
-}
+};
 
 export interface DropdownItem {
   key: string;
@@ -74,7 +127,7 @@ export interface DropdownItem {
 type EducationCommonTypes = {
   __typename?: "Education";
   id: string;
-  from: Date;
+  from: string;
   school: string;
   visibility: Permission;
 };
@@ -84,12 +137,59 @@ type EducationConditionalTypes = (
   | { degree: string; level: EducationLevel.COLLEGE }
   | { degree?: never; level: EducationLevel.HIGH_SCHOOL }
 ) &
-  ({ graduated: boolean; to: Date } | { graduated?: never; to?: never });
+  ({ graduated: boolean; to: string } | { graduated?: never; to?: never });
 
 export type Education = EducationCommonTypes & EducationConditionalTypes;
 
-export interface Photo {
-  __typename?: "Photo";
+export interface File {
+  __typename?: "File";
+  id: string;
+  name: string;
+  size: number;
+}
+
+export interface Friendship {
+  first: string;
+  second: string;
+}
+
+export interface FriendshipRequest {
+  receiver: string;
+  sender: string;
+}
+
+export interface Media {
+  __typename?: "Media";
+  type: MediaType;
+  url: string;
+}
+
+type MessageCommonTypes = {
+  __typename?: "Message";
+  id: string;
+  dateTime: string;
+  parentId: string | null;
+  receiverId: string;
+  reactions: Reaction[] | null;
+  replies: Message[] | null;
+  senderId: string;
+};
+
+type MessageConditionalTypes =
+  | { emoji: Emoji; text?: never }
+  | { emoji?: never; text: string };
+
+export type Message = MessageCommonTypes & MessageConditionalTypes;
+
+export interface NavigationItem {
+  endIcon?: IconType;
+  name: string;
+  startIcon: IconType;
+  onClick?: () => void;
+}
+
+export interface PostPhoto {
+  __typename?: "PostPhoto";
   id: string;
   comments: Comment[] | null;
   ownerId: string;
@@ -100,17 +200,31 @@ export interface Photo {
   url: string;
 }
 
+export interface ProfilePhoto {
+  __typename?: "ProfilePhoto";
+  id: string;
+  comments: Comment[] | null;
+  dateTime: string;
+  description: string | null;
+  isCurrent: boolean | null;
+  ownerId: string;
+  reactions: Reaction[] | null;
+  shares: Share[] | null;
+  url: string;
+  visibility: Permission;
+}
+
 type PlaceCommonTypes = {
   __typename?: "Place";
   id: string;
   city: string;
-  from: Date;
+  from: string;
   visibility: Permission;
 };
 
 type PlaceConditionalTypes =
   | { isCurrent: boolean; to?: never }
-  | { isCurrent?: never; to: Date };
+  | { isCurrent?: never; to: string };
 
 export type Place = PlaceCommonTypes & PlaceConditionalTypes;
 
@@ -120,16 +234,18 @@ export interface Post {
   canComment: Permission;
   canReact: Permission;
   canShare: Permission;
-  canView: Permission;
   comments: Comment[] | null;
   dateTime: string;
   owner: User;
+  ownerId: string;
   parentId: string | null;
-  photos: Photo[] | null;
+  photos: PostPhoto[] | null;
   reactions: Reaction[] | null;
+  receiverId: string;
   shares: Share[] | null;
   text: string | null;
   video: string | null;
+  visibility: Permission;
 }
 
 export interface Reaction {
@@ -153,18 +269,29 @@ export interface Share {
   owner: User;
 }
 
+export type Time = {
+  __typename?: "Time";
+  hour: string;
+  minute: string;
+  second: string;
+};
+
 export interface User {
   __typename?: "User";
   id: string;
   biography?: string | null;
   birthDate?: string | null;
+  coverPhotos?: CoverPhoto[] | null;
   educationHistory: Education[] | null;
   email: string;
   firstName: string;
   friends?: User[] | null;
+  friendshipRequests?: FriendshipRequest[] | null;
   lastName: string;
+  messages: Message[] | null;
   placesHistory: Place[] | null;
   posts: Post[] | null;
+  profilePhotos?: ProfilePhoto[] | null;
   relationshipStatus: RelationshipStatus | null;
   username: string;
   workHistory: Work[] | null;
@@ -174,14 +301,14 @@ type WorkCommonTypes = {
   __typename?: "Work";
   id: string;
   company: string;
-  from: Date;
+  from: string;
   position: string;
   visibility: Permission;
 };
 
 type WorkConditionalTypes =
   | { isCurrent: boolean; to?: never }
-  | { isCurrent?: never; to: Date };
+  | { isCurrent?: never; to: string };
 
 export type Work = WorkCommonTypes & WorkConditionalTypes;
 

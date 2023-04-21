@@ -4,8 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import { UserComment } from "components";
-import { GET_COMMENT_REPLIES, REMOVE_COMMENT_REPLY } from "helpers";
-import { Comment, User } from "models";
+import {
+  GetCommentRepliesData,
+  GET_COMMENT_REPLIES,
+  RemoveCommentReplyData,
+  REMOVE_COMMENT_REPLY,
+} from "helpers";
+import { User } from "models";
 
 const Paragraph = styled.p`
   margin: 5px 0 5px 37px;
@@ -16,14 +21,6 @@ const Paragraph = styled.p`
     text-decoration: underline;
   }
 `;
-
-interface GetCommentRepliesProps {
-  commentReplies: Comment[] | null;
-}
-
-interface RemoveCommentReplyProps {
-  removeCommentReply: Comment | null;
-}
 
 interface Props {
   authenticatedUser?: User;
@@ -39,11 +36,11 @@ export function useCommentReplies({
   postOwnerId,
 }: Props) {
   const [fetchCommentReplies, { data: replies }] =
-    useLazyQuery<GetCommentRepliesProps>(GET_COMMENT_REPLIES);
+    useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
   const [fetchRepliesReplies, { data: repliesReplies }] =
-    useLazyQuery<GetCommentRepliesProps>(GET_COMMENT_REPLIES);
+    useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
 
-  const [removeCommentReply] = useMutation<RemoveCommentReplyProps>(
+  const [removeCommentReply] = useMutation<RemoveCommentReplyData>(
     REMOVE_COMMENT_REPLY,
     {
       refetchQueries: [

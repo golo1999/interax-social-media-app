@@ -3,12 +3,13 @@ import { useMutation } from "@apollo/client";
 import { useMemo } from "react";
 
 import { UserComment } from "components";
-import { GET_COMMENT_REPLIES, GET_POST, REMOVE_COMMENT } from "helpers";
+import {
+  GET_COMMENT_REPLIES,
+  GET_POST,
+  RemoveCommentData,
+  REMOVE_COMMENT,
+} from "helpers";
 import { Comment, User } from "models";
-
-interface RemoveCommentData {
-  removeComment: Comment | null;
-}
 
 interface Props {
   authenticatedUser?: User;

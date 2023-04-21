@@ -24,96 +24,208 @@ function findMatchedComment(comments, commentId) {
   }
 }
 
+// TODO: This should be converted to TS and moved to a "helpers" file
+function getUserFriends(userId) {
+  const userFriends = [];
+
+  _.forEach(FRIENDS_LIST, (friendship) => {
+    const friendshipValues = Object.values(friendship);
+
+    if (friendshipValues.includes(userId)) {
+      const friendId = _.find(friendshipValues, (value) => value !== userId);
+      const friend = _.find(USERS_LIST, (user) => user.id === friendId);
+
+      if (friend) {
+        userFriends.push(friend);
+      }
+    }
+  });
+
+  return userFriends;
+}
+
 const {
   AUTHENTICATED_USER_ID,
   COMMENTS_LIST,
+  CONVERSATIONS_LIST,
+  ConversationTheme,
+  Emoji,
+  FRIEND_REQUESTS_LIST,
+  FRIENDS_LIST,
+  MESSAGES_LIST,
+  POST_PHOTOS_LIST,
   POSTS_LIST,
   USERS_LIST,
-  POST_PHOTOS_LIST,
 } = require("../MockedData");
 
 const resolvers = {
+  Comment: {
+    owner: ({ ownerId }) => {
+      return _.find(USERS_LIST, (user) => user.id === ownerId);
+    },
+  },
   Post: {
     comments: ({ id }) => {
-      const comments = _.filter(
-        COMMENTS_LIST,
-        (comment) => comment.postId === id
-      );
-
-      return comments;
+      return _.filter(COMMENTS_LIST, (comment) => comment.postId === id);
+    },
+    owner: (parent) => {
+      return _.find(USERS_LIST, (user) => user.id === parent.ownerId);
     },
     photos: ({ id }) => {
-      const photos = _.filter(POST_PHOTOS_LIST, (photo) => photo.postId === id);
-
-      return photos;
+      return _.filter(POST_PHOTOS_LIST, (photo) => photo.postId === id);
     },
   },
   User: {
-    posts: ({ username }) => {
-      const posts = _.filter(
-        POSTS_LIST,
-        (post) => post.owner.username === username
+    friends: ({ id: userId }) => {
+      const friends = [];
+
+      _.forEach(FRIENDS_LIST, (friendship) => {
+        const friendshipValues = Object.values(friendship);
+
+        if (friendshipValues.includes(userId)) {
+          const friendId = _.find(
+            friendshipValues,
+            (value) => value !== userId
+          );
+          const friend = _.find(USERS_LIST, (user) => user.id === friendId);
+
+          if (friend) {
+            friends.push(friend);
+          }
+        }
+      });
+
+      return friends.length > 0 ? friends : null;
+    },
+    friendshipRequests: ({ id: userId }) => {
+      return _.filter(
+        FRIEND_REQUESTS_LIST,
+        (request) => request.receiver === userId || request.sender === userId
+      );
+    },
+    messages: ({ id }) => {
+      const messages = _.filter(
+        MESSAGES_LIST,
+        (message) => message.receiverId === id || message.senderId === id
       );
 
-      return posts;
+      return messages.length > 0 ? messages : null;
+    },
+    posts: ({ id }) => {
+      return _.filter(
+        POSTS_LIST,
+        (post) => post.ownerId === id || post.receiverId === id
+      ).sort(
+        (p1, p2) =>
+          +new Date(Number(p2.dateTime) - +new Date(Number(p1.dateTime)))
+      );
     },
   },
   Query: {
     authenticatedUser: () => {
-      const matchedUser = _.find(USERS_LIST, {
+      return _.find(USERS_LIST, {
         id: AUTHENTICATED_USER_ID,
       });
-
-      return matchedUser;
     },
     comment: (parent, { id }) => {
-      const matchedComment = findMatchedComment(COMMENTS_LIST, id);
-
-      if (!matchedComment) {
-        return null;
-      }
-
-      return matchedComment;
+      return findMatchedComment(COMMENTS_LIST, id) || null;
     },
     comments: () => {
       return COMMENTS_LIST;
     },
     commentReactions: (parent, { commentId }) => {
-      const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
-
-      if (!matchedComment) {
-        return null;
-      }
-
-      return matchedComment.reactions;
+      return findMatchedComment(COMMENTS_LIST, commentId).reactions || null;
     },
     commentReplies: (parent, { commentId }) => {
-      const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
+      return findMatchedComment(COMMENTS_LIST, commentId).replies || null;
+    },
+    conversationBetween: (parent, { input: { first, second } }) => {
+      const conversation = _.find(
+        CONVERSATIONS_LIST,
+        (conversation) =>
+          (conversation.first === first && conversation.second === second) ||
+          (conversation.first === second && conversation.second === first)
+      );
+      const defaultConversation = {
+        emoji: Emoji.LIKE,
+        first,
+        firstNickname: null,
+        second,
+        secondNickname: null,
+        theme: ConversationTheme.DEFAULT,
+      };
 
-      if (!matchedComment) {
-        return null;
-      }
-
-      return matchedComment.replies;
+      return conversation || defaultConversation;
     },
     friendsPostsByOwnerId: (parent, { ownerId }) => {
-      const ownerFriendsList = _.filter(USERS_LIST, (user) =>
-        _.some(user.friends, (friend) => friend.id === ownerId)
-      );
-      const friendsPostsList = _.filter(POSTS_LIST, (post) =>
-        _.some(ownerFriendsList, (friend) => friend.id === post.owner.id)
+      const friendsPostsList = [];
+      const ownerFriendsList = [];
+
+      _.forEach(FRIENDS_LIST, (friendship) => {
+        const friendshipValues = Object.values(friendship);
+
+        if (friendshipValues.includes(ownerId)) {
+          const friendId = _.find(
+            friendshipValues,
+            (value) => value !== ownerId
+          );
+          const friend = _.find(USERS_LIST, (user) => user.id === friendId);
+
+          if (friend) {
+            ownerFriendsList.push(friend);
+          }
+        }
+      });
+
+      _.forEach(POSTS_LIST, (post) => {
+        _.forEach(ownerFriendsList, (ownerFriend) => {
+          if (post.owner.id === ownerFriend.id) {
+            friendsPostsList.push(post);
+          }
+        });
+      });
+
+      return friendsPostsList.length > 0
+        ? friendsPostsList.sort(
+            (p1, p2) =>
+              +new Date(Number(p2.dateTime) - +new Date(Number(p1.dateTime)))
+          )
+        : null;
+    },
+    friendshipSuggestionsById: (parent, { id }) => {
+      const matchedUserFriends = getUserFriends(id);
+      const matchedUserFriendshipRequests = _.filter(
+        FRIEND_REQUESTS_LIST,
+        (request) => request.receiver === id || request.sender === id
       );
 
-      return friendsPostsList.length > 0 ? friendsPostsList : null;
+      return USERS_LIST.filter((user) => {
+        const { id: userId } = user;
+        const isMatchedUser = userId === id;
+        const isMatchedUserFriend = matchedUserFriends.find(
+          (matchedUserFriend) => matchedUserFriend.id === userId
+        );
+        const usersHaveFriendshipRequest = matchedUserFriendshipRequests.find(
+          (request) =>
+            (request.receiver === id && request.sender === userId) ||
+            (request.receiver === userId && request.sender === id)
+        );
+
+        return (
+          !isMatchedUser && !isMatchedUserFriend && !usersHaveFriendshipRequest
+        );
+      });
+    },
+    messagesBetween: (parent, { input: { first, second } }) => {
+      return _.filter(
+        MESSAGES_LIST,
+        (message) =>
+          (message.receiverId === first && message.senderId === second) ||
+          (message.senderId === first && message.receiverId === second)
+      );
     },
     post: (parent, { id }) => {
-      const matchedPost = _.find(POSTS_LIST, (post) => post.id === id);
-
-      if (!matchedPost) {
-        return null;
-      }
-
-      return matchedPost;
+      return _.find(POSTS_LIST, (post) => post.id === id) || null;
     },
     posts: () => {
       return POSTS_LIST;
@@ -124,28 +236,16 @@ const resolvers = {
       return posts.length > 0 ? posts : null;
     },
     userById: (parent, { id }) => {
-      const user = _.find(USERS_LIST, { id });
-
-      return user;
+      return _.find(USERS_LIST, { id });
     },
     userByUsername: (parent, { username }) => {
-      const matchedUser = _.find(
-        USERS_LIST,
-        (user) => user.username === username
-      );
-
-      return matchedUser;
+      return _.find(USERS_LIST, (user) => user.username === username);
     },
     userFriendsById: (parent, { id }) => {
-      const matchedUser = _.find(USERS_LIST, (user) => user.id === id);
-      return matchedUser.friends;
+      return _.find(USERS_LIST, (user) => user.id === id).friends;
     },
     userFriendsByUsername: (parent, { username }) => {
-      const matchedUser = _.find(
-        USERS_LIST,
-        (user) => user.username === username
-      );
-      return matchedUser.friends;
+      return _.find(USERS_LIST, (user) => user.username === username).friends;
     },
     userPostReaction: (parent, { input: { postId, userId } }) => {
       const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
@@ -183,8 +283,8 @@ const resolvers = {
         username: matchedOwner.username,
       };
       const newReaction = {
-        id: null,
-        dateTime: new Date().toUTCString(),
+        id: `${commentId}-reaction-${crypto.randomUUID()}`,
+        dateTime: new Date().getTime().toString(),
         owner: newReactionOwner,
         type: reactionType,
       };
@@ -193,7 +293,6 @@ const resolvers = {
         matchedComment.reactions = [];
       }
 
-      newReaction.id = `${commentId}-reaction-${crypto.randomUUID()}`;
       matchedComment.reactions.push(newReaction);
 
       return newReaction;
@@ -205,18 +304,11 @@ const resolvers = {
         return null;
       }
 
-      const matchedOwner = _.find(USERS_LIST, (user) => user.id === ownerId);
       const postId = matchedComment.postId;
       const newComment = {
-        id: null,
-        dateTime: new Date().toUTCString(),
-        owner: {
-          id: matchedOwner.id,
-          email: matchedOwner.email,
-          firstName: matchedOwner.firstName,
-          lastName: matchedOwner.lastName,
-          username: matchedOwner.username,
-        },
+        id: `${postId}-comment-${crypto.randomUUID()}`,
+        dateTime: new Date().getTime().toString(),
+        ownerId,
         postId,
         reactions: null,
         replies: null,
@@ -227,26 +319,39 @@ const resolvers = {
         matchedComment.replies = [];
       }
 
-      newComment.id = `${postId}-comment-${crypto.randomUUID()}`;
       matchedComment.replies.push(newComment);
 
       return newComment;
     },
+    addMessage: (
+      parent,
+      { input: { emoji, parentId, receiverId, senderId, text } }
+    ) => {
+      const newMessage = {
+        id: `message-${crypto.randomUUID()}`,
+        dateTime: new Date().getTime().toString(),
+        emoji: emoji || undefined,
+        parentId,
+        reactions: null,
+        receiverId,
+        replies: null,
+        senderId,
+        text: text || undefined,
+      };
+
+      if (!MESSAGES_LIST) {
+        MESSAGES_LIST = [];
+      }
+
+      MESSAGES_LIST.push(newMessage);
+
+      return newMessage;
+    },
     addPostComment: (parent, { input: { commentOwnerId, postId, text } }) => {
-      const matchedOwner = _.find(
-        USERS_LIST,
-        (user) => user.id === commentOwnerId
-      );
       const newComment = {
-        id: null,
-        dateTime: new Date().toUTCString(),
-        owner: {
-          id: matchedOwner.id,
-          email: matchedOwner.email,
-          firstName: matchedOwner.firstName,
-          lastName: matchedOwner.lastName,
-          username: matchedOwner.username,
-        },
+        id: `${postId}-comment-${crypto.randomUUID()}`,
+        dateTime: new Date().getTime().toString(),
+        ownerId: commentOwnerId,
         postId,
         reactions: null,
         replies: null,
@@ -257,7 +362,6 @@ const resolvers = {
         COMMENTS_LIST = [];
       }
 
-      newComment.id = `${postId}-comment-${crypto.randomUUID()}`;
       COMMENTS_LIST.push(newComment);
 
       return newComment;
@@ -279,7 +383,7 @@ const resolvers = {
         username: matchedOwner.username,
       };
       const newReaction = {
-        id: null,
+        id: `${postId}-reaction-${crypto.randomUUID()}`,
         owner: newReactionOwner,
         type: reactionType,
       };
@@ -288,41 +392,23 @@ const resolvers = {
         matchedPost.reactions = [];
       }
 
-      newReaction.id = `${postId}-reaction-${crypto.randomUUID()}`;
       matchedPost.reactions.push(newReaction);
 
       return newReaction;
     },
     addUserCollegeEducation: (
       parent,
-      {
-        input: {
-          degree,
-          fromDay,
-          fromMonth,
-          fromYear,
-          graduated,
-          school,
-          toDay,
-          toMonth,
-          toYear,
-          userId,
-          visibility,
-        },
-      }
+      { input: { degree, from, graduated, school, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
       const newEducation = {
-        id: null,
+        id: `education-${crypto.randomUUID()}`,
         degree,
-        from: { day: fromDay, month: fromMonth, year: fromYear },
+        from: new Date(Number(from)).getTime().toString(),
         graduated: graduated || undefined,
         level: EducationLevel.COLLEGE,
         school,
-        to:
-          toDay && toMonth && toYear
-            ? { day: toDay, month: toMonth, year: toYear }
-            : undefined,
+        to: to ? new Date(Number(to)).getTime().toString() : undefined,
         visibility,
       };
 
@@ -330,39 +416,39 @@ const resolvers = {
         matchedUser.educationHistory = [];
       }
 
-      newEducation.id = `education-${crypto.randomUUID()}`;
       matchedUser.educationHistory.push(newEducation);
 
       return newEducation;
     },
+    addUserFriend: (parent, { input: { first, second } }) => {
+      const matchedFriendship = _.find(
+        FRIENDS_LIST,
+        (friendship) =>
+          (friendship.first === first && friendship.second === second) ||
+          (friendship.first === second && friendship.second === first)
+      );
+      const newFriendship = { first, second };
+
+      if (matchedFriendship) {
+        return null;
+      }
+
+      FRIENDS_LIST.push(newFriendship);
+
+      return newFriendship;
+    },
     addUserHighSchoolEducation: (
       parent,
-      {
-        input: {
-          fromDay,
-          fromMonth,
-          fromYear,
-          graduated,
-          school,
-          toDay,
-          toMonth,
-          toYear,
-          userId,
-          visibility,
-        },
-      }
+      { input: { from, graduated, school, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
       const newEducation = {
-        id: null,
-        from: { day: fromDay, month: fromMonth, year: fromYear },
+        id: `education-${crypto.randomUUID()}`,
+        from: new Date(Number(from)).getTime().toString(),
         graduated: graduated || undefined,
         level: EducationLevel.HIGH_SCHOOL,
         school,
-        to:
-          toDay && toMonth && toYear
-            ? { day: toDay, month: toMonth, year: toYear }
-            : undefined,
+        to: to ? new Date(Number(to)).getTime().toString() : undefined,
         visibility,
       };
 
@@ -370,38 +456,21 @@ const resolvers = {
         matchedUser.educationHistory = [];
       }
 
-      newEducation.id = `education-${crypto.randomUUID()}`;
       matchedUser.educationHistory.push(newEducation);
 
       return newEducation;
     },
     addUserPlace: (
       parent,
-      {
-        input: {
-          city,
-          fromDay,
-          fromMonth,
-          fromYear,
-          isCurrent,
-          toDay,
-          toMonth,
-          toYear,
-          userId,
-          visibility,
-        },
-      }
+      { input: { city, from, isCurrent, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
       const newPlace = {
-        id: null,
+        id: `place-${crypto.randomUUID()}`,
         city,
-        from: { day: fromDay, month: fromMonth, year: fromYear },
+        from: new Date(Number(from)).getTime().toString(),
         isCurrent: isCurrent || undefined,
-        to:
-          toDay && toMonth && toYear
-            ? { day: toDay, month: toMonth, year: toYear }
-            : undefined,
+        to: to ? new Date(Number(to)).getTime().toString() : undefined,
         visibility,
       };
 
@@ -409,7 +478,6 @@ const resolvers = {
         matchedUser.placesHistory = [];
       }
 
-      newPlace.id = `place-${crypto.randomUUID()}`;
       matchedUser.placesHistory.push(newPlace);
 
       return newPlace;
@@ -430,33 +498,16 @@ const resolvers = {
     },
     addUserWorkplace: (
       parent,
-      {
-        input: {
-          company,
-          fromDay,
-          fromMonth,
-          fromYear,
-          isCurrent,
-          position,
-          toDay,
-          toMonth,
-          toYear,
-          userId,
-          visibility,
-        },
-      }
+      { input: { company, from, isCurrent, position, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
       const newWorkplace = {
-        id: null,
+        id: `work-${crypto.randomUUID()}`,
         company,
-        from: { day: fromDay, month: fromMonth, year: fromYear },
+        from: new Date(Number(from)).getTime().toString(),
         isCurrent: isCurrent || undefined,
         position,
-        to:
-          toDay && toMonth && toYear
-            ? { day: toDay, month: toMonth, year: toYear }
-            : undefined,
+        to: to ? new Date(Number(to)).getTime().toString() : undefined,
         visibility,
       };
 
@@ -464,10 +515,41 @@ const resolvers = {
         matchedUser.workHistory = [];
       }
 
-      newWorkplace.id = `work-${crypto.randomUUID()}`;
       matchedUser.workHistory.push(newWorkplace);
 
       return newWorkplace;
+    },
+    createPost: (
+      parent,
+      { input: { parentId, receiverId, text, userId, visibility } }
+    ) => {
+      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
+      const newPost = {
+        id: `post-${crypto.randomUUID()}`,
+        canComment: visibility,
+        canReact: visibility,
+        canShare: visibility,
+        comments: null,
+        dateTime: new Date().getTime().toString(),
+        owner: matchedUser,
+        ownerId: userId,
+        parentId,
+        photos: null,
+        reactions: null,
+        receiverId,
+        shares: null,
+        text,
+        video: null,
+        visibility,
+      };
+
+      if (!POSTS_LIST) {
+        POSTS_LIST = [];
+      }
+
+      POSTS_LIST.push(newPost);
+
+      return newPost;
     },
     removeComment: (parent, { id }) => {
       let removedComment;
@@ -582,6 +664,47 @@ const resolvers = {
 
       return removedReaction;
     },
+    removeUserFriendshipRequest: (parent, { input: { receiver, sender } }) => {
+      const matchedFriendshipRequest = _.find(
+        FRIEND_REQUESTS_LIST,
+        (request) =>
+          (request.receiver === receiver && request.sender === sender) ||
+          (request.receiver === sender && request.sender === receiver)
+      );
+
+      if (!matchedFriendshipRequest) {
+        return null;
+      }
+
+      _.remove(FRIEND_REQUESTS_LIST, (request) => {
+        return request === matchedFriendshipRequest;
+      });
+
+      return matchedFriendshipRequest;
+    },
+    sendUserFriendshipRequest: (parent, { input: { receiver, sender } }) => {
+      const newFriendshipRequest = { receiver, sender };
+      const matchedReceiver = _.find(
+        USERS_LIST,
+        (user) => user.id === receiver
+      );
+
+      if (
+        !matchedReceiver ||
+        _.find(matchedReceiver.friends, (friend) => friend.id === sender) ||
+        _.find(
+          FRIEND_REQUESTS_LIST,
+          (request) =>
+            request.receiver === receiver && request.sender === sender
+        )
+      ) {
+        return null;
+      }
+
+      FRIEND_REQUESTS_LIST.push(newFriendshipRequest);
+
+      return newFriendshipRequest;
+    },
     updateCommentReaction: (
       parent,
       { input: { commentId, ownerId, postId, reactionType } }
@@ -596,9 +719,95 @@ const resolvers = {
         matchedComment.reactions,
         (reaction) => reaction.owner.id === ownerId
       );
+
+      if (!matchedReaction) {
+        return null;
+      }
+
       matchedReaction.type = reactionType;
 
       return matchedReaction;
+    },
+    updateConversationEmoji: (parent, { input: { emoji, first, second } }) => {
+      const matchedConversation = _.find(
+        CONVERSATIONS_LIST,
+        (conversation) =>
+          (conversation.first === first && conversation.second === second) ||
+          (conversation.first === second && conversation.second === first)
+      );
+
+      if (!matchedConversation) {
+        const defaultConversation = {
+          emoji,
+          first,
+          firstNickname: null,
+          second,
+          secondNickname: null,
+          theme: ConversationTheme.DEFAULT,
+        };
+        CONVERSATIONS_LIST.push(defaultConversation);
+
+        return defaultConversation;
+      }
+
+      matchedConversation.emoji = emoji;
+
+      return matchedConversation;
+    },
+    updateConversationNickname: (parent, { input: { nickname, userId } }) => {
+      const matchedConversation = _.find(
+        CONVERSATIONS_LIST,
+        (conversation) =>
+          conversation.first === userId || conversation.second === userId
+      );
+
+      if (!matchedConversation) {
+        const defaultConversation = {
+          emoji: Emoji.LIKE,
+          first,
+          firstNickname: null,
+          second,
+          secondNickname: null,
+          theme: ConversationTheme.DEFAULT,
+        };
+        CONVERSATIONS_LIST.push(defaultConversation);
+
+        return defaultConversation;
+      }
+
+      if (matchedConversation.first === userId) {
+        matchedConversation.firstNickname = nickname;
+      } else {
+        matchedConversation.secondNickname = nickname;
+      }
+
+      return matchedConversation;
+    },
+    updateConversationTheme: (parent, { input: { first, second, theme } }) => {
+      const matchedConversation = _.find(
+        CONVERSATIONS_LIST,
+        (conversation) =>
+          (conversation.first === first && conversation.second === second) ||
+          (conversation.first === second && conversation.second === first)
+      );
+
+      if (!matchedConversation) {
+        const defaultConversation = {
+          emoji: Emoji.LIKE,
+          first,
+          firstNickname: null,
+          second,
+          secondNickname: null,
+          theme,
+        };
+        CONVERSATIONS_LIST.push(defaultConversation);
+
+        return defaultConversation;
+      }
+
+      matchedConversation.theme = theme;
+
+      return matchedConversation;
     },
     updatePostReaction: (
       parent,
@@ -615,21 +824,7 @@ const resolvers = {
     },
     updateUserPlace: (
       parent,
-      {
-        input: {
-          city,
-          fromDay,
-          fromMonth,
-          fromYear,
-          isCurrent,
-          placeId,
-          toDay,
-          toMonth,
-          toYear,
-          userId,
-          visibility,
-        },
-      }
+      { input: { city, from, isCurrent, placeId, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
       const matchedPlace = _.find(
@@ -642,12 +837,11 @@ const resolvers = {
       }
 
       matchedPlace.city = city;
-      matchedPlace.from = { day: fromDay, month: fromMonth, year: fromYear };
+      matchedPlace.from = new Date(Number(from)).getTime().toString();
       matchedPlace.isCurrent = isCurrent || undefined;
-      matchedPlace.to =
-        toDay && toMonth && toYear
-          ? { day: toDay, month: toMonth, year: toYear }
-          : undefined;
+      matchedPlace.to = to
+        ? new Date(Number(to)).getTime().toString()
+        : undefined;
       matchedPlace.visibility = visibility;
 
       return matchedPlace;

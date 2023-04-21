@@ -1,5 +1,7 @@
 import styled from "styled-components";
 
+import { Colors } from "environment";
+
 export const InnerContainer = styled.div`
   align-items: center;
   display: flex;
@@ -17,7 +19,7 @@ export const OwnerDetails = {
     font-size: 0.6em;
   `,
   Container: styled.div`
-    background-color: #3a3b3c;
+    background-color: ${Colors.BlackOlive};
     border-radius: 20px;
     display: flex;
     flex: 1;

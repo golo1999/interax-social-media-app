@@ -1,11 +1,11 @@
 import { Fragment, useMemo } from "react";
 
-import { Photo } from "models";
+import { PostPhoto } from "models";
 
 import { Blurred, Normal, PhotosContainer } from "./PostPhotos.style";
 
 interface Props {
-  photos: Photo[] | null;
+  photos: PostPhoto[] | null;
 }
 
 export function PostPhotos({ photos }: Props) {

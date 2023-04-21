@@ -1,3 +1,4 @@
+import { Colors } from "environment";
 import { Comment, Reaction, ReactionType } from "models";
 
 interface FindMatchedCommentProps {
@@ -82,16 +83,16 @@ export function getReactionTextColor({
 
   switch (userReactionType) {
     case ReactionType.ANGRY:
-      return "#c46e1c";
+      return Colors.Ochre;
     case ReactionType.LIKE:
-      return "#2d86ff";
+      return Colors.DodgerBlue;
     case ReactionType.LOVE:
-      return "#ee3553";
+      return Colors.Desire;
     case ReactionType.CARE:
     case ReactionType.HAHA:
     case ReactionType.SAD:
     case ReactionType.WOW:
-      return "#f9ce58";
+      return Colors.NaplesYellow;
     default:
       return undefined;
   }

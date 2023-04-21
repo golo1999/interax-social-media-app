@@ -1,5 +1,7 @@
 import styled from "styled-components";
 
+import { Colors } from "environment";
+
 interface ListProps {
   displayedItems: number;
   isExpanded: boolean;
@@ -12,7 +14,7 @@ interface ListItemProps {
 }
 
 export const Container = styled.div`
-  color: #cfd1d5;
+  color: ${Colors.LightGray};
   display: flex;
   flex-direction: column;
   font-weight: 500;
@@ -23,7 +25,7 @@ export const Container = styled.div`
 
 export const Header = styled.div`
   align-items: center;
-  background-color: #3a3b3c;
+  background-color: ${Colors.BlackOlive};
   border-radius: 5px;
   display: flex;
   gap: 0.5em;
@@ -31,12 +33,12 @@ export const Header = styled.div`
   width: fit-content;
 
   &:hover {
-    background-color: #4e4f50;
+    background-color: ${Colors.DarkLiver};
   }
 `;
 
 export const List = styled.ul<ListProps>`
-  background-color: #242526;
+  background-color: ${Colors.RaisinBlack};
   border-radius: 5px;
   box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
   display: flex;
@@ -58,19 +60,21 @@ export const List = styled.ul<ListProps>`
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: #4e4f50;
+    background-color: ${Colors.DarkLiver};
   }
 `;
 
 export const ListItem = styled.li<ListItemProps>`
-  ${(props) => props.isSelected && "background-color: #3a3b3c;"}
+  ${(props) => props.isSelected && `background-color: ${Colors.BlackOlive};`}
   border: ${(props) =>
-    props.isSelected ? "2px solid #cfd1d5" : "2px solid transparent"};
+    props.isSelected
+      ? `2px solid ${Colors.LightGray}`
+      : "2px solid transparent"};
   border-radius: 5px;
   flex: 1;
   padding: 0.5em;
 
   &:hover {
-    ${(props) => !props.isSelected && "background-color: #3a3b3c;"}
+    ${(props) => !props.isSelected && `background-color: ${Colors.BlackOlive};`}
   }
 `;

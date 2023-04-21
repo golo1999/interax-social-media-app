@@ -3,15 +3,16 @@ import { useMutation } from "@apollo/client";
 import { Fragment, MutableRefObject, useEffect, useRef, useState } from "react";
 import { MdHouse, MdMoreHoriz } from "react-icons/md";
 
-import { GET_USER_BY_USERNAME, UPDATE_USER_PLACE } from "helpers";
+import { Colors } from "environment";
+import {
+  GET_USER_BY_USERNAME,
+  UpdateUserPlaceData,
+  UPDATE_USER_PLACE,
+} from "helpers";
 import { useVisibilityModalItems } from "hooks";
 import { Permission, Place, User } from "models";
 
 import { History } from "../Form.style";
-
-interface UpdateUserPlaceData {
-  updateUserPlace: Place | null;
-}
 
 interface Props {
   authenticatedUser: User | null;
@@ -48,7 +49,7 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
       {!isFilteredDataEmpty && data && data.length > 0 ? (
         <Container.Main ref={containerRef}>
           {data.map((place, index) => {
-            const { visibility } = place;
+            const { from, isCurrent, to, visibility } = place;
 
             if (
               visibility === Permission.FRIENDS &&
@@ -64,23 +65,26 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
               return <Fragment key={index} />;
             }
 
+            const parsedFrom = new Date(Number(from));
+            const parsedTo = !isCurrent ? new Date(Number(to)) : null;
+
             const VisibilityIcon = visibilities.find(
               (v) => v.title === visibility
             )?.icon;
 
             return (
               <Item key={index}>
-                <MdHouse color="#8d8f93" size={24} />
+                <MdHouse color={Colors.PhilippineGray} size={24} />
                 <div style={{ flex: 1 }}>
-                  {place.to ? (
+                  {parsedTo ? (
                     <>
                       <p>{`Lived in ${place.city}`}</p>
-                      <p>{`From ${place.from.year} to ${place.to.year}`}</p>
+                      <p>{`From ${parsedFrom.getUTCFullYear()} to ${parsedTo.getUTCFullYear()}`}</p>
                     </>
                   ) : (
                     <>
                       <p>{`Lives in ${place.city}`}</p>
-                      <p>{`From ${place.from.year} to present`}</p>
+                      <p>{`From ${parsedFrom.getUTCFullYear()} to present`}</p>
                     </>
                   )}
                 </div>
@@ -96,7 +100,7 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
                     <div
                       style={{
                         alignItems: "center",
-                        backgroundColor: "#3a3b3c",
+                        backgroundColor: Colors.BlackOlive,
                         borderRadius: "50%",
                         display: "flex",
                         justifyContent: "center",
@@ -104,35 +108,52 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
                       }}
                       onClick={() => {
                         const city = "UPDATED_CITY";
-                        const fromDay = "25";
-                        const fromMonth = "April";
-                        const fromYear = "2008";
+                        const from = {
+                          day: "25",
+                          month: "April",
+                          year: "2008",
+                        };
                         const isCurrent = null;
-                        const toDay: string = "31";
-                        const toMonth: string = "August";
-                        const toYear: string = "2015";
+                        const to = { day: "31", month: "August", year: "2015" };
+
+                        const fromMonthAsNumber =
+                          new Date(
+                            `${from.month} ${from.day}, ${from.year}`
+                          ).getMonth() + 1;
+                        const toMonthAsNumber = to
+                          ? new Date(
+                              `${to.month} ${to.day}, ${to.year}`
+                            ).getMonth() + 1
+                          : null;
+                        const parsedFrom = new Date(
+                          new Date(
+                            parseInt(from.year),
+                            fromMonthAsNumber,
+                            parseInt(from.day)
+                          ).setUTCHours(0, 0, 0, 0)
+                        )
+                          .getTime()
+                          .toString();
+                        const parsedTo = toMonthAsNumber
+                          ? new Date(
+                              new Date(
+                                parseInt(to.year),
+                                toMonthAsNumber,
+                                parseInt(to.day)
+                              ).setUTCHours(0, 0, 0, 0)
+                            )
+                              .getTime()
+                              .toString()
+                          : null;
 
                         updateUserPlace({
                           variables: {
                             input: {
                               city,
-                              fromDay: parseInt(fromDay),
-                              fromMonth:
-                                new Date(
-                                  `${fromMonth} ${fromDay}, ${fromYear}`
-                                ).getMonth() + 1,
-                              fromYear: parseInt(fromYear),
+                              from: parsedFrom,
                               isCurrent,
                               placeId: place.id,
-                              toDay: toDay !== "DAY" ? parseInt(toDay) : null,
-                              toMonth:
-                                toMonth !== "MONTH"
-                                  ? new Date(
-                                      `${toMonth} ${toDay}, ${toYear}`
-                                    ).getMonth() + 1
-                                  : null,
-                              toYear:
-                                toYear !== "YEAR" ? parseInt(toYear) : null,
+                              to: parsedTo,
                               userId: "1",
                               visibility: Permission.ONLY_ME,
                             },
@@ -146,7 +167,7 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
                         });
                       }}
                     >
-                      <MdMoreHoriz color="#dfe1e5" size={24} />
+                      <MdMoreHoriz color={Colors.Platinum} size={24} />
                     </div>
                   </div>
                 )}
@@ -156,7 +177,7 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
         </Container.Main>
       ) : (
         <Container.NoData>
-          <MdHouse color="#8d8f93" size={24} />
+          <MdHouse color={Colors.PhilippineGray} size={24} />
           <NoDataText>No places to show</NoDataText>
         </Container.NoData>
       )}

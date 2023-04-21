@@ -1,5 +1,7 @@
 export enum FriendshipStatus {
   FRIEND,
+  FRIEND_REQUEST_RECEIVED,
+  FRIEND_REQUEST_SENT,
   ME,
   NOT_EXISTS,
   NOT_FRIEND,
