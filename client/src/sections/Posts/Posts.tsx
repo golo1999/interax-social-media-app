@@ -2,20 +2,14 @@ import { useLazyQuery } from "@apollo/client";
 
 import { CSSProperties, useEffect } from "react";
 
-import { UserPost } from "../../components";
+import { UserPost } from "components";
+import { Colors } from "environment";
 import {
+  GetAuthenticatedUserData,
+  GetFriendsPostsByUserIdData,
   GET_AUTHENTICATED_USER_WITH_FRIENDS,
   GET_FRIENDS_POSTS_BY_USER_ID,
-} from "../../helpers";
-import { Post, User } from "../../models";
-
-interface GetAuthenticatedUserData {
-  authenticatedUser: User;
-}
-
-interface GetFriendsPostsByUserIdData {
-  friendsPostsByOwnerId: Post[];
-}
+} from "helpers";
 
 interface Props {
   style?: CSSProperties;
@@ -53,7 +47,7 @@ export function Posts({ style }: Props) {
   if (called && loading) {
     return (
       <section style={style}>
-        <p style={{ color: "#cfd1d5" }}>Loading...</p>
+        <p style={{ color: Colors.LightGray }}>Loading...</p>
       </section>
     );
   }
@@ -61,20 +55,20 @@ export function Posts({ style }: Props) {
   if (!friendsPostsByUserIdData.friendsPostsByOwnerId) {
     return (
       <section style={style}>
-        <p style={{ color: "#cfd1d5" }}>No posts found...</p>
+        <p style={{ color: Colors.LightGray }}>No posts found...</p>
       </section>
     );
   }
 
   function getContent() {
     if (called && loading) {
-      return <p style={{ color: "#cfd1d5" }}>Loading...</p>;
+      return <p style={{ color: Colors.LightGray }}>Loading...</p>;
     }
 
     const friendsPosts = friendsPostsByUserIdData.friendsPostsByOwnerId;
 
     if (!friendsPosts || friendsPosts.length === 0) {
-      return <p style={{ color: "#cfd1d5" }}>No posts found...</p>;
+      return <p style={{ color: Colors.LightGray }}>No posts found...</p>;
     }
 
     return (

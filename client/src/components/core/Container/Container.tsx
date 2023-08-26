@@ -1,21 +1,36 @@
-import { CSSProperties } from "react";
+import { CSSProperties, ReactNode } from "react";
 import styled from "styled-components";
 
-const StyledContainer = styled.div`
-  background-color: #242526;
+import { Colors } from "environment";
+
+const StyledContainer = styled.div<StyleProps>`
+  background-color: ${Colors.RaisinBlack};
   border-radius: 5px;
-  color: #abadb1;
+  color: ${Colors.SilverChalice};
   display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-  padding: 1em;
+  ${({ vertical }) => vertical && "flex-direction: column;"}
+  gap: ${({ gap }) => (gap ||= "0.5em;")};
+  padding: ${({ padding }) => padding || "1em"};
 `;
 
-interface Props {
-  children: React.ReactNode;
+type CommonProps = {
+  children?: ReactNode;
   style?: CSSProperties;
-}
+};
 
-export function Container({ children, style }: Props) {
-  return <StyledContainer style={style}>{children}</StyledContainer>;
+type StyleProps = { gap?: string; padding?: string; vertical?: boolean };
+
+type Props = CommonProps & StyleProps;
+
+export function Container({ children, gap, padding, style, vertical }: Props) {
+  return (
+    <StyledContainer
+      gap={gap}
+      padding={padding}
+      vertical={vertical}
+      style={style}
+    >
+      {children}
+    </StyledContainer>
+  );
 }

@@ -1,2 +1,2 @@
-export { Friends } from "./Friends";
+export { Contacts } from "./Contacts";
 export { Posts } from "./Posts";

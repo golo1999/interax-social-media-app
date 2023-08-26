@@ -1,5 +1,5 @@
-import { Icons as AppIcons } from "../../../environment";
-import { Reaction, ReactionType } from "../../../models";
+import { Colors, Icons as AppIcons } from "environment";
+import { Reaction, ReactionType } from "models";
 
 interface ReactionButtonTextProps {
   currentUserId?: string;
@@ -82,18 +82,18 @@ export function getReactionButtonTextColor({
     : undefined;
 
   if (typeof userReactionType === "undefined") {
-    return "#8d8f93";
+    return Colors.PhilippineGray;
   }
 
   switch (userReactionType) {
     case ReactionType.ANGRY:
-      return "#c46e1c";
+      return Colors.Ochre;
     case ReactionType.LIKE:
-      return "#2d86ff";
+      return Colors.DodgerBlue;
     case ReactionType.LOVE:
-      return "#ee3553";
+      return Colors.Desire;
     default:
-      return "#f9ce58";
+      return Colors.NaplesYellow;
   }
 }
 

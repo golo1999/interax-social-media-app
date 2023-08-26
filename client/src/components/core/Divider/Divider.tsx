@@ -1,15 +1,36 @@
 import { CSSProperties } from "react";
-import styled from "styled-components";
 
-const StyledDivider = styled.div`
-  background-color: #383a3c;
-  height: 2px;
-`;
+import { Colors } from "environment";
 
-interface Props {
+import { Divider as StyledDivider } from "./Divider.style";
+
+type StyleProps = {
+  color?: keyof typeof Colors;
+  margin?: string;
+  thickness?: string;
+  vertical?: boolean;
+};
+
+type CommonProps = {
   style?: CSSProperties;
-}
+};
 
-export function Divider({ style }: Props) {
-  return <StyledDivider style={style} />;
+type Props = CommonProps & StyleProps;
+
+export function Divider({
+  color = "Onyx",
+  margin,
+  style,
+  thickness = "1px",
+  vertical = false,
+}: Props) {
+  return (
+    <StyledDivider
+      color={color}
+      margin={margin}
+      style={style}
+      thickness={thickness}
+      vertical={vertical}
+    />
+  );
 }

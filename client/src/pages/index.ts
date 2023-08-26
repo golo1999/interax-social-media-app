@@ -1,2 +1,9 @@
+export { ForgotPasswordPage } from "./ForgotPasswordPage";
+export { FriendsPage } from "./FriendsPage";
 export { HomePage } from "./HomePage";
+export { LoginPage } from "./LoginPage";
+export { MessengerPage } from "./MessengerPage";
+export { NotFoundPage } from "./NotFoundPage";
 export { ProfilePage } from "./ProfilePage";
+export { RegistrationPage } from "./RegistrationPage";
+export { WatchPage } from "./WatchPage";

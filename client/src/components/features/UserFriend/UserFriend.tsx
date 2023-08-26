@@ -1,21 +1,24 @@
-import { UserPhoto } from "../../../components";
-import { User } from "../../../models";
+import { UserPhoto } from "components";
+import { Colors } from "environment";
+import { User } from "models";
 
 interface Props {
   friend: User;
+  onClick?: () => void;
 }
 
-export function UserFriend({ friend }: Props) {
+export function UserFriend({ friend, onClick }: Props) {
   const displayedName = `${friend.firstName} ${friend.lastName}`;
 
   return (
     <div
       style={{
         alignItems: "center",
-        color: "#cfd1d5",
+        color: Colors.LightGray,
         display: "flex",
         gap: "0.5em",
       }}
+      onClick={onClick}
     >
       <UserPhoto
         user={friend}
@@ -23,7 +26,16 @@ export function UserFriend({ friend }: Props) {
           // TODO
         }}
       />
-      <p style={{ fontWeight: "bold" }}>{displayedName}</p>
+      <p
+        style={{
+          fontWeight: "bold",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {displayedName}
+      </p>
     </div>
   );
 }

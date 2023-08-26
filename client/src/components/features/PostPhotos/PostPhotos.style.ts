@@ -1,5 +1,7 @@
 import styled from "styled-components";
 
+import { Colors } from "environment";
+
 interface PhotoContainerProps {
   photosNumber: number;
 }
@@ -18,7 +20,7 @@ export const Blurred = {
     position: relative;
   `,
   PhotoText: styled.p`
-    color: #cfd1d5;
+    color: ${Colors.LightGray};
     font-size: 3em;
     font-weight: bold;
     left: 50%;
@@ -36,58 +38,58 @@ export const Normal = {
     object-fit: cover;
     width: 100%;
   `,
-  PhotoContainer: styled.div.attrs((props) => ({
-    className: props.className,
+  PhotoContainer: styled.div.attrs(({ className }) => ({
+    className,
   }))`
     &.zero {
-      grid-column: ${(props: PhotoContainerProps) =>
-        props.photosNumber > 4 || props.photosNumber === 2
+      grid-column: ${({ photosNumber }: PhotoContainerProps) =>
+        photosNumber > 4 || photosNumber === 2
           ? "1 / span 3"
-          : props.photosNumber === 4 || props.photosNumber === 3
+          : photosNumber === 4 || photosNumber === 3
           ? "1 / span 4"
           : "1 / span 6"};
-      grid-row: ${(props) =>
-        props.photosNumber > 4 ? "1 / span 6" : "1 / span 12"};
+      grid-row: ${({ photosNumber }) =>
+        photosNumber > 4 ? "1 / span 6" : "1 / span 12"};
     }
     &.one {
-      ${(props) =>
-        props.photosNumber > 4
+      ${({ photosNumber }) =>
+        photosNumber > 4
           ? "grid-column: 1 / span 3; grid-row: 7 / span 6;"
-          : props.photosNumber === 4
+          : photosNumber === 4
           ? "grid-column: 5 / span 2; grid-row: 1 / span 4"
-          : props.photosNumber === 3
+          : photosNumber === 3
           ? "grid-column: 5 / span 2; grid-row: 1 / span 6"
-          : props.photosNumber === 2
+          : photosNumber === 2
           ? "grid-column: 4 / span 3; grid-row: 1 / span 12"
           : undefined}
     }
     &.two {
-      ${(props) =>
-        props.photosNumber > 4
+      ${({ photosNumber }) =>
+        photosNumber > 4
           ? "grid-column: 4 / span 3; grid-row: 1 / span 4;"
-          : props.photosNumber === 4
+          : photosNumber === 4
           ? "grid-column: 5 / span 2; grid-row: 5 / span 4"
-          : props.photosNumber === 3
+          : photosNumber === 3
           ? "grid-column: 5 / span 3; grid-row: 7 / span 6"
           : undefined}
     }
     &.three {
-      ${(props) =>
-        props.photosNumber > 4
+      ${({ photosNumber }) =>
+        photosNumber > 4
           ? "grid-column: 4 / span 3; grid-row: 5 / span 4;"
-          : props.photosNumber === 4
+          : photosNumber === 4
           ? "grid-column: 5 / span 2; grid-row: 9 / span 4"
           : undefined}
     }
     &.four {
-      ${(props) =>
-        props.photosNumber > 4 &&
-        "grid-column: 4 / span 3; grid-row: 9 / span 4"}
+      ${({ photosNumber }) =>
+        photosNumber > 4 && "grid-column: 4 / span 3; grid-row: 9 / span 4"}
     }
   `,
 };
 
 export const PhotosContainer = styled.div`
+  cursor: pointer;
   display: grid;
   gap: 2px;
   grid-template-columns: repeat(6, 1fr);

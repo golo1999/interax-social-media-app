@@ -18,11 +18,13 @@ import {
   Container,
   Divider,
   PostComments,
+  PostOptionsList,
   PostPhotos,
   ReactionEmojis,
   UserPhoto,
   WriteComment,
-} from "../..";
+} from "components";
+import { Colors } from "environment";
 import {
   ADD_POST_COMMENT,
   ADD_POST_REACTION,
@@ -30,9 +32,15 @@ import {
   GET_POST,
   REMOVE_POST_REACTION,
   UPDATE_POST_REACTION,
-  getTimeFromDate,
-} from "../../../helpers";
-import { Post, ReactionType, User } from "../../../models";
+  getTimePassedFromDateTime,
+  GetPostData,
+  AddPostCommentData,
+  AddPostReactionData,
+  RemovePostReactionData,
+  UpdatePostReactionData,
+} from "helpers";
+import { ReactionType, User } from "models";
+import { useMessagesStore, useSettingsStore } from "store";
 
 import {
   getCommentsText,
@@ -45,9 +53,8 @@ import {
 } from "./UserPost.helpers";
 import {
   Button,
-  ButtonsContainer,
+  Container as StyledContainer,
   Header,
-  PostOwnerContainer,
   PostOwnerName,
   PostText,
 } from "./UserPost.style";
@@ -56,10 +63,6 @@ enum ButtonTypes {
   COMMENT,
   REACTION,
   SHARE,
-}
-
-interface GetPostData {
-  post: Post | null;
 }
 
 interface PostReactionCount {
@@ -74,7 +77,7 @@ interface Props {
 }
 
 export function UserPost({ authenticatedUser, id: postId }: Props) {
-  const [addPostComment] = useMutation(ADD_POST_COMMENT, {
+  const [addPostComment] = useMutation<AddPostCommentData>(ADD_POST_COMMENT, {
     refetchQueries: [
       {
         query: GET_FRIENDS_POSTS_BY_USER_ID,
@@ -82,32 +85,41 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
       },
     ],
   });
-  const [addPostReaction] = useMutation(ADD_POST_REACTION, {
-    refetchQueries: [
-      {
-        query: GET_FRIENDS_POSTS_BY_USER_ID,
-        variables: { ownerId: authenticatedUser?.id },
-      },
-    ],
-  });
+  const [addPostReaction] = useMutation<AddPostReactionData>(
+    ADD_POST_REACTION,
+    {
+      refetchQueries: [
+        {
+          query: GET_FRIENDS_POSTS_BY_USER_ID,
+          variables: { ownerId: authenticatedUser?.id },
+        },
+      ],
+    }
+  );
   const [fetchPost, { data: post = { post: null } }] =
     useLazyQuery<GetPostData>(GET_POST);
-  const [removePostReaction] = useMutation(REMOVE_POST_REACTION, {
-    refetchQueries: [
-      {
-        query: GET_FRIENDS_POSTS_BY_USER_ID,
-        variables: { ownerId: authenticatedUser?.id },
-      },
-    ],
-  });
-  const [updatePostReaction] = useMutation(UPDATE_POST_REACTION, {
-    refetchQueries: [
-      {
-        query: GET_FRIENDS_POSTS_BY_USER_ID,
-        variables: { ownerId: authenticatedUser?.id },
-      },
-    ],
-  });
+  const [removePostReaction] = useMutation<RemovePostReactionData>(
+    REMOVE_POST_REACTION,
+    {
+      refetchQueries: [
+        {
+          query: GET_FRIENDS_POSTS_BY_USER_ID,
+          variables: { ownerId: authenticatedUser?.id },
+        },
+      ],
+    }
+  );
+  const [updatePostReaction] = useMutation<UpdatePostReactionData>(
+    UPDATE_POST_REACTION,
+    {
+      refetchQueries: [
+        {
+          query: GET_FRIENDS_POSTS_BY_USER_ID,
+          variables: { ownerId: authenticatedUser?.id },
+        },
+      ],
+    }
+  );
 
   useEffect(() => {
     fetchPost({ variables: { id: postId } });
@@ -128,14 +140,22 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
   const [postReactionsCount, setPostReactionsCount] = useState<
     PostReactionCount[]
   >([]);
+  const { isChatModalVisible, closeChatModal } = useMessagesStore();
+  const {
+    isPostOptionsListVisible,
+    isSettingsListVisible,
+    closePostOptionsList,
+    closeSettingsList,
+    openPostOptionsList,
+  } = useSettingsStore();
 
   useEffect(() => {
-    const postHasUserReaction =
+    const hasUserReaction =
       post.post?.reactions?.some(
         (reaction) => reaction.owner.id === authenticatedUser?.id
       ) || false;
 
-    setHasReacted(postHasUserReaction);
+    setHasReacted(hasUserReaction);
   }, [authenticatedUser, post.post]);
 
   useEffect(() => {
@@ -170,11 +190,23 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
           currentUserId: authenticatedUser?.id,
           reactions: post.post?.reactions || null,
         })
-      : "#8d8f93";
+      : Colors.PhilippineGray;
   }
 
   function handleMoreOptionsClick() {
-    // TODO
+    if (isChatModalVisible) {
+      closeChatModal();
+    }
+
+    if (isSettingsListVisible) {
+      closeSettingsList();
+    }
+
+    if (!isPostOptionsListVisible) {
+      openPostOptionsList(postId);
+    } else {
+      closePostOptionsList();
+    }
   }
 
   function handleReactionClick() {
@@ -256,11 +288,11 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
         }
       }
 
-      const alt = postReaction.type
-        .slice(0, 1)
-        .concat(postReaction.type.slice(1).toLowerCase());
+      const { icon, type } = postReaction;
 
-      return <img key={index} alt={alt} src={postReaction.icon} />;
+      const alt = type.slice(0, 1).concat(type.slice(1).toLowerCase());
+
+      return <img key={index} alt={alt} height={24} src={icon} width={24} />;
     });
   }, [postReactionsCount]);
 
@@ -274,9 +306,9 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
   const postOwnerNameText = `${owner.firstName} ${owner.lastName}`;
 
   return (
-    <Container>
+    <Container vertical>
       <Header>
-        <PostOwnerContainer>
+        <StyledContainer.PostOwner>
           <UserPhoto
             user={owner}
             onPhotoClick={() => navigate(`/${owner.username}`)}
@@ -285,16 +317,27 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
             <PostOwnerName onClick={() => navigate(`/${owner.username}`)}>
               {postOwnerNameText}
             </PostOwnerName>
-            <p>{getTimeFromDate(dateTime)}</p>
+            <p style={{ cursor: "default" }}>
+              {getTimePassedFromDateTime(dateTime, "POST")}
+            </p>
           </div>
-        </PostOwnerContainer>
-        <MdMoreHoriz
-          color="#8d8f93"
-          size="1.5em"
-          onClick={handleMoreOptionsClick}
-        />
+        </StyledContainer.PostOwner>
+        <StyledContainer.MoreOptionsIcon>
+          <MdMoreHoriz
+            color={Colors.PhilippineGray}
+            size="1.5em"
+            onClick={handleMoreOptionsClick}
+          />
+        </StyledContainer.MoreOptionsIcon>
       </Header>
-      <div ref={textContainerRef} style={{ lineHeight: "21px" }}>
+      <div
+        ref={textContainerRef}
+        style={{ lineHeight: "21px", position: "relative" }}
+      >
+        {isPostOptionsListVisible &&
+          postId === isPostOptionsListVisible.postId && (
+            <PostOptionsList postOwner={owner} />
+          )}
         <PostText
           style={
             !isTextCompletelyVisible
@@ -344,13 +387,17 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
             {reactions && <p>{reactions.length}</p>}
           </div>
           <div style={{ display: "flex", gap: "10px" }}>
-            {comments && <p>{getCommentsText(comments.length)}</p>}
-            {shares && <p>{getSharesText(shares.length)}</p>}
+            {comments && comments.length > 0 && (
+              <p>{getCommentsText(comments.length)}</p>
+            )}
+            {shares && shares.length > 0 && (
+              <p>{getSharesText(shares.length)}</p>
+            )}
           </div>
         </div>
       )}
-      <Divider />
-      <ButtonsContainer>
+      <Divider thickness="2px" />
+      <StyledContainer.Buttons>
         <Button
           style={{ color: getButtonColor(ButtonTypes.REACTION) }}
           onClick={handleReactionClick}
@@ -432,15 +479,15 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
           <RiShareForwardLine size={24} />
           Share
         </Button>
-      </ButtonsContainer>
+      </StyledContainer.Buttons>
       {((comments && comments?.length > 0) || isWriteCommentVisible) && (
-        <Divider />
+        <Divider thickness="2px" />
       )}
       {isWriteCommentVisible && (
         <WriteComment
+          authenticatedUser={authenticatedUser || null}
           autoFocus
           placeholder="Write a comment..."
-          user={authenticatedUser}
           style={{ marginTop: "0.5em" }}
           onCancelClick={() => {
             setIsWriteCommentVisible((prev) => !prev);

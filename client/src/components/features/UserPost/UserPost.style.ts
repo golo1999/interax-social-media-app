@@ -1,9 +1,6 @@
 import styled from "styled-components";
 
-export const Header = styled.div`
-  align-items: center;
-  display: flex;
-`;
+import { Colors } from "environment";
 
 export const Button = styled.button`
   align-items: center;
@@ -18,29 +15,56 @@ export const Button = styled.button`
   padding: 0.5em 0;
 
   &:hover {
-    background-color: #3a3b3c;
+    background-color: ${Colors.BlackOlive};
   }
 `;
 
-export const ButtonsContainer = styled.div`
-  align-items: center;
-  display: flex;
-  position: relative;
-`;
+export const Container = {
+  Buttons: styled.div`
+    align-items: center;
+    display: flex;
+    position: relative;
+  `,
+  MoreOptionsIcon: styled.div`
+    align-items: center;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    padding: 0.25em;
 
-export const PostOwnerContainer = styled.div`
+    &:hover {
+      background-color: ${Colors.BlackOlive};
+    }
+  `,
+  PostOwner: styled.div`
+    align-items: center;
+    display: flex;
+    flex: 1;
+    gap: 1em;
+  `,
+};
+
+export const Header = styled.div`
   align-items: center;
   display: flex;
-  flex: 1;
   gap: 1em;
 `;
 
 export const PostOwnerName = styled.p`
-  color: #cfd1d5;
+  color: ${Colors.LightGray};
+  cursor: pointer;
   font-weight: bold;
+  max-width: 60ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
   user-select: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 export const PostText = styled.span`
-  color: #cfd1d5;
+  color: ${Colors.LightGray};
 `;

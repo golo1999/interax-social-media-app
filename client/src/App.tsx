@@ -1,6 +1,6 @@
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 
-import { Router } from "./router";
+import { Router } from "router";
 
 import "./App.css";
 
