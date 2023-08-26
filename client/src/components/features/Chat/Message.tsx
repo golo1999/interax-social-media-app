@@ -14,7 +14,8 @@ const Container = styled.div<ContainerProps>`
   display: flex;
   flex: 1;
   gap: 0.5em;
-  ${(props) => props.isAuthenticatedUser && "justify-content: flex-end;"};
+  ${({ isAuthenticatedUser }) =>
+    isAuthenticatedUser && "justify-content: flex-end;"};
 `;
 
 interface TextProps {
@@ -23,8 +24,8 @@ interface TextProps {
 }
 
 const Text = styled.p<TextProps>`
-  background-color: ${(props) =>
-    props.isAuthenticatedUser ? props.theme : Colors.Arsenic};
+  background-color: ${({ isAuthenticatedUser, theme }) =>
+    isAuthenticatedUser ? theme : Colors.Arsenic};
   border-radius: 1em;
   color: white;
   max-width: 100%;

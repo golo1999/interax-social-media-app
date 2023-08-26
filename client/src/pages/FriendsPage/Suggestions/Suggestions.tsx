@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { MdArrowDropDown } from "react-icons/md";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 import { User } from "models";
 

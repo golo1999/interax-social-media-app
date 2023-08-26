@@ -24,7 +24,7 @@ export function EditDetailsModal({ onCloseClick, onSaveClick }: Props) {
     <Modal minHeight="50vh" ref={modalContainerRef} width="550px">
       <Modal.Header
         alignItems="center"
-        color={Colors.Platinum}
+        color="Platinum"
         gap="0.5em"
         justifyContent="space-between"
         padding="0.75em"
@@ -37,9 +37,9 @@ export function EditDetailsModal({ onCloseClick, onSaveClick }: Props) {
           <MdClose color={Colors.PhilippineGray} size={24} />
         </CloseIconContainer>
       </Modal.Header>
-      <Divider thickness="1px" />
+      <Divider />
       <Modal.Body
-        color={Colors.Platinum}
+        color="Platinum"
         direction="column"
         gap="1em"
         padding="0.75em"
@@ -69,7 +69,7 @@ export function EditDetailsModal({ onCloseClick, onSaveClick }: Props) {
           <h4>Relationship</h4>
         </div>
       </Modal.Body>
-      <Divider thickness="1px" />
+      <Divider />
       <Modal.Footer gap="0.5em" justifyContent="space-between" padding="0.75em">
         <h4 style={{ color: Colors.BrightNavyBlue }}>
           Update Your Information

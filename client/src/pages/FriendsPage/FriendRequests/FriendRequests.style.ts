@@ -51,7 +51,8 @@ export const Container = {
     display: flex;
     flex-direction: column;
     gap: 0.5em;
-    ${(props) => props.mutualFriendsCount === 0 && "padding-bottom: 0.25em;"};
+    ${({ mutualFriendsCount }) =>
+      mutualFriendsCount === 0 && "padding-bottom: 0.25em;"};
   `,
   Main: styled.div`
     display: flex;

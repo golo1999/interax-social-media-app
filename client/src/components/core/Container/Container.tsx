@@ -8,9 +8,9 @@ const StyledContainer = styled.div<StyleProps>`
   border-radius: 5px;
   color: ${Colors.SilverChalice};
   display: flex;
-  ${(props) => props.vertical && "flex-direction: column;"}
-  gap: ${(props) => (props.gap ||= "0.5em;")};
-  padding: ${(props) => props.padding || "1em"};
+  ${({ vertical }) => vertical && "flex-direction: column;"}
+  gap: ${({ gap }) => (gap ||= "0.5em;")};
+  padding: ${({ padding }) => padding || "1em"};
 `;
 
 type CommonProps = {

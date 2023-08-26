@@ -134,11 +134,7 @@ export function FriendsPage() {
 
   return (
     <Container.Main>
-      <Header
-        authenticatedUser={authenticatedUserData.authenticatedUser}
-        items={headerItems}
-        selectedItem={null}
-      />
+      <Header items={headerItems} selectedItem={null} />
       <Container.Content>
         <Container.Navigation>
           <NavigationTitle>Friends</NavigationTitle>
@@ -148,7 +144,7 @@ export function FriendsPage() {
             onItemSelected={handleNavigationItemClick}
           />
         </Container.Navigation>
-        <Divider thickness="1px" vertical />
+        <Divider vertical />
         <Container.NavigationItem>
           {selectedNavigationItem === NAVIGATION_ITEMS[1] ? (
             <FriendRequests

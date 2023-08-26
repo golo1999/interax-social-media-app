@@ -2,7 +2,7 @@ import { useLazyQuery } from "@apollo/client";
 
 import { useEffect, useState } from "react";
 import { MdInfo } from "react-icons/md";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Chat, ChatList, Divider, Header, UserPhoto } from "components";
 import {
@@ -105,14 +105,10 @@ export function MessengerPage() {
 
   return (
     <Container.Main>
-      <Header
-        authenticatedUser={authenticatedUserData.authenticatedUser}
-        items={headerItems}
-        selectedItem={null}
-      />
+      <Header items={headerItems} selectedItem={null} />
       <Container.Content>
         <ChatList />
-        <Divider thickness="1px" vertical />
+        <Divider vertical />
         <Container.Chat>
           <Container.ChatHeader>
             <Container.User
@@ -142,7 +138,7 @@ export function MessengerPage() {
         </Container.Chat>
         {isComplementaryVisible && (
           <>
-            <Divider thickness="1px" vertical />
+            <Divider vertical />
             <Complementary
               authenticatedUser={authenticatedUserData.authenticatedUser}
               conversation={conversation.conversationBetween}

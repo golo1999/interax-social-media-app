@@ -40,7 +40,7 @@ export const IconContainer = styled.span<IconContainerProps>`
   display: flex;
   justify-content: center;
   padding: 0.25em;
-  ${(props) => props.isHidden && "visibility: hidden;"};
+  ${({ isHidden }) => isHidden && "visibility: hidden;"};
   width: fit-content;
 
   &:hover {
@@ -65,7 +65,8 @@ export const ListItem = {
   `,
   Element: styled.li<Props>`
     align-items: center;
-    ${(props) => props.isSelected && `background-color: ${Colors.GunMetal};`};
+    ${({ isSelected }) =>
+      isSelected && `background-color: ${Colors.GunMetal};`};
     border-radius: 5px;
     display: flex;
     justify-content: space-between;
@@ -73,14 +74,14 @@ export const ListItem = {
     padding: 0.5em;
 
     &:hover {
-      ${(props) =>
-        !props.isSelected && `background-color: ${Colors.BlackOlive};`}
+      ${({ isSelected }) =>
+        !isSelected && `background-color: ${Colors.BlackOlive};`}
     }
   `,
   IconContainer: styled.div<Props>`
     align-items: center;
-    background-color: ${(props) =>
-      props.isSelected ? Colors.Arsenic : Colors.DarkLiver};
+    background-color: ${({ isSelected }) =>
+      isSelected ? Colors.Arsenic : Colors.DarkLiver};
     border-radius: 50%;
     display: flex;
     justify-content: center;

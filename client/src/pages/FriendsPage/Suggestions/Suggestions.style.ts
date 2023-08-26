@@ -51,8 +51,8 @@ export const Container = {
     display: flex;
     flex-direction: column;
     gap: 0.5em;
-    ${(props) =>
-      props.friendshipSuggestionsCount === 0 && "padding-bottom: 0.25em;"};
+    ${({ friendshipSuggestionsCount }) =>
+      friendshipSuggestionsCount === 0 && "padding-bottom: 0.25em;"};
   `,
   Main: styled.div`
     display: flex;

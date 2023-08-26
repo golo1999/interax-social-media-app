@@ -1,66 +1,61 @@
-import styled from "styled-components";
+import { CSSProperties, useMemo } from "react";
+import { v4 as uuidv4 } from "uuid";
 
-const Label = styled.label<StyleProps>`
-  color: ${(props) => props.color};
-  font-weight: 600;
-`;
+import { Colors } from "environment";
 
-const Radio = styled.input.attrs({ type: "radio" })<StyleProps>`
-  -webkit-appearance: none;
-  appearance: none;
-  border: 2px solid ${(props) => props.color};
-  border-radius: 50%;
-  height: 1.5em;
-  margin: 0;
-  width: 1.5em;
-
-  ::after {
-    border-radius: 50%;
-    content: "";
-    display: block;
-    height: 0.75em;
-    margin: 3px;
-    width: 0.75em;
-  }
-
-  :checked {
-    ::after {
-      background-color: ${(props) => props.color};
-    }
-  }
-`;
-
-const Wrapper = styled.div`
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-`;
+import { Label, Radio, Wrapper } from "./RadioButton.style";
 
 type CommonProps = {
   isChecked: boolean;
-  label?: string;
   onChange: () => void;
 };
 
+type LabelPosition = "end" | "start";
+
+type LabelProps =
+  | { label?: never; labelPosition?: never }
+  | { label: string; labelPosition?: LabelPosition };
+
 type StyleProps = {
-  color: string;
+  color: keyof typeof Colors;
+  inputStyle?: CSSProperties;
+  labelStyle?: CSSProperties;
+  wrapperStyle?: CSSProperties;
 };
 
-type Props = CommonProps & StyleProps;
+type Props = CommonProps & LabelProps & StyleProps;
 
-export function RadioButton({ color, isChecked, label, onChange }: Props) {
-  const radioId = label ? "radio-button" : undefined;
+export function RadioButton({
+  color,
+  inputStyle,
+  isChecked,
+  label,
+  labelPosition = "end",
+  labelStyle,
+  wrapperStyle,
+  onChange,
+}: Props) {
+  const radioId = useMemo(
+    () => (label ? `radio-button-${label}-${uuidv4()}` : undefined),
+    [label]
+  );
 
   return (
-    <Wrapper>
+    <Wrapper style={wrapperStyle} onClick={onChange}>
+      {label && labelPosition === "start" && (
+        <Label color={color} htmlFor={radioId} style={labelStyle}>
+          {label}
+        </Label>
+      )}
       <Radio
         id={radioId}
         color={color}
         checked={isChecked}
+        style={inputStyle}
         onChange={onChange}
       />
-      {label && (
-        <Label color={color} htmlFor="radio-button">
+      {label && labelPosition === "end" && (
+        <Label color={color} htmlFor={radioId} style={labelStyle}>
           {label}
         </Label>
       )}

@@ -13,28 +13,27 @@ export const Container = {
     flex: 1;
     gap: 0.5em;
     overflow: auto;
-    padding: 0.5em;
   `,
   Main: styled.section<MainContainerProps>`
     background-color: ${Colors.RaisinBlack};
-    ${(props) => props.isModal && "border-radius: 5px;"};
-    ${(props) => props.isModal && "bottom: 1em;"};
-    ${(props) => props.isModal && "box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);"};
+    ${({ isModal }) => isModal && "border-radius: 5px;"};
+    ${({ isModal }) => isModal && "bottom: 1em;"};
+    ${({ isModal }) => isModal && "box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);"};
     display: flex;
     flex-direction: column;
-    ${(props) => props.isModal && "flex: 1;"};
-    ${(props) => props.isModal && "position: fixed;"};
-    ${(props) => props.isModal && "right: 1em;"};
-    ${(props) => props.isModal && "top: 50px;"};
+    ${({ isModal }) => isModal && "flex: 1;"};
+    padding: 0.5em;
+    ${({ isModal }) => isModal && "position: fixed;"};
+    ${({ isModal }) => isModal && "right: 1em;"};
+    ${({ isModal }) => isModal && "top: 50px;"};
     width: 350px;
-    ${(props) => props.isModal && "z-index: 2;"};
+    ${({ isModal }) => isModal && "z-index: 2;"};
   `,
 };
 
 export const Footer = {
   Element: styled.footer`
     align-self: center;
-    padding: 0.5em;
     color: ${Colors.BrilliantAzure};
 
     &:hover {

@@ -3,7 +3,7 @@ import { useLazyQuery } from "@apollo/client";
 import { useEffect, useMemo } from "react";
 import { BsPencilSquare } from "react-icons/bs";
 import { HiOutlineArrowsExpand } from "react-icons/hi";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 import { SearchInput } from "components";
 import { GET_AUTHENTICATED_USER, GetAuthenticatedUserData } from "helpers";

@@ -117,6 +117,22 @@ export function Friends({ authenticatedUser, user }: Props) {
                   key={index}
                   authenticatedUser={authenticatedUser}
                   user={friend}
+                  // onAddFriendClick={() => {
+                  //   addUserFriend({
+                  //     variables: {
+                  //       input: {
+                  //         first: authenticatedUser?.id,
+                  //         second: friend.id,
+                  //       },
+                  //     },
+                  //     refetchQueries: [
+                  //       {
+                  //         query: GET_USER_BY_USERNAME,
+                  //         variables: { username: authenticatedUser?.username },
+                  //       },
+                  //     ],
+                  //   });
+                  // }}
                   onAddFriendClick={() => {
                     sendUserFriendRequest({
                       variables: {
@@ -236,26 +252,26 @@ function Friend({
             <MdMoreHoriz size={24} />
           ) : authenticatedUserAlreadyRequestedFriendship ? (
             <Button
-              backgroundColor={Colors.BrightNavyBlue}
-              color="white"
-              hoverBackgroundColor={Colors.BleuDeFrance}
+              backgroundColor="BrightNavyBlue"
+              color="White"
+              hoverBackgroundColor="BleuDeFrance"
               onClick={onRemoveFriendRequestClick}
             >
               Friend request sent
             </Button>
           ) : userAlreadyRequestedFriendship ? (
             <Button
-              backgroundColor={Colors.BrightNavyBlue}
-              color="white"
-              hoverBackgroundColor={Colors.BleuDeFrance}
+              backgroundColor="BrightNavyBlue"
+              color="White"
+              hoverBackgroundColor="BleuDeFrance"
             >
               Accept friend request
             </Button>
           ) : (
             <Button
-              backgroundColor={Colors.BrightNavyBlue}
-              color="white"
-              hoverBackgroundColor={Colors.BleuDeFrance}
+              backgroundColor="BrightNavyBlue"
+              color="White"
+              hoverBackgroundColor="BleuDeFrance"
               onClick={onAddFriendClick}
             >
               Add friend

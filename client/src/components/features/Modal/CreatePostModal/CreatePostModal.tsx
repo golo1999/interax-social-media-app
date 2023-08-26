@@ -133,7 +133,7 @@ export function CreatePostModal({
       <Modal minHeight="50vh" width="550px">
         <Modal.Header
           alignItems="center"
-          color={Colors.Platinum}
+          color="Platinum"
           gap="0.5em"
           justifyContent="space-between"
           padding="0.75em"
@@ -148,7 +148,7 @@ export function CreatePostModal({
             <MdClose color={Colors.PhilippineGray} size={24} />
           </Container.Icon>
         </Modal.Header>
-        <Divider thickness="1px" />
+        <Divider />
         <Modal.Body direction="column" gap="1em" padding="1em">
           <div style={{ alignItems: "center", display: "flex", gap: "0.5em" }}>
             <UserPhoto user={authenticatedUser} />

@@ -92,7 +92,7 @@ export function MessageBox({ userId, onCloseClick, onMinimizeClick }: Props) {
           <Icon.Close color={Colors.Azure} size={24} onClick={onCloseClick} />
         </Container.Icons>
       </Header>
-      <Divider thickness="1px" />
+      <Divider />
       <Chat chatHeight="350px" userId={userId} />
     </Container.Main>
   );

@@ -45,14 +45,14 @@ export const List = styled.ul<ListProps>`
   flex-direction: column;
   list-style-type: none;
   max-height: calc(
-    (${(props) => props.displayedItems}) * ${(props) => props.itemHeight}px + 2 *
-      0.5em
+    (${({ displayedItems }) => displayedItems}) *
+      ${({ itemHeight }) => itemHeight}px + 2 * 0.5em
   );
   overflow: auto;
   padding: 0.5em;
   position: absolute;
-  top: ${(props) => `${props.top}px`};
-  visibility: ${(props) => (props.isExpanded ? "visible" : "hidden")};
+  top: ${({ top }) => `${top}px`};
+  visibility: ${({ isExpanded }) => (isExpanded ? "visible" : "hidden")};
   width: 300px;
 
   &::-webkit-scrollbar {
@@ -65,16 +65,15 @@ export const List = styled.ul<ListProps>`
 `;
 
 export const ListItem = styled.li<ListItemProps>`
-  ${(props) => props.isSelected && `background-color: ${Colors.BlackOlive};`}
-  border: ${(props) =>
-    props.isSelected
-      ? `2px solid ${Colors.LightGray}`
-      : "2px solid transparent"};
+  ${({ isSelected }) => isSelected && `background-color: ${Colors.BlackOlive};`}
+  border: ${({ isSelected }) =>
+    isSelected ? `2px solid ${Colors.LightGray}` : "2px solid transparent"};
   border-radius: 5px;
   flex: 1;
   padding: 0.5em;
 
   &:hover {
-    ${(props) => !props.isSelected && `background-color: ${Colors.BlackOlive};`}
+    ${({ isSelected }) =>
+      !isSelected && `background-color: ${Colors.BlackOlive};`}
   }
 `;

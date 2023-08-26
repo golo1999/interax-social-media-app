@@ -115,11 +115,14 @@ export function ProfilePage() {
     return <></>;
   }
 
-  const { coverPhotos, firstName, friends, lastName } = user;
+  const { coverPhotos, firstName, friends, lastName, profilePhotos } = user;
 
   const currentCoverPhoto =
     coverPhotos?.find((photo) => photo.isCurrent) || null;
+  const currentProfilePhoto =
+    profilePhotos?.find((photo) => photo.isCurrent) || null;
   const hasCoverPhoto = !!currentCoverPhoto;
+  const hasProfilePhoto = !!currentProfilePhoto;
 
   return (
     <div
@@ -130,7 +133,7 @@ export function ProfilePage() {
       }}
     >
       <Header
-        authenticatedUser={authenticatedUserData.authenticatedUser}
+        // authenticatedUser={authenticatedUserData.authenticatedUser}
         selectedItem={null}
         items={headerItems}
       />
@@ -368,9 +371,9 @@ function ButtonsContainer({
     >
       {friendshipStatus === FriendshipStatus.ME ? (
         <Button
-          backgroundColor={Colors.BlackOlive}
-          color="white"
-          hoverBackgroundColor={Colors.DarkLiver}
+          backgroundColor="BlackOlive"
+          color="White"
+          hoverBackgroundColor="DarkLiver"
         >
           <MdEdit color="white" />
           Edit profile
@@ -378,17 +381,17 @@ function ButtonsContainer({
       ) : friendshipStatus === FriendshipStatus.FRIEND ? (
         <>
           <Button
-            backgroundColor={Colors.BlackOlive}
-            color="white"
-            hoverBackgroundColor={Colors.DarkLiver}
+            backgroundColor="BlackOlive"
+            color="White"
+            hoverBackgroundColor="DarkLiver"
           >
             <BsPersonCheckFill color="white" />
             Friends
           </Button>
           <Button
-            backgroundColor={Colors.BlackOlive}
-            color="white"
-            hoverBackgroundColor={Colors.DarkLiver}
+            backgroundColor="BlackOlive"
+            color="White"
+            hoverBackgroundColor="DarkLiver"
             onClick={onMessageButtonClick}
           >
             <BsMessenger color="white" />
@@ -398,18 +401,18 @@ function ButtonsContainer({
       ) : friendshipStatus === FriendshipStatus.FRIEND_REQUEST_RECEIVED ? (
         <>
           <Button
-            backgroundColor={Colors.BrightNavyBlue}
-            color="white"
-            hoverBackgroundColor={Colors.BleuDeFrance}
+            backgroundColor="BrightNavyBlue"
+            color="White"
+            hoverBackgroundColor="BleuDeFrance"
             onClick={onAcceptFriendButtonClick}
           >
             <BsPersonPlusFill color="white" />
             Accept friend request
           </Button>
           <Button
-            backgroundColor={Colors.BlackOlive}
-            color="white"
-            hoverBackgroundColor={Colors.DarkLiver}
+            backgroundColor="BlackOlive"
+            color="White"
+            hoverBackgroundColor="DarkLiver"
           >
             <BsMessenger color="white" />
             Message
@@ -418,18 +421,18 @@ function ButtonsContainer({
       ) : friendshipStatus === FriendshipStatus.FRIEND_REQUEST_SENT ? (
         <>
           <Button
-            backgroundColor={Colors.BrightNavyBlue}
-            color="white"
-            hoverBackgroundColor={Colors.BleuDeFrance}
+            backgroundColor="BrightNavyBlue"
+            color="White"
+            hoverBackgroundColor="BleuDeFrance"
             onClick={onFriendRequestSentButtonClick}
           >
             <BsPersonPlusFill color="white" />
             Friend request sent
           </Button>
           <Button
-            backgroundColor={Colors.BlackOlive}
-            color="white"
-            hoverBackgroundColor={Colors.DarkLiver}
+            backgroundColor="BlackOlive"
+            color="White"
+            hoverBackgroundColor="DarkLiver"
           >
             <BsMessenger color="white" />
             Message
@@ -438,18 +441,18 @@ function ButtonsContainer({
       ) : (
         <>
           <Button
-            backgroundColor={Colors.BrightNavyBlue}
-            color="white"
-            hoverBackgroundColor={Colors.BleuDeFrance}
+            backgroundColor="BrightNavyBlue"
+            color="White"
+            hoverBackgroundColor="BleuDeFrance"
             onClick={onAddFriendButtonClick}
           >
             <BsPersonPlusFill color="white" />
             Add friend
           </Button>
           <Button
-            backgroundColor={Colors.BlackOlive}
-            color="white"
-            hoverBackgroundColor={Colors.DarkLiver}
+            backgroundColor="BlackOlive"
+            color="White"
+            hoverBackgroundColor="DarkLiver"
           >
             <BsMessenger color="white" />
             Message

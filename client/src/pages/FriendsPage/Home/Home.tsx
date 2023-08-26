@@ -44,7 +44,7 @@ export function Home({
         onSeeAllClick={onFriendRequestsSeeAllClick}
         onSeeMoreClick={onFriendRequestsSeeMoreClick}
       />
-      <Divider thickness="1px" />
+      <Divider />
       <Suggestions
         authenticatedUser={authenticatedUser}
         displayedSuggestions={displayedSuggestions}

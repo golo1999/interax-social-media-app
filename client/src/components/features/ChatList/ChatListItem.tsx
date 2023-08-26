@@ -1,7 +1,7 @@
 import { useLazyQuery } from "@apollo/client";
 
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { UserPhoto } from "components";
 import {

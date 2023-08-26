@@ -15,7 +15,7 @@ interface TextProps {
 }
 
 const Text = styled.p<TextProps>`
-  ${(props) => props.fontWeight && `font-weight: ${props.fontWeight};`};
+  ${({ fontWeight }) => fontWeight && `font-weight: ${fontWeight};`};
   user-select: none;
 `;
 

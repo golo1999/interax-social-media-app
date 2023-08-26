@@ -47,12 +47,14 @@ interface ListItemProps {
 }
 
 const ListItem = styled.li<ListItemProps>`
-  ${(props) => props.isSelected && `background-color: ${Colors.BlackOlive};`};
+  ${({ isSelected }) =>
+    isSelected && `background-color: ${Colors.BlackOlive};`};
   border-radius: 10px;
   padding: 0.5em 10px;
 
   &:hover {
-    ${(props) => !props.isSelected && `background-color: ${Colors.BlackOlive};`}
+    ${({ isSelected }) =>
+      !isSelected && `background-color: ${Colors.BlackOlive};`}
   }
 `;
 
@@ -103,7 +105,7 @@ export function EmojisModal({
         title="Emoji"
         onRightIconClick={onCloseClick}
       />
-      <Divider thickness="1px" />
+      <Divider />
       <Modal.Body padding="1.5em">
         <List>
           {ITEMS.map((item, index) => {

@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { AiFillShop } from "react-icons/ai";
 import { HiUsers, HiUserGroup } from "react-icons/hi";
 import { MdOndemandVideo } from "react-icons/md";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 import { Header, Navigation } from "components";
 import { GetAuthenticatedUserData, GET_AUTHENTICATED_USER } from "helpers";
@@ -53,11 +53,7 @@ export function HomePage() {
 
   return (
     <Container.Main>
-      <Header
-        authenticatedUser={authenticatedUserData.authenticatedUser}
-        items={headerItems}
-        selectedItem={headerItems[0]}
-      />
+      <Header items={headerItems} selectedItem={headerItems[0]} />
       <Container.Content>
         <Navigation.NonSelectable
           authenticatedUser={authenticatedUserData.authenticatedUser}

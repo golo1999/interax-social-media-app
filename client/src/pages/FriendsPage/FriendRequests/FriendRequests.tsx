@@ -2,7 +2,7 @@ import { useMutation } from "@apollo/client";
 
 import { Fragment, useMemo } from "react";
 import { MdArrowDropDown } from "react-icons/md";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 import {
   ADD_USER_FRIEND,

@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
 import { IconType } from "react-icons";
 
+import { Colors } from "environment";
+
 type ChildrenProps = { children?: ReactNode };
 
 type HeaderTemplateProps =
@@ -9,7 +11,7 @@ type HeaderTemplateProps =
       color?: never;
       direction?: never;
       gap?: never;
-      iconColor?: string;
+      iconColor?: keyof typeof Colors;
       iconSize?: string;
       isTemplate: true;
       justifyContent?: never;
@@ -17,7 +19,7 @@ type HeaderTemplateProps =
       padding?: never;
       rightIcon?: IconType;
       title: string;
-      titleColor?: string;
+      titleColor?: keyof typeof Colors;
       onLeftIconClick?: () => void;
       onRightIconClick?: () => void;
     }
@@ -28,7 +30,7 @@ type HeaderTemplateProps =
         | "flex-end"
         | "flex-start"
         | "stretch";
-      color?: string;
+      color?: keyof typeof Colors;
       direction?: "column" | "column-reverse" | "row" | "row-reverse";
       gap?: string;
       iconColor?: never;
@@ -63,7 +65,7 @@ export type ModalProps = ChildrenProps & { minHeight?: string; width?: string };
 
 export type StyleProps = {
   alignItems?: "baseline" | "center" | "flex-end" | "flex-start" | "stretch";
-  color?: string;
+  color?: keyof typeof Colors;
   direction?: "column" | "column-reverse" | "row" | "row-reverse";
   gap?: string;
   justifyContent?:

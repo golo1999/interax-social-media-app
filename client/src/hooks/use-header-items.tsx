@@ -7,7 +7,7 @@ import {
 } from "react-icons/ai";
 import { HiOutlineUserGroup, HiUserGroup } from "react-icons/hi";
 import { MdOndemandVideo, MdOutlineOndemandVideo } from "react-icons/md";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 import { IconItem } from "components";
 

@@ -16,11 +16,12 @@ export const Button = {
     padding: 0.5em;
   `,
   Submit: styled.input.attrs({ type: "submit" })`
-    background-color: ${(props) =>
-      props.disabled ? Colors.DarkLiver : Colors.BlackOlive};
+    background-color: ${({ disabled }) =>
+      disabled ? Colors.DarkLiver : Colors.BlackOlive};
     border-radius: 5px;
-    color: ${(props) => (props.disabled ? Colors.OldSilver : Colors.LightGray)};
-    cursor: ${(props) => (props.disabled ? "no-drop" : "default")};
+    color: ${({ disabled }) =>
+      disabled ? Colors.OldSilver : Colors.LightGray};
+    cursor: ${({ disabled }) => (disabled ? "no-drop" : "default")};
     font-size: medium;
     font-weight: bold;
     padding: 0.5em;
@@ -98,14 +99,14 @@ export const History = {
 
 export const Input = styled.input<InputProps>`
   background-color: inherit;
-  border: 2px solid ${(props) => (props.isValid ? Colors.Onyx : "red")};
+  border: 2px solid ${({ isValid }) => (isValid ? Colors.Onyx : "red")};
   border-radius: 5px;
   color: ${Colors.LightGray};
   font-size: medium;
   padding: 1em;
 
   &::placeholder {
-    color: ${(props) => (props.isValid ? Colors.PhilippineGray : "red")};
+    color: ${({ isValid }) => (isValid ? Colors.PhilippineGray : "red")};
   }
 `;
 

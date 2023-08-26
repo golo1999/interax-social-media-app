@@ -12,10 +12,9 @@ import { NavigationItem } from "models";
 import { Container } from "./WatchPage.style";
 
 export function WatchPage() {
-  const [
-    fetchAuthenticatedUser,
-    { data: authenticatedUserData = { authenticatedUser: null } },
-  ] = useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
+  const [fetchAuthenticatedUser] = useLazyQuery<GetAuthenticatedUserData>(
+    GET_AUTHENTICATED_USER
+  );
 
   const headerItems = useHeaderItems();
   const NAVIGATION_ITEMS = useMemo<NavigationItem[]>(
@@ -43,11 +42,7 @@ export function WatchPage() {
 
   return (
     <Container.Main>
-      <Header
-        authenticatedUser={authenticatedUserData.authenticatedUser}
-        items={headerItems}
-        selectedItem={headerItems[1]}
-      />
+      <Header items={headerItems} selectedItem={headerItems[1]} />
       <Container.Content>
         <Container.Navigation>
           <Navigation.Selectable
@@ -56,7 +51,7 @@ export function WatchPage() {
             onItemSelected={handleNavigationItemClick}
           />
         </Container.Navigation>
-        <Divider thickness="1px" vertical />
+        <Divider vertical />
         <Container.NavigationItem></Container.NavigationItem>
       </Container.Content>
     </Container.Main>

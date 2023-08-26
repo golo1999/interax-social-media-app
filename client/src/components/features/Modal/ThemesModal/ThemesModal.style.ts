@@ -46,21 +46,23 @@ interface ListItemProps {
 }
 
 export const ListItem = styled.li<ListItemProps>`
-  ${(props) => props.isSelected && `background-color: ${Colors.BlackOlive};`};
+  ${({ isSelected }) =>
+    isSelected && `background-color: ${Colors.BlackOlive};`};
   border-radius: 15px;
   padding: 0.5em;
 
   &:hover {
-    ${(props) => !props.isSelected && `background-color: ${Colors.BlackOlive};`}
+    ${({ isSelected }) =>
+      !isSelected && `background-color: ${Colors.BlackOlive};`}
   }
 `;
 
 interface ThemeProps {
-  color: string;
+  color: keyof typeof Colors;
 }
 
 export const Theme = styled.div<ThemeProps>`
-  background-color: ${(props) => props.color};
+  background-color: ${({ color }) => Colors[color]};
   border-radius: 50%;
   height: 3em;
   width: 3em;

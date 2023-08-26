@@ -13,7 +13,6 @@ import {
   RelationshipStatus,
   WorkHistory,
 } from "components";
-import { Colors } from "environment";
 import { User } from "models";
 
 import { Button } from "../ProfilePage.style";
@@ -100,9 +99,9 @@ export function Overview({
         />
         {userIsAuthenticatedUser && (
           <Button
-            backgroundColor={Colors.BlackOlive}
-            color="white"
-            hoverBackgroundColor={Colors.DarkLiver}
+            backgroundColor="BlackOlive"
+            color="White"
+            hoverBackgroundColor="DarkLiver"
             onClick={onEditDetailsClick}
           >
             Edit details

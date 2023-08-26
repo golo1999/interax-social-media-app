@@ -1,7 +1,7 @@
 import { useLazyQuery } from "@apollo/client";
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 import { Header } from "components";
 import { GET_AUTHENTICATED_USER, GetAuthenticatedUserData } from "helpers";
@@ -16,10 +16,9 @@ import {
 } from "./NotFoundPage.style";
 
 export function NotFoundPage() {
-  const [
-    fetchAuthenticatedUser,
-    { data: authenticatedUserData = { authenticatedUser: null } },
-  ] = useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
+  const [fetchAuthenticatedUser] = useLazyQuery<GetAuthenticatedUserData>(
+    GET_AUTHENTICATED_USER
+  );
 
   const headerItems = useHeaderItems();
   const navigate = useNavigate();
@@ -30,11 +29,7 @@ export function NotFoundPage() {
 
   return (
     <Container.Main>
-      <Header
-        authenticatedUser={authenticatedUserData.authenticatedUser}
-        items={headerItems}
-        selectedItem={null}
-      />
+      <Header items={headerItems} selectedItem={null} />
       <Container.Content>
         <Icon size={72} />
         <ContentUnavailable>

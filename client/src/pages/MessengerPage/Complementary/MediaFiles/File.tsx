@@ -26,7 +26,7 @@ export function File({ isDividerVisible, item }: Props) {
           <Size>{formatSize(size)}</Size>
         </Container.Details>
       </Container.Main>
-      {isDividerVisible && <Divider thickness="1px" />}
+      {isDividerVisible && <Divider />}
     </>
   );
 }

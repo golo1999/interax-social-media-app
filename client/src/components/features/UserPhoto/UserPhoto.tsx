@@ -8,19 +8,19 @@ import { User } from "models";
 const Container = styled.div<ContainerProps>`
   align-items: center;
   aspect-ratio: 1 / 1;
-  background-color: ${(props) =>
-    props.hasProfilePhoto ? "inherit" : Colors.PhilippineGray};
-  border-radius: ${(props) => (props.isSquare ? "5px;" : "50%;")};
+  background-color: ${({ hasProfilePhoto }) =>
+    hasProfilePhoto ? "inherit" : Colors.PhilippineGray};
+  border-radius: ${({ isSquare }) => (isSquare ? "5px;" : "50%;")};
   display: flex;
   justify-content: center;
-  height: ${(props) => (props.containerSize ||= "2em;")};
+  height: ${({ containerSize }) => (containerSize ||= "2em;")};
   user-select: none;
-  width: ${(props) => (props.containerSize ||= "2em;")};
+  width: ${({ containerSize }) => (containerSize ||= "2em;")};
 `;
 
 const Photo = styled.img<PhotoProps>`
   aspect-ratio: 1 / 1;
-  border-radius: ${(props) => (props.isSquare ? "5px;" : "50%;")};
+  border-radius: ${({ isSquare }) => (isSquare ? "5px;" : "50%;")};
   height: 100%;
   object-fit: cover;
   width: 100%;

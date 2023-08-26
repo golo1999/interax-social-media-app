@@ -1,17 +1,15 @@
 import { CSSProperties } from "react";
-import styled from "styled-components";
 
 import { Colors } from "environment";
 
-const StyledDivider = styled.div<StyleProps>`
-  background-color: ${Colors.Onyx};
-  ${(props) => props.vertical && "display: flex;"}
-  ${(props) => !props.vertical && `height: ${props.thickness};`}
-  ${(props) => props.margin && `margin: ${props.margin};`};
-  ${(props) => props.vertical && `width: ${props.thickness};`}
-`;
+import { Divider as StyledDivider } from "./Divider.style";
 
-type StyleProps = { margin?: string; thickness: string; vertical?: boolean };
+type StyleProps = {
+  color?: keyof typeof Colors;
+  margin?: string;
+  thickness?: string;
+  vertical?: boolean;
+};
 
 type CommonProps = {
   style?: CSSProperties;
@@ -19,9 +17,16 @@ type CommonProps = {
 
 type Props = CommonProps & StyleProps;
 
-export function Divider({ margin, style, thickness, vertical }: Props) {
+export function Divider({
+  color = "Onyx",
+  margin,
+  style,
+  thickness = "1px",
+  vertical = false,
+}: Props) {
   return (
     <StyledDivider
+      color={color}
       margin={margin}
       style={style}
       thickness={thickness}

@@ -10,10 +10,10 @@ export const FriendsListContainer = styled.div<FriendsListContainerProps>`
   display: grid;
   gap: 0.5em 1em;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: ${(props) =>
-    !props.friends || props.friends <= 3
+  grid-template-rows: ${({ friends }) =>
+    !friends || friends <= 3
       ? "repeat(1, minmax(0, 1fr))"
-      : props.friends <= 6
+      : friends <= 6
       ? "repeat(2, minmax(0, 1fr))"
       : "repeat(3, minmax(0, 1fr))"};
 `;

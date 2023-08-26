@@ -14,7 +14,7 @@ interface DefaultItem {
 }
 
 interface ThemeItem {
-  color: string;
+  color: keyof typeof Colors;
   icon?: never;
 }
 
@@ -34,20 +34,20 @@ export function ThemesModal({
   const ITEMS = useMemo<Item[]>(
     () => [
       { icon: MdBlock, name: ConversationTheme.DEFAULT },
-      { color: Colors.Blood, name: ConversationTheme.BLOOD },
-      { color: Colors.ChineseYellow, name: ConversationTheme.CHINESE_YELLOW },
-      { color: Colors.Indigo, name: ConversationTheme.INDIGO },
+      { color: "Blood", name: ConversationTheme.BLOOD },
+      { color: "ChineseYellow", name: ConversationTheme.CHINESE_YELLOW },
+      { color: "Indigo", name: ConversationTheme.INDIGO },
       {
-        color: Colors.MaximumBluePurple,
+        color: "MaximumBluePurple",
         name: ConversationTheme.MAXIMUM_BLUE_PURPLE,
       },
-      { color: Colors.OceanBlue, name: ConversationTheme.OCEAN_BLUE },
-      { color: Colors.PurplePizzazz, name: ConversationTheme.PURPLE_PIZZAZZ },
-      { color: Colors.Red, name: ConversationTheme.RED },
-      { color: Colors.SunsetOrange, name: ConversationTheme.SUNSET_ORANGE },
-      { color: Colors.SweetBrown, name: ConversationTheme.SWEET_BROWN },
-      { color: Colors.VeryLightBlue, name: ConversationTheme.VERY_LIGH_BLUE },
-      { color: Colors.VividMalachite, name: ConversationTheme.VIVID_MALACHITE },
+      { color: "OceanBlue", name: ConversationTheme.OCEAN_BLUE },
+      { color: "PurplePizzazz", name: ConversationTheme.PURPLE_PIZZAZZ },
+      { color: "Red", name: ConversationTheme.RED },
+      { color: "SunsetOrange", name: ConversationTheme.SUNSET_ORANGE },
+      { color: "SweetBrown", name: ConversationTheme.SWEET_BROWN },
+      { color: "VeryLightBlue", name: ConversationTheme.VERY_LIGH_BLUE },
+      { color: "VividMalachite", name: ConversationTheme.VIVID_MALACHITE },
     ],
     []
   );
@@ -75,7 +75,7 @@ export function ThemesModal({
         title="Themes"
         onRightIconClick={onCloseClick}
       />
-      <Divider thickness="1px" />
+      <Divider />
       <Modal.Body padding="1.5em">
         <List>
           {ITEMS.map((item, index) => {

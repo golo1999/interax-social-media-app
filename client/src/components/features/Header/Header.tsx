@@ -1,74 +1,34 @@
-import { useMatch } from "react-router";
+import { Divider, IconItem } from "components";
+import { useAuthenticationStore } from "store";
 
-import { Divider, IconItem, Navbar, SearchInput, UserPhoto } from "components";
-import { Colors } from "environment";
-import { User } from "models";
-import { useMessagesStore } from "store";
-
-import { Container, Icon } from "./Header.style";
+import { AuthenticatedHeader } from "./AuthenticatedHeader";
+import { Container } from "./Header.style";
+import { NotAuthenticatedHeader } from "./NotAuthenticatedHeader";
 
 interface Props {
-  authenticatedUser: User | null;
   items: IconItem[];
   selectedItem: IconItem | null;
 }
 
-export function Header({ authenticatedUser, items, selectedItem }: Props) {
-  const { isChatModalVisible, closeChatModal, openChatModal } =
-    useMessagesStore();
-  const isMessagesRoute = useMatch("/messages/t/:userId");
+export function Header({ items, selectedItem }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
 
-  function handleItemSelected(newSelectedItem: IconItem) {
-    if (selectedItem === newSelectedItem) {
-      return;
-    }
-
-    const { onClick } = newSelectedItem;
-
-    onClick();
-  }
-
-  function handleMessengerClick() {
-    if (isChatModalVisible) {
-      closeChatModal();
-    } else {
-      openChatModal();
-    }
-  }
-
-  function handleSearchClick() {
-    // TODO
-  }
-
-  const messengerIconColor = isChatModalVisible
-    ? Colors.BrilliantAzure
-    : Colors.Platinum;
+  const isUserAuthenticated = !!authenticatedUser;
 
   return (
-    <Container.Main>
+    <Container.Main isUserAuthenticated={isUserAuthenticated}>
       <Container.Top>
-        <SearchInput onSearchClick={handleSearchClick} />
-        <Navbar.Icons
-          selectedItem={selectedItem}
-          items={items}
-          onItemSelected={handleItemSelected}
-        />
-        <Container.Icons>
-          {!isMessagesRoute && (
-            <Container.Icon
-              isModalVisible={isChatModalVisible}
-              onClick={handleMessengerClick}
-            >
-              <Icon.Messenger color={messengerIconColor} size={20} />
-            </Container.Icon>
-          )}
-          <Container.Icon isModalVisible={false}>
-            <Icon.Notifications color={Colors.Platinum} size={20} />
-          </Container.Icon>
-          <UserPhoto user={authenticatedUser} />
-        </Container.Icons>
+        {isUserAuthenticated ? (
+          <AuthenticatedHeader
+            authenticatedUser={authenticatedUser}
+            items={items}
+            selectedItem={selectedItem}
+          />
+        ) : (
+          <NotAuthenticatedHeader />
+        )}
       </Container.Top>
-      <Divider thickness="1px" />
+      <Divider />
     </Container.Main>
   );
 }

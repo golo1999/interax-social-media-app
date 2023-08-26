@@ -78,7 +78,7 @@ function Header({
   color,
   direction,
   gap,
-  iconColor = Colors.PhilippineGray,
+  iconColor = "PhilippineGray",
   iconSize = "24",
   isTemplate,
   justifyContent,
@@ -86,7 +86,7 @@ function Header({
   padding,
   rightIcon,
   title,
-  titleColor = Colors.Platinum,
+  titleColor = "Platinum",
   onLeftIconClick,
   onRightIconClick,
 }: HeaderProps) {
@@ -105,11 +105,11 @@ function Header({
         }}
       >
         <IconContainer isHidden={!leftIcon} onClick={onLeftIconClick}>
-          <LeftIcon color={iconColor} size={iconSize} />
+          <LeftIcon color={Colors[iconColor]} size={iconSize} />
         </IconContainer>
         <Title color={titleColor}>{title}</Title>
         <IconContainer isHidden={!rightIcon} onClick={onRightIconClick}>
-          <RightIcon color={iconColor} size={iconSize} />
+          <RightIcon color={Colors[iconColor]} size={iconSize} />
         </IconContainer>
       </div>
     );

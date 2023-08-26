@@ -25,9 +25,9 @@ export const Container = styled.div<ContainerProps>`
   box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
   display: flex;
   flex-direction: column;
-  min-height: ${(props) => props.minHeight || "fit-content"};
+  min-height: ${({ minHeight }) => minHeight || "fit-content"};
   max-height: 75vh;
-  width: ${(props) => props.width || "fit-content"};
+  width: ${({ width }) => width || "fit-content"};
 `;
 
 type IconContainerProps = { isHidden?: boolean };
@@ -39,7 +39,7 @@ export const IconContainer = styled.span<IconContainerProps>`
   display: flex;
   justify-content: center;
   padding: 0.25em;
-  ${(props) => props.isHidden && "visibility: hidden;"};
+  ${({ isHidden }) => isHidden && "visibility: hidden;"};
   width: fit-content;
 
   &:hover {
@@ -47,17 +47,17 @@ export const IconContainer = styled.span<IconContainerProps>`
   }
 `;
 
-type TitleProps = { color?: string };
+type TitleProps = { color?: keyof typeof Colors };
 
 export const Title = styled.p<TitleProps>`
-  ${(props) => props.color && `color: ${props.color};`};
+  ${({ color }) => color && `color: ${Colors[color]};`};
   font-size: larger;
   font-weight: bold;
 `;
 
 interface StyleProps {
   alignItems?: "baseline" | "center" | "flex-end" | "flex-start" | "stretch";
-  color?: string;
+  color?: keyof typeof Colors;
   direction?: "column" | "column-reverse" | "row" | "row-reverse";
   gap?: string;
   justifyContent?:
@@ -80,14 +80,14 @@ interface StyleProps {
 }
 
 const Styles = css<StyleProps>`
-  ${(props) => props.alignItems && `align-items: ${props.alignItems};`};
-  ${(props) => props.color && `color: ${props.color};`};
+  ${({ alignItems }) => alignItems && `align-items: ${alignItems};`};
+  ${({ color }) => color && `color: ${Colors[color]};`};
   display: flex;
-  ${(props) => props.direction && `flex-direction: ${props.direction};`};
-  ${(props) => props.gap && `gap: ${props.gap};`};
-  ${(props) =>
-    props.justifyContent && `justify-content: ${props.justifyContent};`};
-  ${(props) => props.padding && `padding: ${props.padding};`}
+  ${({ direction }) => direction && `flex-direction: ${direction};`};
+  ${({ gap }) => gap && `gap: ${gap};`};
+  ${({ justifyContent }) =>
+    justifyContent && `justify-content: ${justifyContent};`};
+  ${({ padding }) => padding && `padding: ${padding};`}
 `;
 
 export const Body = styled.div`

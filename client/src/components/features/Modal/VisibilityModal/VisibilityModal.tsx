@@ -70,8 +70,8 @@ export function VisibilityModal({
   return (
     <Modal minHeight="50vh" ref={modalContainerRef}>
       <>{ModalHeader}</>
-      <Divider thickness="1px" />
-      <Modal.Body color={Colors.PhilippineGray} direction="column">
+      <Divider />
+      <Modal.Body color="PhilippineGray" direction="column">
         {bodyDescription}
         <List>
           {items.map((item, index) => {
@@ -95,9 +95,7 @@ export function VisibilityModal({
                   {description && <p>{description}</p>}
                 </ListItem.DetailsContainer>
                 <RadioButton
-                  color={
-                    isSelected ? Colors.BrilliantAzure : Colors.PhilippineGray
-                  }
+                  color={isSelected ? "BrilliantAzure" : "PhilippineGray"}
                   isChecked={isSelected}
                   onChange={() => handleItemClick(item)}
                 />

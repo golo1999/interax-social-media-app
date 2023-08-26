@@ -16,15 +16,15 @@ export const List = styled.ul`
 `;
 
 export const ListItem = styled.li<ListItemProps>`
-  ${(props) =>
-    props.isSelected && `background-color: ${Colors.JapaneseIndigo};`}
+  ${({ isSelected }) =>
+    isSelected && `background-color: ${Colors.JapaneseIndigo};`}
   border-radius: 5px;
-  ${(props) => props.isSelected && `color: ${Colors.BrilliantAzure};`}
+  ${({ isSelected }) => isSelected && `color: ${Colors.BrilliantAzure};`}
   font-weight: 500;
   padding: 0.5em;
 
   &:hover {
-    ${(props) =>
-      !props.isSelected && `background-color: ${Colors.BlackOlive};`};
+    ${({ isSelected }) =>
+      !isSelected && `background-color: ${Colors.BlackOlive};`};
   }
 `;

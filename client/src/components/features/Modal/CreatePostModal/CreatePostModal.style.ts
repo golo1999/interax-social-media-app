@@ -5,19 +5,19 @@ import { Colors } from "environment";
 type IconContainerProps = { isHidden?: boolean };
 
 export const Button = styled.input.attrs({ type: "submit" })`
-  background-color: ${(props) =>
-    props.disabled ? Colors.DarkLiver : Colors.BrightNavyBlue};
+  background-color: ${({ disabled }) =>
+    disabled ? Colors.DarkLiver : Colors.BrightNavyBlue};
   border-radius: 5px;
-  color: ${(props) =>
-    props.disabled ? Colors.PhilippineGray : Colors.Platinum};
-  cursor: ${(props) => (props.disabled ? "no-drop" : "default")};
+  color: ${({ disabled }) =>
+    disabled ? Colors.PhilippineGray : Colors.Platinum};
+  cursor: ${({ disabled }) => (disabled ? "no-drop" : "default")};
   flex: 1;
   font-weight: 600;
   padding: 0.75em;
 
   &:hover {
-    ${(props) =>
-      !props.disabled && `background-color: ${Colors.BleuDeFrance};`};
+    ${({ disabled }) =>
+      !disabled && `background-color: ${Colors.BleuDeFrance};`};
   }
 `;
 
@@ -29,7 +29,7 @@ export const Container = {
     display: flex;
     justify-content: center;
     padding: 0.25em;
-    ${(props) => props.isHidden && "visibility: hidden;"};
+    ${({ isHidden }) => isHidden && "visibility: hidden;"};
     width: fit-content;
 
     &:hover {

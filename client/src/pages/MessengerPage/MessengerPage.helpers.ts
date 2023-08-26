@@ -22,31 +22,33 @@ export function getEmojiType(displayedEmoji: IconType) {
   }
 }
 
-export function getMessageTheme(theme: ConversationTheme | undefined) {
+export function getMessageTheme(
+  theme: ConversationTheme | undefined
+): keyof typeof Colors {
   switch (theme) {
     case ConversationTheme.BLOOD:
-      return Colors.Blood;
+      return "Blood";
     case ConversationTheme.CHINESE_YELLOW:
-      return Colors.ChineseYellow;
+      return "ChineseYellow";
     case ConversationTheme.INDIGO:
-      return Colors.Indigo;
+      return "Indigo";
     case ConversationTheme.MAXIMUM_BLUE_PURPLE:
-      return Colors.MaximumBluePurple;
+      return "MaximumBluePurple";
     case ConversationTheme.OCEAN_BLUE:
-      return Colors.OceanBlue;
+      return "OceanBlue";
     case ConversationTheme.PURPLE_PIZZAZZ:
-      return Colors.PurplePizzazz;
+      return "PurplePizzazz";
     case ConversationTheme.RED:
-      return Colors.Red;
+      return "Red";
     case ConversationTheme.SUNSET_ORANGE:
-      return Colors.SunsetOrange;
+      return "SunsetOrange";
     case ConversationTheme.SWEET_BROWN:
-      return Colors.SweetBrown;
+      return "SweetBrown";
     case ConversationTheme.VERY_LIGH_BLUE:
-      return Colors.VeryLightBlue;
+      return "VeryLightBlue";
     case ConversationTheme.VIVID_MALACHITE:
-      return Colors.VividMalachite;
+      return "VividMalachite";
     default:
-      return Colors.Azure;
+      return "Azure";
   }
 }

@@ -7,7 +7,7 @@ import { FaDotCircle } from "react-icons/fa";
 import { FiFileText } from "react-icons/fi";
 import { IoTextOutline } from "react-icons/io5";
 import { MdPhotoLibrary } from "react-icons/md";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 import {
   CollapsibleList,

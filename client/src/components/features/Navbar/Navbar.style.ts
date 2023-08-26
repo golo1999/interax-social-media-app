@@ -16,18 +16,19 @@ export const List = styled.ul`
 
 export const ListItem = styled.li<ListItemProps>`
   border-radius: 5px;
-  ${(props) => props.isSelected && `color: ${Colors.BrilliantAzure};`}
+  ${({ isSelected }) => isSelected && `color: ${Colors.BrilliantAzure};`}
   font-weight: 500;
   padding: 0.5em 1em;
 
   &:hover {
-    ${(props) => !props.isSelected && `background-color: ${Colors.BlackOlive};`}
+    ${({ isSelected }) =>
+      !isSelected && `background-color: ${Colors.BlackOlive};`}
   }
 `;
 
 export const ListItemBottomBorder = styled.div<ListItemProps>`
-  ${(props) =>
-    props.isSelected && `background-color: ${Colors.BrilliantAzure};`}
+  ${({ isSelected }) =>
+    isSelected && `background-color: ${Colors.BrilliantAzure};`}
   height: 3px;
   width: 100%;
 `;

@@ -18,6 +18,7 @@ import {
   Container,
   Divider,
   PostComments,
+  PostOptionsList,
   PostPhotos,
   ReactionEmojis,
   UserPhoto,
@@ -39,6 +40,7 @@ import {
   UpdatePostReactionData,
 } from "helpers";
 import { ReactionType, User } from "models";
+import { useMessagesStore, useSettingsStore } from "store";
 
 import {
   getCommentsText,
@@ -51,9 +53,8 @@ import {
 } from "./UserPost.helpers";
 import {
   Button,
-  ButtonsContainer,
+  Container as StyledContainer,
   Header,
-  PostOwnerContainer,
   PostOwnerName,
   PostText,
 } from "./UserPost.style";
@@ -139,6 +140,14 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
   const [postReactionsCount, setPostReactionsCount] = useState<
     PostReactionCount[]
   >([]);
+  const { isChatModalVisible, closeChatModal } = useMessagesStore();
+  const {
+    isPostOptionsListVisible,
+    isSettingsListVisible,
+    closePostOptionsList,
+    closeSettingsList,
+    openPostOptionsList,
+  } = useSettingsStore();
 
   useEffect(() => {
     const hasUserReaction =
@@ -185,7 +194,19 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
   }
 
   function handleMoreOptionsClick() {
-    // TODO
+    if (isChatModalVisible) {
+      closeChatModal();
+    }
+
+    if (isSettingsListVisible) {
+      closeSettingsList();
+    }
+
+    if (!isPostOptionsListVisible) {
+      openPostOptionsList(postId);
+    } else {
+      closePostOptionsList();
+    }
   }
 
   function handleReactionClick() {
@@ -287,7 +308,7 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
   return (
     <Container vertical>
       <Header>
-        <PostOwnerContainer>
+        <StyledContainer.PostOwner>
           <UserPhoto
             user={owner}
             onPhotoClick={() => navigate(`/${owner.username}`)}
@@ -296,16 +317,27 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
             <PostOwnerName onClick={() => navigate(`/${owner.username}`)}>
               {postOwnerNameText}
             </PostOwnerName>
-            <p>{getTimePassedFromDateTime(dateTime, "POST")}</p>
+            <p style={{ cursor: "default" }}>
+              {getTimePassedFromDateTime(dateTime, "POST")}
+            </p>
           </div>
-        </PostOwnerContainer>
-        <MdMoreHoriz
-          color={Colors.PhilippineGray}
-          size="1.5em"
-          onClick={handleMoreOptionsClick}
-        />
+        </StyledContainer.PostOwner>
+        <StyledContainer.MoreOptionsIcon>
+          <MdMoreHoriz
+            color={Colors.PhilippineGray}
+            size="1.5em"
+            onClick={handleMoreOptionsClick}
+          />
+        </StyledContainer.MoreOptionsIcon>
       </Header>
-      <div ref={textContainerRef} style={{ lineHeight: "21px" }}>
+      <div
+        ref={textContainerRef}
+        style={{ lineHeight: "21px", position: "relative" }}
+      >
+        {isPostOptionsListVisible &&
+          postId === isPostOptionsListVisible.postId && (
+            <PostOptionsList postOwner={owner} />
+          )}
         <PostText
           style={
             !isTextCompletelyVisible
@@ -365,7 +397,7 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
         </div>
       )}
       <Divider thickness="2px" />
-      <ButtonsContainer>
+      <StyledContainer.Buttons>
         <Button
           style={{ color: getButtonColor(ButtonTypes.REACTION) }}
           onClick={handleReactionClick}
@@ -447,7 +479,7 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
           <RiShareForwardLine size={24} />
           Share
         </Button>
-      </ButtonsContainer>
+      </StyledContainer.Buttons>
       {((comments && comments?.length > 0) || isWriteCommentVisible) && (
         <Divider thickness="2px" />
       )}

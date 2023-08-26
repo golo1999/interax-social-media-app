@@ -37,18 +37,16 @@ interface ListItemProps {
 
 export const ListItem = styled.ul<ListItemProps>`
   align-items: center;
-  ${(props) =>
-    !props.isModal &&
-    props.isSelected &&
-    `background-color: ${Colors.GunMetal};`};
+  ${({ isModal, isSelected }) =>
+    !isModal && isSelected && `background-color: ${Colors.GunMetal};`};
   border-radius: 5px;
   display: flex;
   gap: 0.5em;
   padding: 0.5em;
 
   &:hover {
-    ${(props) =>
-      !props.isSelected && `background-color: ${Colors.BlackOlive};`};
+    ${({ isSelected }) =>
+      !isSelected && `background-color: ${Colors.BlackOlive};`};
   }
 `;
 

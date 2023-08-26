@@ -2,11 +2,13 @@ import { useState } from "react";
 import { IconType } from "react-icons";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 
+import { Colors } from "environment";
+
 import { Label, List, ListItem } from "./CollapsibleList.style";
 
 export interface CollapsibleListItem {
   icon: IconType;
-  iconColor?: string;
+  iconColor?: keyof typeof Colors;
   text: string;
   onClick: () => void;
 }
@@ -38,7 +40,13 @@ export function CollapsibleList({ items, label }: Props) {
 
             return (
               <ListItem key={index} onClick={onClick}>
-                <Icon color={iconColor} />
+                <Icon
+                  color={
+                    typeof iconColor !== "undefined"
+                      ? Colors[iconColor]
+                      : undefined
+                  }
+                />
                 <p>{text}</p>
               </ListItem>
             );

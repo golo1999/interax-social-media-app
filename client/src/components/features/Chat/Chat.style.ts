@@ -11,7 +11,7 @@ export const Container = {
   Main: styled.div<MainContainerProps>`
     display: flex;
     flex-direction: column;
-    ${(props) => (props.height ? `height: ${props.height};` : "flex: 1;")};
+    ${({ height }) => (height ? `height: ${height};` : "flex: 1;")};
     gap: 1em;
     overflow: auto;
     padding: 0.5em;

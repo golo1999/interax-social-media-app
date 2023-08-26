@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Divider, Dropdown, VisibilityModal } from "components";
-import { AddCollegeEducationData, ADD_USER_COLLEGE_EDUCATION, GET_USER_BY_USERNAME } from "helpers";
+import {
+  AddCollegeEducationData,
+  ADD_USER_COLLEGE_EDUCATION,
+  GET_USER_BY_USERNAME,
+} from "helpers";
 import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
 import { Date as CustomDate, Permission, User } from "models";
 

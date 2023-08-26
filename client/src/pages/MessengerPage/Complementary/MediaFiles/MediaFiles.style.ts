@@ -22,12 +22,11 @@ export const Container = {
     padding: 1em;
   `,
   Media: styled.div<MediaContainerProps>`
-    display: ${(props) => (props.itemsCount > 0 ? "grid" : "flex")};
-    ${(props) => props.itemsCount === 0 && "flex: 1;"};
+    display: ${({ itemsCount }) => (itemsCount > 0 ? "grid" : "flex")};
+    ${({ itemsCount }) => itemsCount === 0 && "flex: 1;"};
     gap: 0.25em;
-    ${(props) =>
-      props.itemsCount > 0 &&
-      "grid-template-columns: repeat(3, minmax(0, 1fr));"};
+    ${({ itemsCount }) =>
+      itemsCount > 0 && "grid-template-columns: repeat(3, minmax(0, 1fr));"};
   `,
   NoData: styled.div`
     align-items: center;
