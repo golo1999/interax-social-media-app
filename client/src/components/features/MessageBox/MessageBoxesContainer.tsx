@@ -10,6 +10,7 @@ const Container = styled.div`
   gap: 0.5em;
   position: fixed;
   right: 100px;
+  z-index: 2;
 `;
 
 export function MessageBoxesContainer() {

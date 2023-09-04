@@ -433,6 +433,8 @@ const POSTS_LIST = [
   },
 ];
 
+const SAVED_POSTS_LIST = [{ savedPosts: ["post-0"], userId: "1" }];
+
 const USERS_LIST = [
   {
     id: "0",
@@ -957,5 +959,6 @@ module.exports = {
   MESSAGES_LIST,
   POST_PHOTOS_LIST,
   POSTS_LIST,
+  SAVED_POSTS_LIST,
   USERS_LIST,
 };

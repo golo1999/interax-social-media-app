@@ -258,3 +258,17 @@ export const GET_USER_FRIENDS_BY_USERNAME = gql`
     }
   }
 `;
+
+export interface GetUserSavedPostsData {
+  userSavedPosts: Post[] | null;
+}
+
+export const GET_USER_SAVED_POSTS = gql`
+  ${COMMENT_DATA}
+  ${POST_DATA}
+  query GetUserSavedPosts($id: ID!) {
+    userSavedPosts(id: $id) {
+      ...PostData
+    }
+  }
+`;
