@@ -55,6 +55,7 @@ const {
   MESSAGES_LIST,
   POST_PHOTOS_LIST,
   POSTS_LIST,
+  SAVED_POSTS_LIST,
   USERS_LIST,
 } = require("../MockedData");
 
@@ -256,9 +257,29 @@ const resolvers = {
 
       return matchedReaction;
     },
-    users: () => {
-      return USERS_LIST;
+    userSavedPosts: (parent, { id }) => {
+      const userSavedPosts = _.find(
+        SAVED_POSTS_LIST,
+        (savedPost) => savedPost.userId === id
+      );
+
+      if (!userSavedPosts) {
+        return null;
+      }
+
+      const list = [];
+
+      userSavedPosts.savedPosts.forEach((postId) => {
+        const matchedPost = _.find(POSTS_LIST, (p) => p.id === postId);
+
+        if (matchedPost) {
+          list.push(matchedPost);
+        }
+      });
+
+      return list;
     },
+    users: () => USERS_LIST,
   },
   Mutation: {
     addCommentReaction: (
@@ -682,6 +703,25 @@ const resolvers = {
 
       return matchedFriendshipRequest;
     },
+    savePost: (parent, { input: { postId, userId } }) => {
+      const userSavedPosts = _.find(
+        SAVED_POSTS_LIST,
+        (savedPost) => savedPost.userId === userId
+      );
+
+      if (!userSavedPosts) {
+        SAVED_POSTS_LIST.push({ savedPosts: [postId], userId });
+        return postId;
+      }
+
+      if (_.includes(userSavedPosts.savedPosts, postId)) {
+        return null;
+      }
+
+      userSavedPosts.savedPosts.push(postId);
+
+      return postId;
+    },
     sendUserFriendshipRequest: (parent, { input: { receiver, sender } }) => {
       const newFriendshipRequest = { receiver, sender };
       const matchedReceiver = _.find(
@@ -704,6 +744,20 @@ const resolvers = {
       FRIEND_REQUESTS_LIST.push(newFriendshipRequest);
 
       return newFriendshipRequest;
+    },
+    unsavePost: (parent, { input: { postId, userId } }) => {
+      const userSavedPosts = _.find(
+        SAVED_POSTS_LIST,
+        (savedPost) => savedPost.userId === userId
+      );
+
+      if (!userSavedPosts || !userSavedPosts.savedPosts.includes(postId)) {
+        return null;
+      }
+
+      _.remove(userSavedPosts.savedPosts, (savedPost) => savedPost === postId);
+
+      return postId;
     },
     updateCommentReaction: (
       parent,

@@ -129,6 +129,11 @@ const typeDefs = gql`
     sender: ID!
   }
 
+  input SavePostInput {
+    postId: ID!
+    userId: ID!
+  }
+
   input SendUserFriendshipRequestInput {
     receiver: ID!
     sender: ID!
@@ -317,6 +322,11 @@ const typeDefs = gql`
     visibility: Permission!
   }
 
+  type SavedPost {
+    postId: ID!
+    userId: ID!
+  }
+
   type Share {
     id: ID!
     dateTime: String!
@@ -372,6 +382,7 @@ const typeDefs = gql`
     userFriendsById(id: ID!): [User!]
     userFriendsByUsername(username: String!): [User!]
     userPostReaction(input: GetUserPostReactionInput!): Reaction
+    userSavedPosts(id: ID!): [Post!]
     users: [User!]
   }
 
@@ -400,9 +411,11 @@ const typeDefs = gql`
     removeUserFriendshipRequest(
       input: RemoveUserFriendshipRequestInput!
     ): FriendshipRequest
+    savePost(input: SavePostInput!): String
     sendUserFriendshipRequest(
       input: SendUserFriendshipRequestInput!
     ): FriendshipRequest
+    unsavePost(input: SavePostInput!): String
     updateCommentReaction(input: UpdateCommentReactionInput): Reaction
     updateConversationEmoji(input: UpdateConversationEmojiInput!): Conversation
     updateConversationNickname(

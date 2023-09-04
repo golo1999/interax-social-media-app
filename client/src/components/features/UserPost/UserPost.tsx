@@ -204,7 +204,14 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
 
     if (!isPostOptionsListVisible) {
       openPostOptionsList(postId);
-    } else {
+    }
+    // if the PostOptionsList is visible for another post
+    else if (isPostOptionsListVisible.postId !== postId) {
+      closePostOptionsList();
+      openPostOptionsList(postId);
+    }
+    // if the PostOptionsList is visible for the same post
+    else {
       closePostOptionsList();
     }
   }
@@ -336,7 +343,7 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
       >
         {isPostOptionsListVisible &&
           postId === isPostOptionsListVisible.postId && (
-            <PostOptionsList postOwner={owner} />
+            <PostOptionsList postId={postId} postOwner={owner} />
           )}
         <PostText
           style={

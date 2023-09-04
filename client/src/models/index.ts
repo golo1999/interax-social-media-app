@@ -262,6 +262,12 @@ export interface RelationshipStatus {
   visibility: Permission;
 }
 
+export interface SavedPosts {
+  __typename?: "SavedPosts";
+  savedPosts: string[];
+  userId: string;
+}
+
 export interface Share {
   __typename?: "Share";
   id: string;

@@ -344,6 +344,16 @@ export const REMOVE_USER_FRIENDSHIP_REQUEST = gql`
   }
 `;
 
+export interface SavePostData {
+  savePost: string | null;
+}
+
+export const SAVE_POST = gql`
+  mutation SavePost($input: SavePostInput!) {
+    savePost(input: $input)
+  }
+`;
+
 export interface SendUserFriendRequestData {
   sendUserFriendshipRequest: FriendshipRequest | null;
 }
@@ -354,6 +364,16 @@ export const SEND_USER_FRIENDSHIP_REQUEST = gql`
       receiver
       sender
     }
+  }
+`;
+
+export interface UnsavePostData {
+  unsavePost: string | null;
+}
+
+export const UNSAVE_POST = gql`
+  mutation UnsavePost($input: SavePostInput!) {
+    unsavePost(input: $input)
   }
 `;
 
