@@ -1,9 +1,15 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
 
 interface InputProps {
   isValid: boolean;
+}
+
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
 }
 
 export const Button = {
@@ -92,7 +98,12 @@ export const History = {
     display: flex;
     gap: 0.5em;
   `,
-  NoDataText: styled.p`
+  NoDataText: styled.span<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.PhilippineSilver
+        : Colors.GraniteGray};
+    font-size: 15px;
     font-weight: 500;
   `,
 };

@@ -3,7 +3,12 @@ import { useLazyQuery } from "@apollo/client";
 import { useEffect } from "react";
 import { Route, Routes, useMatch } from "react-router-dom";
 
-import { ChatList, MessageBoxesContainer, SettingsList } from "components";
+import {
+  ChatList,
+  MessageBoxesContainer,
+  NotificationsList,
+  SettingsList,
+} from "components";
 import { GET_AUTHENTICATED_USER, GetAuthenticatedUserData } from "helpers";
 import {
   ForgotPasswordPage,
@@ -12,6 +17,7 @@ import {
   LoginPage,
   MessengerPage,
   NotFoundPage,
+  NotificationsPage,
   ProfilePage,
   RegistrationPage,
   WatchPage,
@@ -23,7 +29,12 @@ import {
 } from "store";
 
 export function Router() {
-  const { setAuthenticatedUser } = useAuthenticationStore();
+  const {
+    authenticatedUser,
+    setAuthenticatedUser,
+    setIsLoading,
+    setIsFinishedLoading,
+  } = useAuthenticationStore();
   const [fetchAuthenticatedUser] = useLazyQuery<GetAuthenticatedUserData>(
     GET_AUTHENTICATED_USER
   );
@@ -32,11 +43,15 @@ export function Router() {
   const isMessagesRoute = useMatch("/messages/t/:userId");
   const isRegistrationRoute = useMatch("/registration");
   const { activeMessageBoxes, isChatModalVisible } = useMessagesStore();
-  const { isSettingsListVisible } = useSettingsStore();
+  const { isNotificationListVisible, isSettingsListVisible } =
+    useSettingsStore();
 
   useEffect(() => {
     async function fetchAndSetData() {
+      setIsLoading(true);
       const { data } = await fetchAuthenticatedUser();
+      setIsLoading(false);
+      setIsFinishedLoading(true);
 
       if (data?.authenticatedUser) {
         setAuthenticatedUser(data.authenticatedUser);
@@ -55,17 +70,20 @@ export function Router() {
         <Route path="/friends" element={<FriendsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/messages/t/:userId" element={<MessengerPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/:userId" element={<ProfilePage />} />
         <Route path="/registration" element={<RegistrationPage />} />
         <Route path="/watch" element={<WatchPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      {!isForgotPasswordPage &&
+      {!!authenticatedUser &&
+        !isForgotPasswordPage &&
         !isLoginRoute &&
         !isMessagesRoute &&
         !isRegistrationRoute &&
         activeMessageBoxes.length > 0 && <MessageBoxesContainer />}
       {isChatModalVisible && <ChatList isModal />}
+      {isNotificationListVisible && <NotificationsList isModal />}
       {isSettingsListVisible && <SettingsList />}
     </>
   );

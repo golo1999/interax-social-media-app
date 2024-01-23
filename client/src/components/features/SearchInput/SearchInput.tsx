@@ -1,5 +1,8 @@
 import { MdSearch } from "react-icons/md";
 
+import { Colors } from "environment";
+import { useAuthenticationStore, useSettingsStore } from "store";
+
 import { Container, Input } from "./SearchInput.style";
 
 interface Props {
@@ -13,9 +16,19 @@ export function SearchInput({
   placeholder = "Search Interax",
   onSearchClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
+  const iconColor =
+    !!authenticatedUser && theme === "DARK"
+      ? Colors.PhilippineSilver
+      : Colors.GraniteGray;
+
   return (
-    <Container>
-      <MdSearch color="silver" size={iconSize} onClick={onSearchClick} />
+    <Container {...themeProps}>
+      <MdSearch color={iconColor} size={iconSize} onClick={onSearchClick} />
       <Input placeholder={placeholder} spellCheck={false} />
     </Container>
   );

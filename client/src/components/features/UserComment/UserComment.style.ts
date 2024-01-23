@@ -1,6 +1,12 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
+
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
+}
 
 export const InnerContainer = styled.div`
   align-items: center;
@@ -18,17 +24,32 @@ export const OwnerDetails = {
   Badge: styled.p`
     font-size: 0.6em;
   `,
-  Container: styled.div`
-    background-color: ${Colors.BlackOlive};
+  Container: styled.div<ThemeProps>`
+    background-color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.BlackOlive
+        : Colors.AntiFlashWhite};
     border-radius: 20px;
     display: flex;
     flex: 1;
     flex-direction: column;
     padding: 5px 10px;
   `,
-  Name: styled.p`
-    font-weight: bold;
+  Name: styled.p<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.Platinum
+        : Colors.VampireBlack};
+    font-size: 13px;
+    font-weight: 600;
     user-select: none;
+  `,
+  Text: styled.p<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.Platinum
+        : Colors.VampireBlack};
+    font-size: 15px;
   `,
 };
 

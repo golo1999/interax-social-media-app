@@ -245,6 +245,16 @@ export const ADD_USER_WORKPLACE = gql`
   }
 `;
 
+export interface BlockUserData {
+  blockUser: string | null;
+}
+
+export const BLOCK_USER = gql`
+  mutation BlockUser($input: BlockUserInput!) {
+    blockUser(input: $input)
+  }
+`;
+
 export interface CreatePostData {
   createPost: Post | null;
 }
@@ -256,6 +266,26 @@ export const CREATE_POST = gql`
     createPost(input: $input) {
       ...PostData
     }
+  }
+`;
+
+export interface FollowUserData {
+  followUser: string | null;
+}
+
+export const FOLLOW_USER = gql`
+  mutation FollowUser($input: FollowUserInput!) {
+    followUser(input: $input)
+  }
+`;
+
+export interface HidePostData {
+  hidePost: string | null;
+}
+
+export const HIDE_POST = gql`
+  mutation HidePost($input: HidePostInput!) {
+    hidePost(input: $input)
   }
 `;
 
@@ -313,6 +343,20 @@ export const REMOVE_COMMENT_REPLY = gql`
   }
 `;
 
+export interface RemovePostData {
+  removePost: Post | null;
+}
+
+export const REMOVE_POST = gql`
+  ${COMMENT_DATA}
+  ${POST_DATA}
+  mutation RemovePost($id: ID!) {
+    removePost(id: $id) {
+      ...PostData
+    }
+  }
+`;
+
 export interface RemovePostReactionData {
   removePostReaction: Reaction | null;
 }
@@ -325,6 +369,19 @@ export const REMOVE_POST_REACTION = gql`
         username
       }
       type
+    }
+  }
+`;
+
+export interface RemoveUserFriendData {
+  removeUserFriend: Friendship | null;
+}
+
+export const REMOVE_USER_FRIEND = gql`
+  mutation RemoveUserFriend($input: AddUserFriendInput!) {
+    removeUserFriend(input: $input) {
+      first
+      second
     }
   }
 `;
@@ -364,6 +421,26 @@ export const SEND_USER_FRIENDSHIP_REQUEST = gql`
       receiver
       sender
     }
+  }
+`;
+
+export interface UnblockUserData {
+  unblockUser: string | null;
+}
+
+export const UNBLOCK_USER = gql`
+  mutation UnblockUser($input: BlockUserInput!) {
+    unblockUser(input: $input)
+  }
+`;
+
+export interface UnfollowUserData {
+  unfollowUser: string | null;
+}
+
+export const UNFOLLOW_USER = gql`
+  mutation UnfollowUser($input: FollowUserInput!) {
+    unfollowUser(input: $input)
   }
 `;
 

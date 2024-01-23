@@ -46,12 +46,15 @@ function getUserFriends(userId) {
 
 const {
   AUTHENTICATED_USER_ID,
+  BLOCKED_USERS_LIST,
   COMMENTS_LIST,
   CONVERSATIONS_LIST,
   ConversationTheme,
   Emoji,
+  FOLLOWING_USERS_LIST,
   FRIEND_REQUESTS_LIST,
   FRIENDS_LIST,
+  HIDDEN_POSTS_LIST,
   MESSAGES_LIST,
   POST_PHOTOS_LIST,
   POSTS_LIST,
@@ -77,6 +80,19 @@ const resolvers = {
     },
   },
   User: {
+    // friends: (parent) => {
+    //   const friends = [];
+
+    //   _.forEach(parent.friends, (friend) => {
+    //     _.forEach(USERS_LIST, (user) => {
+    //       if (user.id === friend.id) {
+    //         friends.push(user);
+    //       }
+    //     });
+    //   });
+
+    //   return friends;
+    // },
     friends: ({ id: userId }) => {
       const friends = [];
 
@@ -113,6 +129,25 @@ const resolvers = {
       return messages.length > 0 ? messages : null;
     },
     posts: ({ id }) => {
+      const authenticatedUserHiddenPosts = _.find(
+        HIDDEN_POSTS_LIST,
+        (hiddenPost) => hiddenPost.userId === AUTHENTICATED_USER_ID
+      );
+
+      if (authenticatedUserHiddenPosts) {
+        return _.filter(
+          POSTS_LIST,
+          (post) =>
+            (post.ownerId === id || post.receiverId === id) &&
+            !authenticatedUserHiddenPosts.hiddenPosts.some(
+              (hiddenPostId) => hiddenPostId === post.id
+            )
+        ).sort(
+          (p1, p2) =>
+            +new Date(Number(p2.dateTime) - +new Date(Number(p1.dateTime)))
+        );
+      }
+
       return _.filter(
         POSTS_LIST,
         (post) => post.ownerId === id || post.receiverId === id
@@ -122,25 +157,61 @@ const resolvers = {
       );
     },
   },
+  UserByIdResult: {
+    __resolveType(obj) {
+      if (obj.id) {
+        return "User";
+      }
+      if (obj.message) {
+        return obj.user ? "UserWithMessage" : "UserError";
+      }
+
+      return null;
+    },
+  },
+  UserByUsernameResult: {
+    __resolveType(obj) {
+      if (obj.id) {
+        return "User";
+      }
+      if (obj.message) {
+        return "UserError";
+      }
+
+      return null;
+    },
+  },
+  UsersResult: {
+    __resolveType(obj) {
+      if (obj.users) {
+        return "Users";
+      }
+      if (obj.message) {
+        return "UsersError";
+      }
+
+      return null;
+    },
+  },
   Query: {
     authenticatedUser: () => {
       return _.find(USERS_LIST, {
         id: AUTHENTICATED_USER_ID,
       });
     },
-    comment: (parent, { id }) => {
+    comment: (_parent, { id }) => {
       return findMatchedComment(COMMENTS_LIST, id) || null;
     },
     comments: () => {
       return COMMENTS_LIST;
     },
-    commentReactions: (parent, { commentId }) => {
+    commentReactions: (_parent, { commentId }) => {
       return findMatchedComment(COMMENTS_LIST, commentId).reactions || null;
     },
-    commentReplies: (parent, { commentId }) => {
+    commentReplies: (_parent, { commentId }) => {
       return findMatchedComment(COMMENTS_LIST, commentId).replies || null;
     },
-    conversationBetween: (parent, { input: { first, second } }) => {
+    conversationBetween: (_parent, { input: { first, second } }) => {
       const conversation = _.find(
         CONVERSATIONS_LIST,
         (conversation) =>
@@ -158,9 +229,16 @@ const resolvers = {
 
       return conversation || defaultConversation;
     },
-    friendsPostsByOwnerId: (parent, { ownerId }) => {
+    friendsPostsByOwnerId: (_parent, { ownerId }) => {
+      // const ownerFriendsList = _.filter(USERS_LIST, (user) =>
+      //   _.some(user.friends, (friend) => friend.id === ownerId)
+      // );
       const friendsPostsList = [];
       const ownerFriendsList = [];
+      const authenticatedUserHiddenPosts = _.find(
+        HIDDEN_POSTS_LIST,
+        (hiddenPost) => hiddenPost.userId === AUTHENTICATED_USER_ID
+      );
 
       _.forEach(FRIENDS_LIST, (friendship) => {
         const friendshipValues = Object.values(friendship);
@@ -178,13 +256,38 @@ const resolvers = {
         }
       });
 
-      _.forEach(POSTS_LIST, (post) => {
-        _.forEach(ownerFriendsList, (ownerFriend) => {
-          if (post.owner.id === ownerFriend.id) {
-            friendsPostsList.push(post);
+      // const ownerFriendsList = _.find(
+      //   USERS_LIST,
+      //   (user) => user.id === ownerId
+      // ).friends;
+      // const friendsPostsList = _.filter(POSTS_LIST, (post) =>
+      //   _.some(ownerFriendsList, (friend) => friend.id === post.owner.id)
+      // );
+
+      if (authenticatedUserHiddenPosts) {
+        _.forEach(POSTS_LIST, (post) => {
+          // Pushing into the list if authenticated user's hidden posts don't include the current one
+          if (
+            !authenticatedUserHiddenPosts.hiddenPosts.some(
+              (hiddenPostId) => hiddenPostId === post.id
+            )
+          ) {
+            _.forEach(ownerFriendsList, (ownerFriend) => {
+              if (post.owner.id === ownerFriend.id) {
+                friendsPostsList.push(post);
+              }
+            });
           }
         });
-      });
+      } else {
+        _.forEach(POSTS_LIST, (post) => {
+          _.forEach(ownerFriendsList, (ownerFriend) => {
+            if (post.owner.id === ownerFriend.id) {
+              friendsPostsList.push(post);
+            }
+          });
+        });
+      }
 
       return friendsPostsList.length > 0
         ? friendsPostsList.sort(
@@ -193,7 +296,7 @@ const resolvers = {
           )
         : null;
     },
-    friendshipSuggestionsById: (parent, { id }) => {
+    friendshipSuggestionsById: (_parent, { id }) => {
       const matchedUserFriends = getUserFriends(id);
       const matchedUserFriendshipRequests = _.filter(
         FRIEND_REQUESTS_LIST,
@@ -217,7 +320,7 @@ const resolvers = {
         );
       });
     },
-    messagesBetween: (parent, { input: { first, second } }) => {
+    messagesBetween: (_parent, { input: { first, second } }) => {
       return _.filter(
         MESSAGES_LIST,
         (message) =>
@@ -225,30 +328,87 @@ const resolvers = {
           (message.senderId === first && message.receiverId === second)
       );
     },
-    post: (parent, { id }) => {
+    post: (_parent, { id }) => {
       return _.find(POSTS_LIST, (post) => post.id === id) || null;
     },
     posts: () => {
       return POSTS_LIST;
     },
-    postsByOwnerId: (parent, { ownerId }) => {
+    postsByOwnerId: (_parent, { ownerId }) => {
       const posts = _.filter(POSTS_LIST, (post) => post.owner.id === ownerId);
 
       return posts.length > 0 ? posts : null;
     },
-    userById: (parent, { id }) => {
-      return _.find(USERS_LIST, { id });
+    userById: (_parent, { input: { id, returnUserIfBlocked = false } }) => {
+      // Searched user
+      const matchedUser = _.find(USERS_LIST, (user) => user.id === id);
+
+      if (!matchedUser) {
+        return { message: "NOT_FOUND" };
+      }
+
+      // Authenticated user's blocked users
+      const blockedUsers = _.find(
+        BLOCKED_USERS_LIST,
+        (blockedUser) => blockedUser.userId === AUTHENTICATED_USER_ID
+      );
+
+      // Checking if the authenticated user has blocked the user
+      if (blockedUsers) {
+        const isBlocked = !!_.find(
+          blockedUsers.blockedUsers,
+          (userId) => userId === matchedUser.id
+        );
+
+        if (isBlocked) {
+          return returnUserIfBlocked
+            ? { message: "BLOCKED", user: matchedUser }
+            : { message: "BLOCKED" };
+        }
+      }
+
+      return matchedUser;
     },
-    userByUsername: (parent, { username }) => {
-      return _.find(USERS_LIST, (user) => user.username === username);
+    userByUsername: (_parent, { username }) => {
+      // Searched user
+      const matchedUser = _.find(
+        USERS_LIST,
+        (user) => user.username === username
+      );
+
+      if (!matchedUser) {
+        return { message: "NOT_FOUND" };
+      }
+
+      // Authenticated user's blocked users
+      const blockedUsers = _.find(
+        BLOCKED_USERS_LIST,
+        (blockedUser) => blockedUser.userId === AUTHENTICATED_USER_ID
+      );
+
+      // Checking if the authenticated user has blocked the user
+      if (blockedUsers) {
+        const isBlocked = !!_.find(
+          blockedUsers.blockedUsers,
+          (userId) => userId === matchedUser.id
+        );
+
+        if (isBlocked) {
+          return { message: "BLOCKED" };
+        }
+      }
+
+      return matchedUser;
     },
-    userFriendsById: (parent, { id }) => {
+    userFriendsById: (_parent, { id }) => {
+      console.log(_.find(USERS_LIST, (user) => user.id === id));
+
       return _.find(USERS_LIST, (user) => user.id === id).friends;
     },
-    userFriendsByUsername: (parent, { username }) => {
+    userFriendsByUsername: (_parent, { username }) => {
       return _.find(USERS_LIST, (user) => user.username === username).friends;
     },
-    userPostReaction: (parent, { input: { postId, userId } }) => {
+    userPostReaction: (_parent, { input: { postId, userId } }) => {
       const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
       const matchedReaction = _.find(
         matchedPost.reactions,
@@ -257,20 +417,70 @@ const resolvers = {
 
       return matchedReaction;
     },
-    userSavedPosts: (parent, { id }) => {
+    userBlockedList: (_parent, { id }) => {
+      const userBlockedList = _.find(
+        BLOCKED_USERS_LIST,
+        (blockedUser) => blockedUser.userId === id
+      );
+
+      if (!userBlockedList) {
+        return [];
+      }
+
+      const list = [];
+
+      userBlockedList.blockedUsers.forEach((blockedUserId) => {
+        const matchedUser = _.find(
+          USERS_LIST,
+          (user) => user.id === blockedUserId
+        );
+
+        if (matchedUser) {
+          list.push(matchedUser);
+        }
+      });
+
+      return list;
+    },
+    userFollowingList: (_parent, { id }) => {
+      const userFollowingList = _.find(
+        FOLLOWING_USERS_LIST,
+        (followingUser) => followingUser.userId === id
+      );
+
+      if (!userFollowingList) {
+        return { message: "NULL" };
+      }
+
+      const list = [];
+
+      userFollowingList.followingUsers.forEach((followingUserId) => {
+        const matchedUser = _.find(
+          USERS_LIST,
+          (user) => user.id === followingUserId
+        );
+
+        if (matchedUser) {
+          list.push(matchedUser);
+        }
+      });
+
+      return { users: list };
+    },
+    userSavedPosts: (_parent, { id }) => {
       const userSavedPosts = _.find(
         SAVED_POSTS_LIST,
         (savedPost) => savedPost.userId === id
       );
 
       if (!userSavedPosts) {
-        return null;
+        return [];
       }
 
       const list = [];
 
       userSavedPosts.savedPosts.forEach((postId) => {
-        const matchedPost = _.find(POSTS_LIST, (p) => p.id === postId);
+        const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
 
         if (matchedPost) {
           list.push(matchedPost);
@@ -283,7 +493,7 @@ const resolvers = {
   },
   Mutation: {
     addCommentReaction: (
-      parent,
+      _parent,
       { input: { commentId, reactionOwnerId, reactionType } }
     ) => {
       const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
@@ -318,7 +528,7 @@ const resolvers = {
 
       return newReaction;
     },
-    addCommentReply: (parent, { input: { commentId, ownerId, text } }) => {
+    addCommentReply: (_parent, { input: { commentId, ownerId, text } }) => {
       const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
 
       if (!matchedComment) {
@@ -345,7 +555,7 @@ const resolvers = {
       return newComment;
     },
     addMessage: (
-      parent,
+      _parent,
       { input: { emoji, parentId, receiverId, senderId, text } }
     ) => {
       const newMessage = {
@@ -368,7 +578,7 @@ const resolvers = {
 
       return newMessage;
     },
-    addPostComment: (parent, { input: { commentOwnerId, postId, text } }) => {
+    addPostComment: (_parent, { input: { commentOwnerId, postId, text } }) => {
       const newComment = {
         id: `${postId}-comment-${crypto.randomUUID()}`,
         dateTime: new Date().getTime().toString(),
@@ -388,7 +598,7 @@ const resolvers = {
       return newComment;
     },
     addPostReaction: (
-      parent,
+      _parent,
       { input: { postId, reactionOwnerId, reactionType } }
     ) => {
       const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
@@ -418,7 +628,7 @@ const resolvers = {
       return newReaction;
     },
     addUserCollegeEducation: (
-      parent,
+      _parent,
       { input: { degree, from, graduated, school, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
@@ -441,7 +651,7 @@ const resolvers = {
 
       return newEducation;
     },
-    addUserFriend: (parent, { input: { first, second } }) => {
+    addUserFriend: (_parent, { input: { first, second } }) => {
       const matchedFriendship = _.find(
         FRIENDS_LIST,
         (friendship) =>
@@ -459,7 +669,7 @@ const resolvers = {
       return newFriendship;
     },
     addUserHighSchoolEducation: (
-      parent,
+      _parent,
       { input: { from, graduated, school, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
@@ -482,7 +692,7 @@ const resolvers = {
       return newEducation;
     },
     addUserPlace: (
-      parent,
+      _parent,
       { input: { city, from, isCurrent, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
@@ -504,7 +714,7 @@ const resolvers = {
       return newPlace;
     },
     addUserRelationshipStatus: (
-      parent,
+      _parent,
       { input: { status, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
@@ -518,7 +728,7 @@ const resolvers = {
       return null;
     },
     addUserWorkplace: (
-      parent,
+      _parent,
       { input: { company, from, isCurrent, position, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
@@ -540,9 +750,41 @@ const resolvers = {
 
       return newWorkplace;
     },
+    blockUser: (_parent, { input: { blockedUserId, userId } }) => {
+      if (blockedUserId === userId) {
+        return null;
+      }
+
+      const blockedUsers = _.find(
+        BLOCKED_USERS_LIST,
+        (blockedUser) => blockedUser.userId === userId
+      );
+
+      if (!blockedUsers) {
+        BLOCKED_USERS_LIST.push({ blockedUsers: [blockedUserId], userId });
+        return blockedUserId;
+      }
+
+      if (_.includes(blockedUsers.blockedUsers, blockedUserId)) {
+        return null;
+      }
+
+      blockedUsers.blockedUsers.push(blockedUserId);
+
+      return blockedUserId;
+    },
     createPost: (
-      parent,
-      { input: { parentId, receiverId, text, userId, visibility } }
+      _parent,
+      {
+        input: {
+          parentId,
+          receiverId,
+          receiverUsername,
+          text,
+          userId,
+          visibility,
+        },
+      }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
       const newPost = {
@@ -558,6 +800,7 @@ const resolvers = {
         photos: null,
         reactions: null,
         receiverId,
+        receiverUsername,
         shares: null,
         text,
         video: null,
@@ -572,7 +815,67 @@ const resolvers = {
 
       return newPost;
     },
-    removeComment: (parent, { id }) => {
+    followUser: (_parent, { input: { followingUserId, userId } }) => {
+      if (followingUserId === userId) {
+        return null;
+      }
+
+      const followingUsers = _.find(
+        FOLLOWING_USERS_LIST,
+        (followingUser) => followingUser.userId === userId
+      );
+
+      if (!followingUsers) {
+        FOLLOWING_USERS_LIST.push({
+          followingUsers: [followingUserId],
+          userId,
+        });
+        return followingUserId;
+      }
+
+      if (_.includes(followingUsers.followingUsers, followingUserId)) {
+        return null;
+      }
+
+      followingUsers.followingUsers.push(followingUserId);
+
+      return followingUserId;
+    },
+    hidePost: (_parent, { input: { hiddenPostId, userId } }) => {
+      const matchedPost = _.find(
+        POSTS_LIST,
+        (post) => post.id === hiddenPostId
+      );
+
+      if (!matchedPost) {
+        return null;
+      }
+
+      const isUserPost = matchedPost.ownerId === userId;
+
+      if (isUserPost) {
+        return null;
+      }
+
+      const hiddenPosts = _.find(
+        HIDDEN_POSTS_LIST,
+        (hiddenPost) => hiddenPost.userId === userId
+      );
+
+      if (!hiddenPosts) {
+        HIDDEN_POSTS_LIST.push({ hiddenPosts: [hiddenPostId], userId });
+        return hiddenPostId;
+      }
+
+      if (_.includes(hiddenPosts.hiddenPosts, hiddenPostId)) {
+        return null;
+      }
+
+      hiddenPosts.hiddenPosts.push(hiddenPostId);
+
+      return hiddenPostId;
+    },
+    removeComment: (_parent, { id }) => {
       let removedComment;
       const matchedComment = _.find(
         COMMENTS_LIST,
@@ -597,7 +900,7 @@ const resolvers = {
       return removedComment;
     },
     removeCommentReaction: (
-      parent,
+      _parent,
       { input: { commentId, reactionOwnerId } }
     ) => {
       let removedReaction;
@@ -620,7 +923,7 @@ const resolvers = {
 
       return removedReaction;
     },
-    removeCommentReply: (parent, { input: { commentId, replyId } }) => {
+    removeCommentReply: (_parent, { input: { commentId, replyId } }) => {
       let removedReply;
       const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
 
@@ -642,7 +945,18 @@ const resolvers = {
 
       return removedReply;
     },
-    removePostComment: (parent, { input: { commentId } }) => {
+    removePost: (_parent, { id }) => {
+      const matchedPost = _.find(POSTS_LIST, (post) => post.id === id);
+
+      if (!matchedPost || matchedPost.ownerId !== AUTHENTICATED_USER_ID) {
+        return null;
+      }
+
+      _.remove(POSTS_LIST, (post) => post.id === matchedPost.id);
+
+      return matchedPost;
+    },
+    removePostComment: (_parent, { input: { commentId } }) => {
       let removedComment;
       const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
 
@@ -664,7 +978,7 @@ const resolvers = {
 
       return removedComment;
     },
-    removePostReaction: (parent, { input: { ownerId, postId } }) => {
+    removePostReaction: (_parent, { input: { ownerId, postId } }) => {
       let removedReaction;
       const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
       const matchedReaction = _.find(
@@ -685,7 +999,28 @@ const resolvers = {
 
       return removedReaction;
     },
-    removeUserFriendshipRequest: (parent, { input: { receiver, sender } }) => {
+    removeUserFriend: (_parent, { input: { first, second } }) => {
+      const matchedFriendship = _.find(
+        FRIENDS_LIST,
+        (friendship) =>
+          (friendship.first === first && friendship.second === second) ||
+          (friendship.first === second && friendship.second === first)
+      );
+
+      if (!matchedFriendship) {
+        return null;
+      }
+
+      _.remove(
+        FRIENDS_LIST,
+        (friendship) =>
+          (friendship.first === first && friendship.second === second) ||
+          (friendship.first === second && friendship.second === first)
+      );
+
+      return matchedFriendship;
+    },
+    removeUserFriendshipRequest: (_parent, { input: { receiver, sender } }) => {
       const matchedFriendshipRequest = _.find(
         FRIEND_REQUESTS_LIST,
         (request) =>
@@ -703,7 +1038,7 @@ const resolvers = {
 
       return matchedFriendshipRequest;
     },
-    savePost: (parent, { input: { postId, userId } }) => {
+    savePost: (_parent, { input: { postId, userId } }) => {
       const userSavedPosts = _.find(
         SAVED_POSTS_LIST,
         (savedPost) => savedPost.userId === userId
@@ -722,7 +1057,7 @@ const resolvers = {
 
       return postId;
     },
-    sendUserFriendshipRequest: (parent, { input: { receiver, sender } }) => {
+    sendUserFriendshipRequest: (_parent, { input: { receiver, sender } }) => {
       const newFriendshipRequest = { receiver, sender };
       const matchedReceiver = _.find(
         USERS_LIST,
@@ -745,7 +1080,44 @@ const resolvers = {
 
       return newFriendshipRequest;
     },
-    unsavePost: (parent, { input: { postId, userId } }) => {
+    unblockUser: (_parent, { input: { blockedUserId, userId } }) => {
+      const blockedUsers = _.find(
+        BLOCKED_USERS_LIST,
+        (blockedUser) => blockedUser.userId === userId
+      );
+
+      if (!blockedUsers || !blockedUsers.blockedUsers.includes(blockedUserId)) {
+        return null;
+      }
+
+      _.remove(
+        blockedUsers.blockedUsers,
+        (blockedUser) => blockedUser === blockedUserId
+      );
+
+      return blockedUserId;
+    },
+    unfollowUser: (_parent, { input: { followingUserId, userId } }) => {
+      const followingUsers = _.find(
+        FOLLOWING_USERS_LIST,
+        (followingUser) => followingUser.userId === userId
+      );
+
+      if (
+        !followingUsers ||
+        !followingUsers.followingUsers.includes(followingUserId)
+      ) {
+        return null;
+      }
+
+      _.remove(
+        followingUsers.followingUsers,
+        (followingUser) => followingUser === followingUserId
+      );
+
+      return followingUserId;
+    },
+    unsavePost: (_parent, { input: { postId, userId } }) => {
       const userSavedPosts = _.find(
         SAVED_POSTS_LIST,
         (savedPost) => savedPost.userId === userId
@@ -760,7 +1132,7 @@ const resolvers = {
       return postId;
     },
     updateCommentReaction: (
-      parent,
+      _parent,
       { input: { commentId, ownerId, postId, reactionType } }
     ) => {
       const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
@@ -782,7 +1154,7 @@ const resolvers = {
 
       return matchedReaction;
     },
-    updateConversationEmoji: (parent, { input: { emoji, first, second } }) => {
+    updateConversationEmoji: (_parent, { input: { emoji, first, second } }) => {
       const matchedConversation = _.find(
         CONVERSATIONS_LIST,
         (conversation) =>
@@ -808,7 +1180,7 @@ const resolvers = {
 
       return matchedConversation;
     },
-    updateConversationNickname: (parent, { input: { nickname, userId } }) => {
+    updateConversationNickname: (_parent, { input: { nickname, userId } }) => {
       const matchedConversation = _.find(
         CONVERSATIONS_LIST,
         (conversation) =>
@@ -837,7 +1209,7 @@ const resolvers = {
 
       return matchedConversation;
     },
-    updateConversationTheme: (parent, { input: { first, second, theme } }) => {
+    updateConversationTheme: (_parent, { input: { first, second, theme } }) => {
       const matchedConversation = _.find(
         CONVERSATIONS_LIST,
         (conversation) =>
@@ -864,7 +1236,7 @@ const resolvers = {
       return matchedConversation;
     },
     updatePostReaction: (
-      parent,
+      _parent,
       { input: { ownerId, postId, reactionType } }
     ) => {
       const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
@@ -877,7 +1249,7 @@ const resolvers = {
       return matchedReaction;
     },
     updateUserPlace: (
-      parent,
+      _parent,
       { input: { city, from, isCurrent, placeId, to, userId, visibility } }
     ) => {
       const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);

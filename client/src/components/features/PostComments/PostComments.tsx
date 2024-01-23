@@ -9,21 +9,15 @@ import {
   RemoveCommentData,
   REMOVE_COMMENT,
 } from "helpers";
-import { Comment, User } from "models";
+import { Comment } from "models";
 
 interface Props {
-  authenticatedUser?: User;
   comments: Comment[] | null;
   postId: string;
   postOwnerId: string;
 }
 
-export function PostComments({
-  authenticatedUser,
-  comments,
-  postId,
-  postOwnerId,
-}: Props) {
+export function PostComments({ comments, postId, postOwnerId }: Props) {
   const [removeComment] = useMutation<RemoveCommentData>(REMOVE_COMMENT);
 
   return useMemo(() => {
@@ -49,7 +43,6 @@ export function PostComments({
         {comments.map((comment, index) => (
           <UserComment
             key={index}
-            authenticatedUser={authenticatedUser}
             id={comment.id}
             postOwnerId={postOwnerId}
             onDeleteClick={(replyId) => handleDeleteClick(replyId)}
@@ -57,5 +50,5 @@ export function PostComments({
         ))}
       </div>
     );
-  }, [authenticatedUser, comments, postId, postOwnerId, removeComment]);
+  }, [comments, postId, postOwnerId, removeComment]);
 }

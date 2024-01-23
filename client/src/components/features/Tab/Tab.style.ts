@@ -1,15 +1,23 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
 
-interface ContainerProps {
+interface MainContainerProps {
   containsDescription: boolean;
+  gap: number | string;
   isSelected: boolean;
+  padding: number | string;
   selectedBackgroundColor?: keyof typeof Colors;
 }
 
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
+}
+
 export const Container = {
-  Main: styled.div<ContainerProps>`
+  Main: styled.div<MainContainerProps>`
     align-items: ${({ containsDescription }) =>
       containsDescription ? "flex-start" : "center"};
     border-radius: 5px;
@@ -19,8 +27,9 @@ export const Container = {
       `background-color: ${Colors[selectedBackgroundColor]};`};
     cursor: pointer;
     display: flex;
-    gap: 0.5em;
-    padding: 0.75em;
+    gap: ${({ gap }) => (typeof gap === "number" ? `${gap}px` : gap)};
+    padding: ${({ padding }) =>
+      typeof padding === "number" ? `${padding}px` : padding};
     user-select: none;
 
     &:hover {
@@ -37,15 +46,21 @@ export const Container = {
   `,
 };
 
-export const Description = styled.p`
+export const Description = styled.span`
   color: ${Colors.PhilippineSilver};
   font-size: 12px;
   font-weight: 400;
 `;
 
-export const Name = styled.p`
-  color: ${Colors.Platinum};
+type NameProps = { textSize: number | string } & ThemeProps;
+
+export const Name = styled.span<NameProps>`
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.Platinum
+      : Colors.VampireBlack};
   flex: 1;
-  font-size: 15px;
+  font-size: ${({ textSize }) =>
+    typeof textSize === "number" ? `${textSize}px` : textSize};
   font-weight: 500;
 `;

@@ -1,6 +1,15 @@
 import { gql } from "@apollo/client";
 
-import { Comment, Conversation, Message, Post, User } from "models";
+import {
+  Comment,
+  Conversation,
+  Message,
+  Post,
+  User,
+  Users,
+  UserError,
+  UserWithMessage,
+} from "models";
 
 import { COMMENT_DATA, PLACE_DATA, POST_DATA, USER_DATA } from "./Fragments";
 
@@ -216,8 +225,48 @@ export const GET_POST = gql`
   }
 `;
 
+export interface GetUserBlockedListData {
+  userBlockedList: User[] | null;
+}
+
+export const GET_USER_BLOCKED_LIST = gql`
+  ${COMMENT_DATA}
+  ${PLACE_DATA}
+  ${POST_DATA}
+  ${USER_DATA}
+  query GetUserBlockedList($id: ID!) {
+    userBlockedList(id: $id) {
+      ...UserData
+    }
+  }
+`;
+
+export interface GetUserFollowingListData {
+  userFollowingList: Users | UserError | null;
+}
+
+export const GET_USER_FOLLOWING_LIST = gql`
+  ${COMMENT_DATA}
+  ${PLACE_DATA}
+  ${POST_DATA}
+  ${USER_DATA}
+  query GetUserFollowingList($id: ID!) {
+    userFollowingList(id: $id) {
+      ... on UsersError {
+        message
+        __typename
+      }
+      ... on Users {
+        users {
+          ...UserData
+        }
+      }
+    }
+  }
+`;
+
 export interface GetUserByIdData {
-  userById: User | null;
+  userById: User | UserError | UserWithMessage | null;
 }
 
 export const GET_USER_BY_ID = gql`
@@ -225,15 +274,26 @@ export const GET_USER_BY_ID = gql`
   ${PLACE_DATA}
   ${POST_DATA}
   ${USER_DATA}
-  query GetUserById($id: ID!) {
-    userById(id: $id) {
-      ...UserData
+  query GetUserById($input: GetUserByIdInput!) {
+    userById(input: $input) {
+      ... on User {
+        ...UserData
+      }
+      ... on UserError {
+        message
+      }
+      ... on UserWithMessage {
+        message
+        user {
+          ...UserData
+        }
+      }
     }
   }
 `;
 
 export interface GetUserByUsernameData {
-  userByUsername: User | null;
+  userByUsername: User | UserError | null;
 }
 
 export const GET_USER_BY_USERNAME = gql`
@@ -243,7 +303,23 @@ export const GET_USER_BY_USERNAME = gql`
   ${USER_DATA}
   query GetUserByUsername($username: String!) {
     userByUsername(username: $username) {
-      ...UserData
+      ... on User {
+        ...UserData
+      }
+      ... on UserError {
+        message
+      }
+    }
+  }
+`;
+
+export const GET_USER_FRIENDS_BY_ID = gql`
+  query GetUserFriendsById($id: String!) {
+    userFriendsById(id: $id) {
+      firstName
+      id
+      lastName
+      username
     }
   }
 `;

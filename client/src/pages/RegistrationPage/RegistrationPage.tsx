@@ -1,10 +1,11 @@
 import { CSSProperties, useMemo } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import { Divider, RadioButton } from "components";
 import { Colors } from "environment";
 import { emailValidation } from "helpers";
+import { useAuthenticationStore } from "store";
 
 import {
   Button,
@@ -101,6 +102,24 @@ const resolver: Resolver<FormValues> = async (values) => {
 };
 
 export function RegistrationPage() {
+  const { authenticatedUser, isFinishedLoading } = useAuthenticationStore();
+
+  if (!isFinishedLoading) {
+    return <>Loading...</>;
+  }
+
+  return !!authenticatedUser ? (
+    <AuthenticatedRegistrationPage />
+  ) : (
+    <NotAuthenticatedRegistrationPage />
+  );
+}
+
+function AuthenticatedRegistrationPage() {
+  return <Navigate to="/" />;
+}
+
+function NotAuthenticatedRegistrationPage() {
   const {
     control,
     formState,

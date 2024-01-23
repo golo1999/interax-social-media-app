@@ -125,6 +125,7 @@ export const POST_DATA = gql`
       type
     }
     receiverId
+    receiverUsername
     shares {
       owner {
         firstName

@@ -82,12 +82,23 @@ const typeDefs = gql`
     visibility: Permission!
   }
 
+  input BlockUserInput {
+    blockedUserId: ID!
+    userId: ID!
+  }
+
   input CreatePostInput {
     parentId: ID
     receiverId: ID!
+    receiverUsername: String!
     text: String!
     userId: ID!
     visibility: Permission!
+  }
+
+  input FollowUserInput {
+    followingUserId: ID!
+    userId: ID!
   }
 
   input GetConversationBetweenInput {
@@ -102,6 +113,16 @@ const typeDefs = gql`
 
   input GetUserPostReactionInput {
     postId: ID!
+    userId: ID!
+  }
+
+  input GetUserByIdInput {
+    id: ID!
+    returnUserIfBlocked: Boolean
+  }
+
+  input HidePostInput {
+    hiddenPostId: ID!
     userId: ID!
   }
 
@@ -280,6 +301,7 @@ const typeDefs = gql`
     photos: [PostPhoto!]
     reactions: [Reaction!]
     receiverId: ID!
+    receiverUsername: String!
     shares: [Share!]
     text: String
     video: String
@@ -353,6 +375,29 @@ const typeDefs = gql`
     workHistory: [Work!]
   }
 
+  type UserError {
+    message: String!
+  }
+
+  type UserWithMessage {
+    message: String!
+    user: User!
+  }
+
+  union UserByIdResult = User | UserError | UserWithMessage
+
+  union UserByUsernameResult = User | UserError
+
+  type Users {
+    users: [User!]
+  }
+
+  type UsersError {
+    message: String!
+  }
+
+  union UsersResult = Users | UsersError
+
   type Work {
     id: ID!
     company: String!
@@ -366,24 +411,26 @@ const typeDefs = gql`
   type Query {
     authenticatedUser: User
     comment(id: ID!): Comment
-    comments: [Comment!]
     commentReactions(commentId: ID!): [Reaction!]
     commentReplies(commentId: ID!): [Comment!]
+    comments: [Comment!]
     conversationBetween(input: GetConversationBetweenInput!): Conversation
-    friendsPostsByOwnerId(ownerId: ID!): [Post!]
     friendshipSuggestionsById(id: ID!): [User!]
+    friendsPostsByOwnerId(ownerId: ID!): [Post!]
     messagesBetween(input: GetMessagesBetweenInput!): [Message!]
-    postComments(postId: ID!): [Comment!]
     post(id: ID!): Post
+    postComments(postId: ID!): [Comment!]
     posts: [Post!]
     postsByOwnerId(ownerId: ID!): [Post!]
-    userById(id: ID!): User
-    userByUsername(username: String!): User
+    userBlockedList(id: ID!): [User!]
+    userById(input: GetUserByIdInput!): UserByIdResult
+    userByUsername(username: String!): UserByUsernameResult
+    userFollowingList(id: ID!): UsersResult
     userFriendsById(id: ID!): [User!]
     userFriendsByUsername(username: String!): [User!]
     userPostReaction(input: GetUserPostReactionInput!): Reaction
-    userSavedPosts(id: ID!): [Post!]
     users: [User!]
+    userSavedPosts(id: ID!): [Post!]
   }
 
   type Mutation {
@@ -402,12 +449,17 @@ const typeDefs = gql`
       input: AddUserRelationshipStatusInput!
     ): RelationshipStatus
     addUserWorkplace(input: AddUserWorkplaceInput!): Work
+    blockUser(input: BlockUserInput!): String
     createPost(input: CreatePostInput!): Post
+    followUser(input: FollowUserInput!): String
+    hidePost(input: HidePostInput!): String
     removeComment(id: ID!): Comment
     removeCommentReaction(input: RemoveCommentReactionInput!): Reaction
     removeCommentReply(input: RemoveCommentReplyInput!): Comment
+    removePost(id: ID!): Post
     removePostComment(input: RemovePostCommentInput!): Comment
     removePostReaction(input: RemovePostReactionInput!): Reaction
+    removeUserFriend(input: AddUserFriendInput!): Friendship
     removeUserFriendshipRequest(
       input: RemoveUserFriendshipRequestInput!
     ): FriendshipRequest
@@ -415,6 +467,8 @@ const typeDefs = gql`
     sendUserFriendshipRequest(
       input: SendUserFriendshipRequestInput!
     ): FriendshipRequest
+    unblockUser(input: BlockUserInput!): String
+    unfollowUser(input: FollowUserInput!): String
     unsavePost(input: SavePostInput!): String
     updateCommentReaction(input: UpdateCommentReactionInput): Reaction
     updateConversationEmoji(input: UpdateConversationEmojiInput!): Conversation

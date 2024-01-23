@@ -1,5 +1,13 @@
 import styled from "styled-components";
 
+import { Colors } from "environment";
+import { Theme } from "models";
+
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
+}
+
 export const Container = {
   Content: styled.div`
     display: flex;
@@ -8,8 +16,11 @@ export const Container = {
     margin-top: 55px;
     padding: 1em 0.5em;
   `,
-  Main: styled.div`
-    background-color: inherit;
+  Main: styled.div<ThemeProps>`
+    background-color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.EerieBlack
+        : Colors.AntiFlashWhite};
     display: flex;
     flex-direction: column;
     flex: 1;

@@ -5,7 +5,12 @@ import styled from "styled-components";
 
 import { UserPhoto } from "components";
 import { useMessagesStore } from "store";
-import { GetUserByIdData, GET_USER_BY_ID } from "helpers";
+import {
+  GetUserByIdData,
+  GET_USER_BY_ID,
+  instanceOfUserError,
+  instanceOfUserWithMessage,
+} from "helpers";
 
 const Container = styled.div`
   bottom: 1em;
@@ -41,22 +46,31 @@ interface ChatHeadProps {
 function ChatHead({ userId }: ChatHeadProps) {
   const [fetchUserById, { data: user = { userById: null } }] =
     useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+  const { maximizeMessageBox } = useMessagesStore();
 
   useEffect(() => {
-    fetchUserById({ variables: { id: userId } });
+    fetchUserById({
+      variables: { input: { id: userId, returnUserIfBlocked: true } },
+    });
   }, [userId, fetchUserById]);
-
-  const { maximizeMessageBox } = useMessagesStore();
 
   function handlePhotoClick() {
     maximizeMessageBox(userId);
+  }
+
+  if (!user.userById || instanceOfUserError(user.userById)) {
+    return <></>;
   }
 
   return (
     <UserPhoto
       containerSize="3em"
       iconSize="1.5em"
-      user={user.userById}
+      user={
+        instanceOfUserWithMessage(user.userById)
+          ? user.userById.user
+          : user.userById
+      }
       onPhotoClick={handlePhotoClick}
     />
   );

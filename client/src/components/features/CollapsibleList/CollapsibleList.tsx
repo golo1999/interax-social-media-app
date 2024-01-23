@@ -3,6 +3,7 @@ import { IconType } from "react-icons";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 
 import { Colors } from "environment";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Label, List, ListItem } from "./CollapsibleList.style";
 
@@ -19,6 +20,8 @@ interface Props {
 }
 
 export function CollapsibleList({ items, label }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   function handleClick() {
@@ -27,28 +30,36 @@ export function CollapsibleList({ items, label }: Props) {
 
   const LabelIcon = isCollapsed ? MdKeyboardArrowUp : MdKeyboardArrowDown;
 
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
+  const labelIconColor =
+    !!authenticatedUser && theme === "DARK"
+      ? Colors.PhilippineSilver
+      : Colors.DarkJungleGreen;
+
   return (
     <>
-      <Label.Container onClick={handleClick}>
-        <Label.Text>{label}</Label.Text>
-        <LabelIcon color="silver" size={24} />
+      <Label.Container {...themeProps} onClick={handleClick}>
+        <Label.Text {...themeProps}>{label}</Label.Text>
+        <LabelIcon color={labelIconColor} size={24} />
       </Label.Container>
       {isCollapsed && (
-        <List>
+        <List {...themeProps}>
           {items.map((item, index) => {
             const { icon: Icon, iconColor, text, onClick } = item;
 
             return (
-              <ListItem key={index} onClick={onClick}>
+              <ListItem.Container {...themeProps} key={index} onClick={onClick}>
                 <Icon
                   color={
                     typeof iconColor !== "undefined"
                       ? Colors[iconColor]
                       : undefined
                   }
+                  size={24}
                 />
-                <p>{text}</p>
-              </ListItem>
+                <ListItem.Text>{text}</ListItem.Text>
+              </ListItem.Container>
             );
           })}
         </List>

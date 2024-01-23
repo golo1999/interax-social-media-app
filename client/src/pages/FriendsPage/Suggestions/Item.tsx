@@ -3,6 +3,7 @@ import { CSSProperties } from "react";
 import { UserPhoto } from "components";
 import { useMutualFriends } from "hooks";
 import { User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { ListItem } from "../FriendsPage.style";
 
@@ -14,7 +15,6 @@ import {
 } from "./Suggestions.style";
 
 interface Props {
-  authenticatedUser: User | null;
   user: User;
   onAddFriendClick: (userId: string | null) => void;
   onItemClick: (username: string) => void;
@@ -22,12 +22,14 @@ interface Props {
 }
 
 export function Item({
-  authenticatedUser,
   user,
   onAddFriendClick,
   onItemClick,
   onRemoveClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
   const { firstName, id: userId, lastName, username } = user;
 
   function handleConfirmClick() {
@@ -42,10 +44,9 @@ export function Item({
     onAddFriendClick(userId || null);
   }
 
-  const { mutualFriends, mutualFriendsText } = useMutualFriends({
-    authenticatedUser,
-    user: user,
-  });
+  const { mutualFriends, mutualFriendsText } = useMutualFriends(user);
+
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
 
   const userPhotoContainerStyle: CSSProperties = {
     borderBottomLeftRadius: 0,
@@ -53,7 +54,7 @@ export function Item({
   };
 
   return (
-    <ListItem>
+    <ListItem {...themeProps}>
       <Container.DisplayedName
         friendshipSuggestionsCount={mutualFriends.length}
       >
@@ -65,18 +66,20 @@ export function Item({
           user={user}
           onPhotoClick={handleItemClick}
         />
-        <DisplayedName onClick={handleItemClick}>
+        <DisplayedName {...themeProps} onClick={handleItemClick}>
           {firstName} {lastName}
         </DisplayedName>
       </Container.DisplayedName>
       <Container.MutualFriends>
         {mutualFriends.length > 0 && (
-          <MutualFriends>{mutualFriendsText}</MutualFriends>
+          <MutualFriends {...themeProps}>{mutualFriendsText}</MutualFriends>
         )}
-        <Button.AddFriend onClick={handleConfirmClick}>
+        <Button.AddFriend {...themeProps} onClick={handleConfirmClick}>
           Add Friend
         </Button.AddFriend>
-        <Button.Remove onClick={handleRemoveClick}>Remove</Button.Remove>
+        <Button.Remove {...themeProps} onClick={handleRemoveClick}>
+          Remove
+        </Button.Remove>
       </Container.MutualFriends>
     </ListItem>
   );

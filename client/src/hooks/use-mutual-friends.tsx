@@ -1,13 +1,12 @@
 import { useMemo } from "react";
 
 import { User } from "models";
+import { useAuthenticationStore } from "store";
 
-interface Props {
-  authenticatedUser: User | null;
-  user: User | null;
-}
+// Hook for getting the mutual friends between the authenticated user and a given user
+export function useMutualFriends(user: User | null) {
+  const { authenticatedUser } = useAuthenticationStore();
 
-export function useMutualFriends({ authenticatedUser, user }: Props) {
   const { friends: authenticatedUserFriends, id: authenticatedUserId } = {
     ...authenticatedUser,
   };
@@ -20,6 +19,10 @@ export function useMutualFriends({ authenticatedUser, user }: Props) {
 
   const mutualFriends: User[] = useMemo(() => {
     const list: User[] = [];
+
+    if (!user) {
+      return list;
+    }
 
     if (!isAuthenticatedUser && !isAuthenticatedUserFriend) {
       userFriends?.forEach((userFriend) => {
@@ -39,6 +42,7 @@ export function useMutualFriends({ authenticatedUser, user }: Props) {
     authenticatedUser?.friends,
     isAuthenticatedUser,
     isAuthenticatedUserFriend,
+    user,
     userFriends,
   ]);
   const mutualFriendsText = useMemo(

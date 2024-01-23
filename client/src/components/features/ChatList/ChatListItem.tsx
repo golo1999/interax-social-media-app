@@ -8,10 +8,16 @@ import {
   GET_CONVERSATION_BETWEEN,
   GET_USER_BY_ID,
   GetConversationBetweenData,
-  GetUserByIdData,
   getTimePassedFromDateTime,
+  GetUserByIdData,
+  instanceOfUserError,
+  instanceOfUserWithMessage,
 } from "helpers";
-import { useMessagesStore } from "store";
+import {
+  useAuthenticationStore,
+  useMessagesStore,
+  useSettingsStore,
+} from "store";
 
 import { getDisplayedEmoji } from "./ChatList.helpers";
 import { GroupedMessage } from "./ChatList.types";
@@ -24,23 +30,18 @@ import {
 } from "./ChatListItem.style";
 
 interface Props {
-  authenticatedUserId: string | null;
   groupedMessage: GroupedMessage;
   isModal?: boolean;
 }
 
-export function ChatListItem({
-  authenticatedUserId,
-  groupedMessage,
-  isModal,
-}: Props) {
+export function ChatListItem({ groupedMessage, isModal }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [
     fetchConversationBetween,
     { data: conversation = { conversationBetween: null } },
   ] = useLazyQuery<GetConversationBetweenData>(GET_CONVERSATION_BETWEEN);
   const [fetchUserById, { data: user = { userById: null } }] =
     useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
-
   const { pathname } = useLocation();
   const {
     activeMessageBoxes,
@@ -49,25 +50,37 @@ export function ChatListItem({
     maximizeMessageBox,
   } = useMessagesStore();
   const navigate = useNavigate();
+  const { theme } = useSettingsStore();
+
   const { messages, userId } = groupedMessage;
 
   useEffect(() => {
-    fetchUserById({ variables: { id: userId } });
+    fetchUserById({
+      variables: { input: { id: userId, returnUserIfBlocked: true } },
+    });
 
     if (userId) {
       fetchConversationBetween({
         variables: {
           input: {
-            first: authenticatedUserId,
+            first: authenticatedUser?.id,
             second: userId,
           },
         },
       });
     }
-  }, [authenticatedUserId, userId, fetchConversationBetween, fetchUserById]);
+  }, [authenticatedUser, userId, fetchConversationBetween, fetchUserById]);
+
+  if (!user.userById || instanceOfUserError(user.userById)) {
+    return <></>;
+  }
 
   const { emoji } = { ...conversation.conversationBetween };
-  const { firstName, lastName } = { ...user.userById };
+  const { firstName, lastName } = {
+    ...(instanceOfUserWithMessage(user.userById)
+      ? user.userById.user
+      : user.userById),
+  };
 
   if (!messages) {
     return <></>;
@@ -98,15 +111,28 @@ export function ChatListItem({
 
   const { dateTime, senderId, text } = lastMessage;
 
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
   return (
-    <ListItem isModal={isModal} isSelected={isSelected} onClick={handleClick}>
-      <UserPhoto user={user.userById} />
+    <ListItem
+      {...themeProps}
+      isModal={isModal}
+      isSelected={isSelected}
+      onClick={handleClick}
+    >
+      <UserPhoto
+        user={
+          instanceOfUserWithMessage(user.userById)
+            ? user.userById.user
+            : user.userById
+        }
+      />
       <Container.Details>
-        <DisplayedName>
+        <DisplayedName {...themeProps}>
           {firstName} {lastName}
         </DisplayedName>
-        <Container.Message>
-          {senderId === authenticatedUserId && <p>You:</p>}
+        <Container.Message {...themeProps}>
+          {senderId === authenticatedUser?.id && <span>You:</span>}
           {text ? <Message>{text}</Message> : <DisplayedEmoji />}
           <Container.DateTime>
             <TimePassed>

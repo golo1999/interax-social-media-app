@@ -4,6 +4,7 @@ export { HomePage } from "./HomePage";
 export { LoginPage } from "./LoginPage";
 export { MessengerPage } from "./MessengerPage";
 export { NotFoundPage } from "./NotFoundPage";
+export { NotificationsPage } from "./NotificationsPage";
 export { ProfilePage } from "./ProfilePage";
 export { RegistrationPage } from "./RegistrationPage";
 export { WatchPage } from "./WatchPage";

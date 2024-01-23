@@ -39,8 +39,12 @@ import {
   RemovePostReactionData,
   UpdatePostReactionData,
 } from "helpers";
-import { ReactionType, User } from "models";
-import { useMessagesStore, useSettingsStore } from "store";
+import { ReactionType } from "models";
+import {
+  useAuthenticationStore,
+  useMessagesStore,
+  useSettingsStore,
+} from "store";
 
 import {
   getCommentsText,
@@ -55,8 +59,7 @@ import {
   Button,
   Container as StyledContainer,
   Header,
-  PostOwnerName,
-  PostText,
+  Text,
 } from "./UserPost.style";
 
 enum ButtonTypes {
@@ -72,11 +75,11 @@ interface PostReactionCount {
 }
 
 interface Props {
-  authenticatedUser?: User;
   id: string;
 }
 
-export function UserPost({ authenticatedUser, id: postId }: Props) {
+export function UserPost({ id: postId }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [addPostComment] = useMutation<AddPostCommentData>(ADD_POST_COMMENT, {
     refetchQueries: [
       {
@@ -144,6 +147,7 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
   const {
     isPostOptionsListVisible,
     isSettingsListVisible,
+    theme,
     closePostOptionsList,
     closeSettingsList,
     openPostOptionsList,
@@ -307,10 +311,29 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
     return <></>;
   }
 
-  const { comments, dateTime, owner, photos, reactions, shares, text } =
-    post.post;
+  const {
+    comments,
+    dateTime,
+    owner,
+    photos,
+    reactions,
+    receiverId,
+    receiverUsername,
+    shares,
+    text,
+  } = post.post;
+  const {
+    firstName: ownerFirstName,
+    id: ownerId,
+    lastName: ownerLastName,
+    username: ownerUsername,
+  } = owner;
 
-  const postOwnerNameText = `${owner.firstName} ${owner.lastName}`;
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+  const moreOptionsIconColor =
+    !!authenticatedUser && theme === "DARK" ? "PhilippineGray" : "GraniteGray";
+  const postOwnerNameText = `${ownerFirstName} ${ownerLastName}`;
 
   return (
     <Container vertical>
@@ -318,57 +341,60 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
         <StyledContainer.PostOwner>
           <UserPhoto
             user={owner}
-            onPhotoClick={() => navigate(`/${owner.username}`)}
+            onPhotoClick={() => navigate(`/${ownerUsername}`)}
           />
           <div>
-            <PostOwnerName onClick={() => navigate(`/${owner.username}`)}>
+            <Text.PostOwnerName
+              isAuthenticated={!!authenticatedUser}
+              theme={theme}
+              onClick={() => navigate(`/${ownerUsername}`)}
+            >
               {postOwnerNameText}
-            </PostOwnerName>
-            <p style={{ cursor: "default" }}>
+            </Text.PostOwnerName>
+            <Text.DateTime isAuthenticated={!!authenticatedUser} theme={theme}>
               {getTimePassedFromDateTime(dateTime, "POST")}
-            </p>
+            </Text.DateTime>
           </div>
         </StyledContainer.PostOwner>
-        <StyledContainer.MoreOptionsIcon>
+        <StyledContainer.MoreOptionsIcon
+          isAuthenticated={!!authenticatedUser}
+          theme={theme}
+        >
           <MdMoreHoriz
-            color={Colors.PhilippineGray}
+            color={moreOptionsIconColor}
             size="1.5em"
             onClick={handleMoreOptionsClick}
           />
         </StyledContainer.MoreOptionsIcon>
       </Header>
-      <div
-        ref={textContainerRef}
-        style={{ lineHeight: "21px", position: "relative" }}
-      >
+      <StyledContainer.PostText ref={textContainerRef}>
         {isPostOptionsListVisible &&
           postId === isPostOptionsListVisible.postId && (
-            <PostOptionsList postId={postId} postOwner={owner} />
+            <PostOptionsList
+              postId={postId}
+              postOwner={owner}
+              receiverUsername={receiverUsername}
+            />
           )}
-        <PostText
-          style={
-            !isTextCompletelyVisible
-              ? {
-                  overflow: "hidden",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 5,
-                  WebkitBoxOrient: "vertical",
-                }
-              : undefined
-          }
+        <Text.PostText
+          isAuthenticated={!!authenticatedUser}
+          isCompletelyVisible={isTextCompletelyVisible}
+          theme={theme}
         >
           {text}
-        </PostText>
+        </Text.PostText>
         {!isTextCompletelyVisible && (
-          <span
+          <Text.SeeMore
+            isAuthenticated={!!authenticatedUser}
+            theme={theme}
             onClick={() => {
               setIsTextCompletelyVisible((prev) => !prev);
             }}
           >
             See more
-          </span>
+          </Text.SeeMore>
         )}
-      </div>
+      </StyledContainer.PostText>
       <PostPhotos photos={photos} />
       {((comments && comments?.length > 0) ||
         (reactions && reactions?.length > 0) ||
@@ -393,20 +419,38 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
             </div>
             {reactions && <p>{reactions.length}</p>}
           </div>
-          <div style={{ display: "flex", gap: "10px" }}>
+          <StyledContainer.CommentsShares>
             {comments && comments.length > 0 && (
-              <p>{getCommentsText(comments.length)}</p>
+              <StyledContainer.Comments>
+                {
+                  <Text.CommentsCount>
+                    {!!authenticatedUser
+                      ? getCommentsText(comments.length)
+                      : comments.length}
+                  </Text.CommentsCount>
+                }
+                {!authenticatedUser && <BiComment size={18} />}
+              </StyledContainer.Comments>
             )}
             {shares && shares.length > 0 && (
-              <p>{getSharesText(shares.length)}</p>
+              <StyledContainer.Shares>
+                <Text.SharesCount>
+                  {!!authenticatedUser
+                    ? getSharesText(shares.length)
+                    : shares.length}
+                </Text.SharesCount>
+                {!authenticatedUser && <RiShareForwardLine size={18} />}
+              </StyledContainer.Shares>
             )}
-          </div>
+          </StyledContainer.CommentsShares>
         </div>
       )}
-      <Divider thickness="2px" />
+      <Divider color={dividerColor} />
       <StyledContainer.Buttons>
         <Button
+          isAuthenticated={!!authenticatedUser}
           style={{ color: getButtonColor(ButtonTypes.REACTION) }}
+          theme={theme}
           onClick={handleReactionClick}
           onMouseEnter={() => {
             postReactionTimer = setTimeout(() => {
@@ -450,31 +494,34 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
             currentUserId: authenticatedUser?.id,
           })}
         </Button>
-        {(isHoveringOverEmojis || isHoveringOverReactionButton) && (
-          <ReactionEmojis
-            size={32}
-            style={{
-              left: "-5px",
-              top: "-52px",
-            }}
-            onMouseEnter={() => {
-              setIsHoveringOverEmojis((prev) => !prev);
-            }}
-            onMouseLeave={() => {
-              setTimeout(() => {
+        {!!authenticatedUser &&
+          (isHoveringOverEmojis || isHoveringOverReactionButton) && (
+            <ReactionEmojis
+              size={32}
+              style={{
+                left: "-5px",
+                top: "-52px",
+              }}
+              onMouseEnter={() => {
                 setIsHoveringOverEmojis((prev) => !prev);
-              }, 750);
-            }}
-            onReactionClick={(reactionType) => {
-              handleReactionEmojisClick(reactionType);
-              if (isHoveringOverEmojis) {
-                setIsHoveringOverEmojis((prev) => !prev);
-              }
-            }}
-          />
-        )}
+              }}
+              onMouseLeave={() => {
+                setTimeout(() => {
+                  setIsHoveringOverEmojis((prev) => !prev);
+                }, 750);
+              }}
+              onReactionClick={(reactionType) => {
+                handleReactionEmojisClick(reactionType);
+                if (isHoveringOverEmojis) {
+                  setIsHoveringOverEmojis((prev) => !prev);
+                }
+              }}
+            />
+          )}
         <Button
+          isAuthenticated={!!authenticatedUser}
           style={{ color: getButtonColor(ButtonTypes.COMMENT) }}
+          theme={theme}
           onClick={() => {
             setIsWriteCommentVisible((prev) => !prev);
           }}
@@ -482,17 +529,20 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
           <BiComment size={24} />
           Comment
         </Button>
-        <Button style={{ color: getButtonColor(ButtonTypes.SHARE) }}>
+        <Button
+          isAuthenticated={!!authenticatedUser}
+          style={{ color: getButtonColor(ButtonTypes.SHARE) }}
+          theme={theme}
+        >
           <RiShareForwardLine size={24} />
           Share
         </Button>
       </StyledContainer.Buttons>
       {((comments && comments?.length > 0) || isWriteCommentVisible) && (
-        <Divider thickness="2px" />
+        <Divider color={dividerColor} />
       )}
       {isWriteCommentVisible && (
         <WriteComment
-          authenticatedUser={authenticatedUser || null}
           autoFocus
           placeholder="Write a comment..."
           style={{ marginTop: "0.5em" }}
@@ -516,12 +566,7 @@ export function UserPost({ authenticatedUser, id: postId }: Props) {
           }}
         />
       )}
-      <PostComments
-        authenticatedUser={authenticatedUser}
-        comments={comments}
-        postId={postId}
-        postOwnerId={owner.id}
-      />
+      <PostComments comments={comments} postId={postId} postOwnerId={ownerId} />
     </Container>
   );
 }

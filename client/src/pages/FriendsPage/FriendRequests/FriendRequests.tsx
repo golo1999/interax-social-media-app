@@ -11,7 +11,8 @@ import {
   REMOVE_USER_FRIENDSHIP_REQUEST,
   RemoveUserFriendRequestData,
 } from "helpers";
-import { FriendshipRequest, User } from "models";
+import { FriendshipRequest } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import {
   List,
@@ -25,7 +26,6 @@ import { Button, Container } from "./FriendRequests.style";
 import { Item } from "./Item";
 
 interface Props {
-  authenticatedUser: User | null;
   displayedRequests: number;
   friendshipRequests: FriendshipRequest[] | null;
   onSeeAllClick: () => void;
@@ -33,18 +33,18 @@ interface Props {
 }
 
 export function FriendRequests({
-  authenticatedUser,
   displayedRequests,
   friendshipRequests,
   onSeeAllClick,
   onSeeMoreClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [addUserFriend] = useMutation<AddUserFriendData>(ADD_USER_FRIEND);
   const [removeUserFriendRequest] = useMutation<RemoveUserFriendRequestData>(
     REMOVE_USER_FRIENDSHIP_REQUEST
   );
-
   const navigate = useNavigate();
+  const { theme } = useSettingsStore();
 
   const { id: authenticatedUserId } = {
     ...authenticatedUser,
@@ -96,15 +96,20 @@ export function FriendRequests({
       ) || [],
     [authenticatedUserId, friendshipRequests]
   );
+
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
   const receivedFriendshipRequestsCount = receivedFriendshipRequests.length;
 
   return (
     <Container.Main>
       <SectionHeader>
-        <SectionTitle>Friend requests</SectionTitle>
+        <SectionTitle {...themeProps}>Friend Requests</SectionTitle>
         {receivedFriendshipRequestsCount > 0 &&
           displayedRequests < receivedFriendshipRequestsCount && (
-            <SeeButton onClick={onSeeAllClick}>See all</SeeButton>
+            <SeeButton {...themeProps} onClick={onSeeAllClick}>
+              See all
+            </SeeButton>
           )}
       </SectionHeader>
       {receivedFriendshipRequestsCount > 0 ? (
@@ -122,7 +127,6 @@ export function FriendRequests({
               return (
                 <Item
                   key={index}
-                  authenticatedUser={authenticatedUser}
                   request={request}
                   onConfirmClick={handleConfirmClick}
                   onItemClick={handleItemClick}
@@ -132,7 +136,7 @@ export function FriendRequests({
             })}
           </List>
           {displayedRequests < receivedFriendshipRequestsCount && (
-            <Button.SeeMore onClick={onSeeMoreClick}>
+            <Button.SeeMore {...themeProps} onClick={onSeeMoreClick}>
               See more
               <MdArrowDropDown size={24} />
             </Button.SeeMore>

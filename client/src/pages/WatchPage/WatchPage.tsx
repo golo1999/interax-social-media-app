@@ -5,16 +5,14 @@ import { BsSaveFill } from "react-icons/bs";
 import { MdOndemandVideo, MdPlayCircle } from "react-icons/md";
 
 import { Divider, Header, Navigation } from "components";
-import { GET_AUTHENTICATED_USER, GetAuthenticatedUserData } from "helpers";
 import { useHeaderItems } from "hooks";
 import { NavigationItem } from "models";
+import { useAuthenticationStore } from "store";
 
 import { Container } from "./WatchPage.style";
 
 export function WatchPage() {
-  const [fetchAuthenticatedUser] = useLazyQuery<GetAuthenticatedUserData>(
-    GET_AUTHENTICATED_USER
-  );
+  const { authenticatedUser } = useAuthenticationStore();
 
   const headerItems = useHeaderItems();
   const NAVIGATION_ITEMS = useMemo<NavigationItem[]>(
@@ -29,10 +27,6 @@ export function WatchPage() {
   const [selectedNavigationItem, setSelectedNavigationItem] = useState(
     NAVIGATION_ITEMS[0]
   );
-
-  useEffect(() => {
-    fetchAuthenticatedUser();
-  }, [fetchAuthenticatedUser]);
 
   function handleNavigationItemClick(item: NavigationItem) {
     if (item !== selectedNavigationItem) {

@@ -2,6 +2,7 @@ import styled from "styled-components";
 
 import { Divider } from "components";
 import { FriendshipRequest, User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { FriendRequests } from "../FriendRequests";
 import { Suggestions } from "../Suggestions";
@@ -13,7 +14,6 @@ const Container = styled.div`
 `;
 
 interface Props {
-  authenticatedUser: User | null;
   displayedRequests: number;
   displayedSuggestions: number;
   friendshipRequests: FriendshipRequest[] | null;
@@ -25,7 +25,6 @@ interface Props {
 }
 
 export function Home({
-  authenticatedUser,
   displayedRequests,
   displayedSuggestions,
   friendshipRequests,
@@ -35,18 +34,22 @@ export function Home({
   onSuggestionsSeeAllClick,
   onSuggestionsSeeMoreClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+
   return (
     <Container>
       <FriendRequests
-        authenticatedUser={authenticatedUser}
         displayedRequests={displayedRequests}
         friendshipRequests={friendshipRequests}
         onSeeAllClick={onFriendRequestsSeeAllClick}
         onSeeMoreClick={onFriendRequestsSeeMoreClick}
       />
-      <Divider />
+      <Divider color={dividerColor} />
       <Suggestions
-        authenticatedUser={authenticatedUser}
         displayedSuggestions={displayedSuggestions}
         suggestions={suggestions}
         onSeeAllClick={onSuggestionsSeeAllClick}

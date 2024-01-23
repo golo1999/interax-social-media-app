@@ -2,9 +2,15 @@ import { MdSend } from "react-icons/md";
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
 
 interface MainContainerProps {
   height?: string;
+}
+
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
 }
 
 export const Container = {
@@ -12,7 +18,9 @@ export const Container = {
     display: flex;
     flex-direction: column;
     ${({ height }) => (height ? `height: ${height};` : "flex: 1;")};
+    /* flex: 1; */
     gap: 1em;
+    /* height: 350px; */
     overflow: auto;
     padding: 0.5em;
 
@@ -73,23 +81,38 @@ export const Container = {
   `,
 };
 
-export const DisplayedName = styled.p`
-  color: ${Colors.Platinum};
+export const DisplayedName = styled.span<ThemeProps>`
+  color: ${({ isAuthenticated, theme }) =>
+    isAuthenticated && theme === "DARK"
+      ? Colors.Platinum
+      : Colors.VampireBlack};
+  font-size: 17px;
+  font-weight: 600;
+`;
+
+export const DisplayedTime = styled.span<ThemeProps>`
+  align-self: center;
+  color: ${({ isAuthenticated, theme }) =>
+    isAuthenticated && theme === "DARK" ? Colors.Platinum : Colors.GraniteGray};
+  font-size: 12px;
   font-weight: 500;
 `;
 
-export const DisplayedTime = styled.p`
-  align-self: center;
-  color: silver;
-  font-size: small;
-`;
-
-export const Footer = styled.div`
-  align-items: center;
-  display: flex;
-  gap: 0.5em;
-  padding: 0.5em;
-`;
+export const Footer = {
+  Blocked: styled.div`
+    background-color: ${Colors.Azure};
+    color: ${Colors.White};
+    font-size: 15px;
+    padding: 0.5em;
+    text-align: center;
+  `,
+  Normal: styled.div`
+    align-items: center;
+    display: flex;
+    gap: 0.5em;
+    padding: 0.5em;
+  `,
+};
 
 export const HiddenInput = {
   FileUpload: styled.input.attrs({ type: "file" })`
@@ -97,15 +120,25 @@ export const HiddenInput = {
   `,
 };
 
-export const Input = styled.input.attrs({ type: "text" })`
-  background-color: ${Colors.BlackOlive};
+export const Input = styled.input.attrs({ type: "text" })<ThemeProps>`
+  background-color: ${({ isAuthenticated, theme }) =>
+    isAuthenticated && theme === "DARK"
+      ? Colors.BlackOlive
+      : Colors.AntiFlashWhite};
   border-radius: 20px;
-  color: silver;
+  color: ${({ isAuthenticated, theme }) =>
+    isAuthenticated && theme === "DARK"
+      ? Colors.Platinum
+      : Colors.VampireBlack};
+  font-size: 15px;
   flex: 1;
   padding: 0.75em 1em;
 
   &::placeholder {
-    color: silver;
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.Platinum
+        : Colors.VampireBlack};
   }
 `;
 

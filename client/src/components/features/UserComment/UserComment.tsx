@@ -23,7 +23,8 @@ import {
   AddCommentReplyData,
 } from "helpers";
 import { useCommentReplies } from "hooks";
-import { ReactionType, User } from "models";
+import { ReactionType } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import {
   getReactionText,
@@ -38,7 +39,6 @@ import {
 } from "./UserComment.style";
 
 interface Props {
-  authenticatedUser?: User;
   id: string;
   postOwnerId: string;
   replyLevel?: number;
@@ -46,17 +46,16 @@ interface Props {
 }
 
 export function UserComment({
-  authenticatedUser,
   id: commentId,
   postOwnerId,
   replyLevel = 0,
   onDeleteClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [fetchComment, { data: comment = { comment: null } }] =
     useLazyQuery<GetCommentData>(GET_COMMENT);
   const [fetchCommentReplies] =
     useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
-
   const [addCommentReaction] = useMutation<AddCommentReactionData>(
     ADD_COMMENT_REACTION,
     {
@@ -102,6 +101,7 @@ export function UserComment({
       ],
     }
   );
+  const { theme } = useSettingsStore();
 
   useEffect(() => {
     fetchComment({ variables: { id: commentId } });
@@ -218,7 +218,6 @@ export function UserComment({
   }
 
   const commentReplies = useCommentReplies({
-    authenticatedUser,
     commentId,
     level: replyLevel,
     postOwnerId,
@@ -249,72 +248,89 @@ export function UserComment({
             onPhotoClick={() => navigate(`/${owner.username}`)}
           />
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <OwnerDetails.Container>
+            <OwnerDetails.Container
+              isAuthenticated={!!authenticatedUser}
+              theme={theme}
+            >
               {isPostOwner && <OwnerDetails.Badge>Author</OwnerDetails.Badge>}
-              <OwnerDetails.Name onClick={() => navigate(`/${owner.username}`)}>
+              <OwnerDetails.Name
+                isAuthenticated={!!authenticatedUser}
+                theme={theme}
+                onClick={() => navigate(`/${owner.username}`)}
+              >
                 {owner.firstName} {owner.lastName}
               </OwnerDetails.Name>
-              <p>{text}</p>
+              <OwnerDetails.Text
+                isAuthenticated={!!authenticatedUser}
+                theme={theme}
+              >
+                {text}
+              </OwnerDetails.Text>
             </OwnerDetails.Container>
             <Reactions.Container>
-              <p
-                style={getReactionTextStyle()}
-                onClick={handleReactionClick}
-                onMouseEnter={() => {
-                  commentReactionTimer = setTimeout(() => {
-                    setIsHoveringOverReactionText((prev) => !prev);
-                  }, 750);
-                }}
-                onMouseLeave={() => {
-                  if (commentReactionTimer) {
-                    clearTimeout(commentReactionTimer);
-                    return;
-                  }
-
-                  if (isHoveringOverReactionText) {
-                    setTimeout(() => {
+              {!!authenticatedUser && (
+                <p
+                  style={getReactionTextStyle()}
+                  onClick={handleReactionClick}
+                  onMouseEnter={() => {
+                    commentReactionTimer = setTimeout(() => {
                       setIsHoveringOverReactionText((prev) => !prev);
                     }, 750);
-                  }
-                }}
-              >
-                {getReactionText({
-                  hasReacted,
-                  reactions,
-                  currentUserId: authenticatedUser?.id,
-                })}
-              </p>
-              {(isHoveringOverEmojis || isHoveringOverReactionText) && (
-                <ReactionEmojis
-                  size={32}
-                  style={{
-                    left: "-5px",
-                    top: "-48px",
-                  }}
-                  onMouseEnter={() => {
-                    setIsHoveringOverEmojis((prev) => !prev);
                   }}
                   onMouseLeave={() => {
-                    setTimeout(() => {
-                      setIsHoveringOverEmojis((prev) => !prev);
-                    }, 750);
-                  }}
-                  onReactionClick={(reactionType) => {
-                    handleReactionEmojisClick(reactionType);
-                    if (isHoveringOverEmojis) {
-                      setIsHoveringOverEmojis((prev) => !prev);
+                    if (commentReactionTimer) {
+                      clearTimeout(commentReactionTimer);
+                      return;
+                    }
+
+                    if (isHoveringOverReactionText) {
+                      setTimeout(() => {
+                        setIsHoveringOverReactionText((prev) => !prev);
+                      }, 750);
                     }
                   }}
-                />
+                >
+                  {getReactionText({
+                    hasReacted,
+                    reactions,
+                    currentUserId: authenticatedUser?.id,
+                  })}
+                </p>
               )}
-              <p
-                style={{ color: Colors.PhilippineGray, fontWeight: "bold" }}
-                onClick={() => {
-                  setIsWriteReplyVisible((prev) => !prev);
-                }}
-              >
-                Reply
-              </p>
+              {!!authenticatedUser &&
+                (isHoveringOverEmojis || isHoveringOverReactionText) && (
+                  <ReactionEmojis
+                    size={32}
+                    style={{
+                      left: "-5px",
+                      top: "-48px",
+                    }}
+                    onMouseEnter={() => {
+                      setIsHoveringOverEmojis((prev) => !prev);
+                    }}
+                    onMouseLeave={() => {
+                      setTimeout(() => {
+                        setIsHoveringOverEmojis((prev) => !prev);
+                      }, 750);
+                    }}
+                    onReactionClick={(reactionType) => {
+                      handleReactionEmojisClick(reactionType);
+                      if (isHoveringOverEmojis) {
+                        setIsHoveringOverEmojis((prev) => !prev);
+                      }
+                    }}
+                  />
+                )}
+              {!!authenticatedUser && (
+                <p
+                  style={{ color: Colors.PhilippineGray, fontWeight: "bold" }}
+                  onClick={() => {
+                    setIsWriteReplyVisible((prev) => !prev);
+                  }}
+                >
+                  Reply
+                </p>
+              )}
               <p>{getTimePassedFromDateTime(dateTime, "COMMENT")}</p>
               {reactions && <p>{reactions.length}</p>}
             </Reactions.Container>
@@ -332,7 +348,6 @@ export function UserComment({
       </InnerContainer>
       {isWriteReplyVisible && (
         <WriteComment
-          authenticatedUser={authenticatedUser || null}
           autoFocus
           placeholder="Write a reply..."
           style={{

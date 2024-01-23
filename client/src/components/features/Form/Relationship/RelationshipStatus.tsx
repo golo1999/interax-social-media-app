@@ -4,16 +4,24 @@ import { MdMoreHoriz } from "react-icons/md";
 import { Colors } from "environment";
 import { useVisibilityModalItems } from "hooks";
 import { Permission, RelationshipStatus as Status, User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { History } from "../Form.style";
+import {
+  Container as StyledContainer,
+  Text as StyledText,
+} from "../InformationContainer.style";
 
 interface Props {
-  authenticatedUser: User | null;
   data: Status | null;
+  readonly?: boolean;
   user: User;
 }
 
-export function RelationshipStatus({ authenticatedUser, data, user }: Props) {
+export function RelationshipStatus({ data, readonly = false, user }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
   const { Container, NoDataText } = History;
 
   const userIsAuthenticatedUser =
@@ -41,37 +49,29 @@ export function RelationshipStatus({ authenticatedUser, data, user }: Props) {
       {data && data.status && isVisibleToUser ? (
         <Container.MainHorizontal>
           <AiFillHeart color={Colors.PhilippineGray} size={24} />
-          <div style={{ flex: 1 }}>
-            <p>{text}</p>
-          </div>
-          {userIsAuthenticatedUser && (
-            <div
-              style={{
-                alignItems: "center",
-                display: "flex",
-                gap: "1em",
-              }}
+          <StyledContainer.Text>
+            <StyledText.Normal
+              isAuthenticated={!!authenticatedUser}
+              theme={theme}
             >
+              {text}
+            </StyledText.Normal>
+          </StyledContainer.Text>
+          {userIsAuthenticatedUser && !readonly && (
+            <StyledContainer.Visibility>
               {VisibilityIcon && <VisibilityIcon size={18} />}
-              <div
-                style={{
-                  alignItems: "center",
-                  backgroundColor: Colors.BlackOlive,
-                  borderRadius: "50%",
-                  display: "flex",
-                  justifyContent: "center",
-                  padding: "0.25em",
-                }}
-              >
+              <StyledContainer.MoreOptionsIcon>
                 <MdMoreHoriz color={Colors.Platinum} size={24} />
-              </div>
-            </div>
+              </StyledContainer.MoreOptionsIcon>
+            </StyledContainer.Visibility>
           )}
         </Container.MainHorizontal>
       ) : (
         <Container.NoData>
           <AiFillHeart color={Colors.PhilippineGray} size={24} />
-          <NoDataText>No relationship info to show</NoDataText>
+          <NoDataText isAuthenticated={!!authenticatedUser} theme={theme}>
+            No relationship info to show
+          </NoDataText>
         </Container.NoData>
       )}
     </>

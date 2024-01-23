@@ -18,6 +18,14 @@ export const Container = {
     gap: 1em;
     justify-content: center;
   `,
+  Redirection: styled.div`
+    background-color: ${Colors.CornSilk};
+    border: 1px solid ${Colors.DeepLemon};
+    color: ${Colors.DarkJungleGreen};
+    font-size: 14px;
+    padding: 10px;
+    text-align: center;
+  `,
 };
 
 export const Form = styled.form`

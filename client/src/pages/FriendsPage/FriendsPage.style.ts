@@ -1,6 +1,12 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
+
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
+}
 
 export const Container = {
   Content: styled.div`
@@ -14,15 +20,22 @@ export const Container = {
     flex-direction: column;
     flex: 1;
   `,
-  Navigation: styled.div`
-    background-color: ${Colors.RaisinBlack};
+  Navigation: styled.div<ThemeProps>`
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.RaisinBlack
+        : Colors.White};
     display: flex;
     flex-direction: column;
     gap: 0.5em;
     padding: 1em 0.5em;
     width: 350px;
   `,
-  NavigationItem: styled.div`
+  NavigationItem: styled.div<ThemeProps>`
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.EerieBlack
+        : Colors.AntiFlashWhite};
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -38,16 +51,26 @@ export const List = styled.ul`
   list-style-type: none;
 `;
 
-export const ListItem = styled.li`
-  background-color: ${Colors.RaisinBlack};
+export const ListItem = styled.li<ThemeProps>`
+  background-color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK" ? Colors.RaisinBlack : Colors.White};
   border-radius: 5px;
-  border: 1px solid ${Colors.Onyx};
+  border: 1px solid
+    ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.Arsenic
+        : Colors.AmericanSilver};
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 1px 2px 0px;
   display: flex;
   flex-direction: column;
 `;
 
-export const NavigationTitle = styled.h2`
-  color: ${Colors.Platinum};
+export const NavigationTitle = styled.h1<ThemeProps>`
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.Platinum
+      : Colors.VampireBlack};
+  font-size: 24px;
   padding: 0 0.5em;
 `;
 
@@ -62,19 +85,28 @@ export const SectionNoData = styled.p`
   color: ${Colors.Platinum};
 `;
 
-export const SectionTitle = styled.h3`
-  color: ${Colors.Platinum};
+export const SectionTitle = styled.span<ThemeProps>`
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.Platinum
+      : Colors.VampireBlack};
+  font-size: 20px;
+  font-weight: bold;
 `;
 
-export const SeeButton = styled.button.attrs({ type: "button" })`
+export const SeeButton = styled.button.attrs({ type: "button" })<ThemeProps>`
   background-color: inherit;
   border-radius: 5px;
-  color: ${Colors.TuftsBlue};
-  font-size: medium;
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK" ? Colors.TuftsBlue : Colors.TrueBlue};
+  font-size: 17px;
   padding: 0.5em;
   user-select: none;
 
   &:hover {
-    background-color: ${Colors.BlackOlive};
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.BlackOlive
+        : Colors.Platinum};
   }
 `;

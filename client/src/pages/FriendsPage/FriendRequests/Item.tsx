@@ -3,9 +3,15 @@ import { useLazyQuery } from "@apollo/client";
 import { CSSProperties, useEffect } from "react";
 
 import { UserPhoto } from "components";
-import { GET_USER_BY_ID, GetUserByIdData } from "helpers";
+import {
+  GET_USER_BY_ID,
+  GetUserByIdData,
+  instanceOfUserError,
+  instanceOfUserWithMessage,
+} from "helpers";
 import { useMutualFriends } from "hooks";
-import { FriendshipRequest, User } from "models";
+import { FriendshipRequest } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { ListItem } from "../FriendsPage.style";
 
@@ -17,7 +23,6 @@ import {
 } from "./FriendRequests.style";
 
 interface Props {
-  authenticatedUser: User | null;
   request: FriendshipRequest;
   onConfirmClick: (userId: string | null) => void;
   onItemClick: (username: string) => void;
@@ -25,22 +30,21 @@ interface Props {
 }
 
 export function Item({
-  authenticatedUser,
   request,
   onConfirmClick,
   onItemClick,
   onRemoveClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [fetchUserById, { data: user = { userById: null } }] =
     useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+  const { theme } = useSettingsStore();
 
   const { sender } = request;
 
   useEffect(() => {
-    fetchUserById({ variables: { id: sender } });
+    fetchUserById({ variables: { input: { id: sender } } });
   }, [sender, fetchUserById]);
-
-  const { firstName, id: userId, lastName, username } = { ...user.userById };
 
   function handleConfirmClick() {
     onRemoveClick(userId || null);
@@ -56,10 +60,32 @@ export function Item({
     onConfirmClick(userId || null);
   }
 
-  const { mutualFriends, mutualFriendsText } = useMutualFriends({
-    authenticatedUser,
-    user: user.userById,
-  });
+  const { mutualFriends, mutualFriendsText } = useMutualFriends(
+    !user.userById
+      ? null
+      : instanceOfUserError(user.userById)
+      ? null
+      : instanceOfUserWithMessage(user.userById)
+      ? user.userById.user
+      : user.userById
+  );
+
+  if (instanceOfUserError(user.userById)) {
+    return <></>;
+  }
+
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
+  const {
+    firstName,
+    id: userId,
+    lastName,
+    username,
+  } = {
+    ...(instanceOfUserWithMessage(user.userById)
+      ? user.userById.user
+      : user.userById),
+  };
 
   const userPhotoContainerStyle: CSSProperties = {
     borderBottomLeftRadius: 0,
@@ -67,26 +93,32 @@ export function Item({
   };
 
   return (
-    <ListItem>
+    <ListItem {...themeProps}>
       <Container.DisplayedName mutualFriendsCount={mutualFriends.length}>
         <UserPhoto
           containerSize="100%"
           containerStyle={userPhotoContainerStyle}
           iconSize="50%"
           isSquare
-          user={user.userById}
+          user={
+            instanceOfUserWithMessage(user.userById)
+              ? user.userById.user
+              : user.userById
+          }
           onPhotoClick={handleItemClick}
         />
-        <DisplayedName onClick={handleItemClick}>
+        <DisplayedName {...themeProps} onClick={handleItemClick}>
           {firstName} {lastName}
         </DisplayedName>
       </Container.DisplayedName>
       <Container.MutualFriends>
         {mutualFriends.length > 0 && (
-          <MutualFriends>{mutualFriendsText}</MutualFriends>
+          <MutualFriends {...themeProps}>{mutualFriendsText}</MutualFriends>
         )}
         <Button.Confirm onClick={handleConfirmClick}>Confirm</Button.Confirm>
-        <Button.Remove onClick={handleRemoveClick}>Remove</Button.Remove>
+        <Button.Remove {...themeProps} onClick={handleRemoveClick}>
+          Remove
+        </Button.Remove>
       </Container.MutualFriends>
     </ListItem>
   );

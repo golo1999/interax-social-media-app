@@ -1,19 +1,16 @@
 import { UserPhoto } from "components";
-import { User } from "models";
+import { useAuthenticationStore } from "store";
 
 import { Container } from "./CreatePost.style";
 
 interface Props {
-  authenticatedUser: User | null;
   text: string;
   onTextContainerClick: () => void;
 }
 
-export function CreatePost({
-  authenticatedUser,
-  text,
-  onTextContainerClick,
-}: Props) {
+export function CreatePost({ text, onTextContainerClick }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+
   if (!authenticatedUser) {
     return <></>;
   }

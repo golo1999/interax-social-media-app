@@ -3,24 +3,50 @@ import { RiMessengerFill } from "react-icons/ri";
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
 
-interface IconContainerProps {
-  isModalVisible: boolean;
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
 }
+
+type IconContainerProps = {
+  isModalOpen: boolean;
+} & ThemeProps;
 
 export const Container = {
   Icon: styled.span<IconContainerProps>`
     align-items: center;
-    background-color: ${({ isModalVisible }) =>
-      isModalVisible ? Colors.JapaneseIndigo : Colors.BlackOlive};
+    background-color: ${({ $isAuthenticated, $theme, isModalOpen }) =>
+      isModalOpen
+        ? $isAuthenticated && $theme === "DARK"
+          ? // isModalOpen & dark theme
+            Colors.JapaneseIndigo
+          : // isModalOpen & light theme
+            Colors.AliceBlue
+        : $isAuthenticated && $theme === "DARK"
+        ? // !isModalOpen & dark theme
+          Colors.BlackOlive
+        : // !isModalOpen & light theme
+          Colors.Platinum};
     border-radius: 50%;
     display: flex;
     justify-content: center;
     padding: 0.5em;
 
     &:hover {
-      background-color: ${({ isModalVisible }) =>
-        isModalVisible ? Colors.PoliceBlue : Colors.DarkLiver};
+      background-color: ${({ $isAuthenticated, $theme, isModalOpen }) =>
+        isModalOpen
+          ? $isAuthenticated && $theme === "DARK"
+            ? // // isModalOpen & dark theme
+              Colors.PoliceBlue
+            : // isModalOpen & light theme
+              Colors.AzureishWhite
+          : $isAuthenticated && $theme === "DARK"
+          ? // !isModalOpen & dark theme
+            Colors.DarkLiver
+          : // !isModalOpen & light theme
+            Colors.Gainsboro};
     }
   `,
   Icons: styled.div`

@@ -17,15 +17,16 @@ import {
 } from "helpers";
 import { useMutualFriends } from "hooks";
 import { User } from "models";
+import { useAuthenticationStore } from "store";
 
 import { Button } from "../ProfilePage.style";
 
 interface Props {
-  authenticatedUser: User | null;
   user: User;
 }
 
-export function Friends({ authenticatedUser, user }: Props) {
+export function Friends({ user }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [addUserFriend] = useMutation<AddUserFriendData>(ADD_USER_FRIEND);
   const [removeUserFriendRequest] = useMutation<RemoveUserFriendRequestData>(
     REMOVE_USER_FRIENDSHIP_REQUEST
@@ -206,10 +207,7 @@ function Friend({
         request.receiver === authenticatedUser?.id && request.sender === userId
     ) || false;
 
-  const { mutualFriends, mutualFriendsText } = useMutualFriends({
-    authenticatedUser,
-    user: user,
-  });
+  const { mutualFriends, mutualFriendsText } = useMutualFriends(user);
 
   const navigate = useNavigate();
 

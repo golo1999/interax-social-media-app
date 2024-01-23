@@ -1,7 +1,8 @@
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { Divider, Input } from "components";
+import { useAuthenticationStore } from "store";
 
 import {
   Button,
@@ -36,6 +37,24 @@ const resolver: Resolver<FormValues> = async (values) => {
 };
 
 export function ForgotPasswordPage() {
+  const { authenticatedUser, isFinishedLoading } = useAuthenticationStore();
+
+  if (!isFinishedLoading) {
+    return <>Loading...</>;
+  }
+
+  return !!authenticatedUser ? (
+    <AuthenticatedForgotPasswordPage />
+  ) : (
+    <NotAuthenticatedForgotPasswordPage />
+  );
+}
+
+function AuthenticatedForgotPasswordPage() {
+  return <Navigate to="/" />;
+}
+
+function NotAuthenticatedForgotPasswordPage() {
   const {
     control,
     formState: { errors, isValid },
@@ -65,6 +84,7 @@ export function ForgotPasswordPage() {
     // const { email } = data;
     console.log(data);
     // TODO
+    reset();
   };
 
   return (
@@ -79,7 +99,7 @@ export function ForgotPasswordPage() {
           <Controller
             control={control}
             name="email"
-            render={({ field: { onChange } }) => (
+            render={({ field: { onChange, value } }) => (
               <Input
                 borderColor="LightGray"
                 borderStyle="solid"
@@ -93,6 +113,7 @@ export function ForgotPasswordPage() {
                 placeholderColor="PhilippineSilver"
                 spellCheck="false"
                 type="email"
+                value={value}
                 onChange={onChange}
               />
             )}

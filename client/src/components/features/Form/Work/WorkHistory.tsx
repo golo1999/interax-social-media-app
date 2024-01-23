@@ -4,16 +4,23 @@ import { MdMoreHoriz, MdWork } from "react-icons/md";
 import { Colors } from "environment";
 import { useVisibilityModalItems } from "hooks";
 import { Permission, User, Work } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { History } from "../Form.style";
+import {
+  Container as StyledContainer,
+  Text as StyledText,
+} from "../InformationContainer.style";
 
 interface Props {
-  authenticatedUser: User | null;
   data: Work[] | null;
+  readonly?: boolean;
   user: User;
 }
 
-export function WorkHistory({ authenticatedUser, data, user }: Props) {
+export function WorkHistory({ data, readonly = false, user }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
   // True if the data is not empty or null, but there is no visible data for the current user
   // i.e: the current user's data private or the data is visible only for friends
   const [isFilteredDataEmpty, setIsFilteredDataEmpty] = useState(false);
@@ -69,32 +76,28 @@ export function WorkHistory({ authenticatedUser, data, user }: Props) {
             return (
               <Item key={index}>
                 <MdWork color={Colors.PhilippineGray} size={24} />
-                <div style={{ flex: 1 }}>
-                  <p>{`${work.position} at ${work.company}`}</p>
-                  <p>{period}</p>
-                </div>
-                {userIsAuthenticatedUser && (
-                  <div
-                    style={{
-                      alignItems: "center",
-                      display: "flex",
-                      gap: "1em",
-                    }}
+                <StyledContainer.Text>
+                  <StyledText.Normal
+                    isAuthenticated={!!authenticatedUser}
+                    theme={theme}
                   >
+                    {work.position} at&nbsp;
+                    <StyledText.SemiBold>{work.company}</StyledText.SemiBold>
+                  </StyledText.Normal>
+                  <StyledText.Period
+                    isAuthenticated={!!authenticatedUser}
+                    theme={theme}
+                  >
+                    {period}
+                  </StyledText.Period>
+                </StyledContainer.Text>
+                {userIsAuthenticatedUser && !readonly && (
+                  <StyledContainer.Visibility>
                     {VisibilityIcon && <VisibilityIcon size={18} />}
-                    <div
-                      style={{
-                        alignItems: "center",
-                        backgroundColor: Colors.BlackOlive,
-                        borderRadius: "50%",
-                        display: "flex",
-                        justifyContent: "center",
-                        padding: "0.25em",
-                      }}
-                    >
+                    <StyledContainer.MoreOptionsIcon>
                       <MdMoreHoriz color={Colors.Platinum} size={24} />
-                    </div>
-                  </div>
+                    </StyledContainer.MoreOptionsIcon>
+                  </StyledContainer.Visibility>
                 )}
               </Item>
             );
@@ -103,7 +106,9 @@ export function WorkHistory({ authenticatedUser, data, user }: Props) {
       ) : (
         <Container.NoData>
           <MdWork color={Colors.PhilippineGray} size={24} />
-          <NoDataText>No workplaces to show</NoDataText>
+          <NoDataText isAuthenticated={!!authenticatedUser} theme={theme}>
+            No workplaces to show
+          </NoDataText>
         </Container.NoData>
       )}
     </>

@@ -1,5 +1,6 @@
 import { UserPhoto } from "components";
 import { User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Container, Name } from "./UserTab.style";
 
@@ -18,16 +19,21 @@ export function UserTab({
   user,
   onClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
   const { firstName, lastName } = { ...user };
 
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
   return (
-    <Container isSelected={isSelected} onClick={onClick}>
+    <Container {...themeProps} isSelected={isSelected} onClick={onClick}>
       <UserPhoto
         containerSize={containerSize}
         iconSize={iconSize}
         user={user}
       />
-      <Name>
+      <Name {...themeProps}>
         {firstName} {lastName}
       </Name>
     </Container>

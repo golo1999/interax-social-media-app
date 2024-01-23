@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { UserPhoto } from "components";
 import { Colors } from "environment";
-import { User } from "models";
+import { useAuthenticationStore } from "store";
 
 const containerStyle: CSSProperties = {
   alignItems: "center",
@@ -23,7 +23,6 @@ const inputStyle: CSSProperties = {
 };
 
 interface Props {
-  authenticatedUser: User | null;
   autoFocus?: boolean;
   placeholder: string;
   style?: CSSProperties;
@@ -32,13 +31,13 @@ interface Props {
 }
 
 export function WriteComment({
-  authenticatedUser,
   autoFocus = false,
   placeholder,
   style,
   onCancelClick,
   onSendClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const inputRef = useRef() as MutableRefObject<HTMLInputElement>;
 
   const navigate = useNavigate();

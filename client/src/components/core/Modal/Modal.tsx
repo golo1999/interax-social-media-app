@@ -104,6 +104,15 @@ function Header({
           padding: "0.75em",
         }}
       >
+        {/* {LeftIcon ? (
+          <IconContainer>
+            <LeftIcon color={iconColor} size={iconSize} />
+          </IconContainer>
+        ) : (
+          <IconContainer isHidden>
+            <MdKeyboardBackspace color={iconColor} size={iconSize} />
+          </IconContainer>
+        )} */}
         <IconContainer isHidden={!leftIcon} onClick={onLeftIconClick}>
           <LeftIcon color={Colors[iconColor]} size={iconSize} />
         </IconContainer>
@@ -111,6 +120,15 @@ function Header({
         <IconContainer isHidden={!rightIcon} onClick={onRightIconClick}>
           <RightIcon color={Colors[iconColor]} size={iconSize} />
         </IconContainer>
+        {/* {RightIcon ? (
+          <IconContainer>
+            <RightIcon color={iconColor} size={iconSize} />
+          </IconContainer>
+        ) : (
+          <IconContainer isHidden>
+            <MdClose color={iconColor} size={iconSize} />
+          </IconContainer>
+        )} */}
       </div>
     );
   }

@@ -1,8 +1,14 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
 
-export const Button = styled.button`
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
+}
+
+export const Button = styled.button<ThemeProps>`
   align-items: center;
   background-color: transparent;
   border-radius: 5px;
@@ -15,7 +21,10 @@ export const Button = styled.button`
   padding: 0.5em 0;
 
   &:hover {
-    background-color: ${Colors.BlackOlive};
+    background-color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.BlackOlive
+        : Colors.AntiFlashWhite};
   }
 `;
 
@@ -25,7 +34,17 @@ export const Container = {
     display: flex;
     position: relative;
   `,
-  MoreOptionsIcon: styled.div`
+  Comments: styled.div`
+    align-items: center;
+    display: flex;
+    gap: 4px;
+  `,
+  CommentsShares: styled.div`
+    align-items: center;
+    display: flex;
+    gap: 12px;
+  `,
+  MoreOptionsIcon: styled.div<ThemeProps>`
     align-items: center;
     border-radius: 50%;
     display: flex;
@@ -33,7 +52,10 @@ export const Container = {
     padding: 0.25em;
 
     &:hover {
-      background-color: ${Colors.BlackOlive};
+      background-color: ${({ isAuthenticated, theme }) =>
+        isAuthenticated && theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.AntiFlashWhite};
     }
   `,
   PostOwner: styled.div`
@@ -41,6 +63,15 @@ export const Container = {
     display: flex;
     flex: 1;
     gap: 1em;
+  `,
+  PostText: styled.div`
+    line-height: 21px;
+    position: relative;
+  `,
+  Shares: styled.div`
+    align-items: center;
+    display: flex;
+    gap: 4px;
   `,
 };
 
@@ -50,21 +81,73 @@ export const Header = styled.div`
   gap: 1em;
 `;
 
-export const PostOwnerName = styled.p`
-  color: ${Colors.LightGray};
-  cursor: pointer;
-  font-weight: bold;
-  max-width: 60ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  user-select: none;
-  white-space: nowrap;
+type PostTextProps = {
+  isCompletelyVisible: boolean;
+} & ThemeProps;
 
-  &:hover {
-    text-decoration: underline;
-  }
-`;
+export const Text = {
+  CommentsCount: styled.p`
+    color: ${Colors.GraniteGray};
+    font-size: 15px;
+    line-height: 20px;
+  `,
+  DateTime: styled.p<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.PhilippineSilver
+        : Colors.GraniteGray};
+    cursor: default;
+  `,
+  PostOwnerName: styled.p<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.LightGray
+        : Colors.VampireBlack};
+    cursor: pointer;
+    font-weight: bold;
+    max-width: 60ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: none;
+    white-space: nowrap;
 
-export const PostText = styled.span`
-  color: ${Colors.LightGray};
-`;
+    &:hover {
+      text-decoration: underline;
+    }
+  `,
+  PostText: styled.span<PostTextProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.Platinum
+        : Colors.VampireBlack};
+    ${({ isCompletelyVisible }) =>
+      !isCompletelyVisible && "display: -webkit-box;"};
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 20px;
+    ${({ isCompletelyVisible }) => !isCompletelyVisible && "overflow: hidden;"};
+    ${({ isCompletelyVisible }) =>
+      !isCompletelyVisible && "-webkit-box-orient: vertical;"};
+    ${({ isCompletelyVisible }) =>
+      !isCompletelyVisible && "-webkit-line-clamp: 5;"};
+  `,
+  SeeMore: styled.span<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.Platinum
+        : Colors.VampireBlack};
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 20px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  `,
+  SharesCount: styled.p`
+    color: ${Colors.GraniteGray};
+    font-size: 15px;
+    line-height: 20px;
+  `,
+};

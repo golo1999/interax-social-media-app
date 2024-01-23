@@ -1,6 +1,28 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
+
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
+}
+
+export const Container = {
+  Main: styled.div`
+    display: flex;
+    gap: 1em;
+
+    @media screen and (max-width: 924px) {
+      flex-direction: column;
+    }
+  `,
+  Posts: styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+  `,
+};
 
 interface FriendsListContainerProps {
   friends: number | null;
@@ -18,15 +40,19 @@ export const FriendsListContainer = styled.div<FriendsListContainerProps>`
       : "repeat(3, minmax(0, 1fr))"};
 `;
 
-export const SeeButton = styled.button.attrs({ type: "button" })`
+export const SeeButton = styled.button.attrs({ type: "button" })<ThemeProps>`
   background-color: inherit;
   border-radius: 5px;
-  color: ${Colors.TuftsBlue};
-  font-size: medium;
+  color: ${Colors.BrightNavyBlue};
+  font-size: 17px;
   padding: 0.5em;
+  transition: 0.3s ease;
   user-select: none;
 
   &:hover {
-    background-color: ${Colors.BlackOlive};
+    background-color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.BlackOlive
+        : Colors.Platinum};
   }
 `;

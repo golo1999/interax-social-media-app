@@ -21,10 +21,14 @@ export function AuthenticatedHeader({
   const { isChatModalVisible, closeChatModal, openChatModal } =
     useMessagesStore();
   const {
+    isNotificationListVisible,
     isPostOptionsListVisible,
     isSettingsListVisible,
+    theme,
+    closeNotificationsList,
     closePostOptionsList,
     closeSettingsList,
+    openNotificationsList,
     openSettingsList,
   } = useSettingsStore();
   const isMessagesRoute = useMatch("/messages/t/:userId");
@@ -40,6 +44,10 @@ export function AuthenticatedHeader({
   }
 
   function handleMessengerClick() {
+    if (isNotificationListVisible) {
+      closeNotificationsList();
+    }
+
     if (isPostOptionsListVisible) {
       closePostOptionsList();
     }
@@ -55,6 +63,26 @@ export function AuthenticatedHeader({
     }
   }
 
+  function handleNotificationsClick() {
+    if (isChatModalVisible) {
+      closeChatModal();
+    }
+
+    if (isPostOptionsListVisible) {
+      closePostOptionsList();
+    }
+
+    if (isSettingsListVisible) {
+      closeSettingsList();
+    }
+
+    if (isNotificationListVisible) {
+      closeNotificationsList();
+    } else {
+      openNotificationsList();
+    }
+  }
+
   function handleSearchClick() {
     // TODO
   }
@@ -62,6 +90,10 @@ export function AuthenticatedHeader({
   function handleUserPhotoClick() {
     if (isChatModalVisible) {
       closeChatModal();
+    }
+
+    if (isNotificationListVisible) {
+      closeNotificationsList();
     }
 
     if (isPostOptionsListVisible) {
@@ -75,9 +107,18 @@ export function AuthenticatedHeader({
     }
   }
 
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
   const messengerIconColor = isChatModalVisible
     ? Colors.BrilliantAzure
-    : Colors.Platinum;
+    : !!authenticatedUser && theme === "DARK"
+    ? Colors.Platinum
+    : Colors.VampireBlack;
+  const notificationsIconColor = isNotificationListVisible
+    ? Colors.BrilliantAzure
+    : !!authenticatedUser && theme === "DARK"
+    ? Colors.Platinum
+    : Colors.VampireBlack;
 
   return (
     <>
@@ -90,16 +131,23 @@ export function AuthenticatedHeader({
       <Container.Icons>
         {!isMessagesRoute && (
           <Container.Icon
-            isModalVisible={isChatModalVisible}
+            {...themeProps}
+            isModalOpen={isChatModalVisible}
             onClick={handleMessengerClick}
           >
-            <Icon.Messenger color={messengerIconColor} size={20} />
+            <Icon.Messenger color={messengerIconColor} size={24} />
           </Container.Icon>
         )}
-        <Container.Icon isModalVisible={false}>
-          <Icon.Notifications color={Colors.Platinum} size={20} />
+        <Container.Icon
+          {...themeProps}
+          isModalOpen={isNotificationListVisible}
+          onClick={handleNotificationsClick}
+        >
+          <Icon.Notifications color={notificationsIconColor} size={24} />
         </Container.Icon>
         <UserPhoto
+          containerSize="40px"
+          iconSize="16px"
           user={authenticatedUser}
           onPhotoClick={handleUserPhotoClick}
         />

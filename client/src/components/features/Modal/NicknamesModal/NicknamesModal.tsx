@@ -7,9 +7,9 @@ import styled from "styled-components";
 import { Modal, UserPhoto } from "components";
 import { Colors } from "environment";
 import { Conversation, User } from "models";
+import { useAuthenticationStore } from "store";
 
 interface Props {
-  authenticatedUser: User | null;
   conversation: Conversation | null;
   user: User | null;
   onCloseClick: () => void;
@@ -17,12 +17,12 @@ interface Props {
 }
 
 export function NicknamesModal({
-  authenticatedUser,
   conversation,
   user,
   onCloseClick,
   onSaveClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const {
     firstName: authenticatedUserFirstName,
     id: authenticatedUserId,

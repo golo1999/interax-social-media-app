@@ -4,22 +4,29 @@ import { MdMoreHoriz, MdSchool } from "react-icons/md";
 import { Colors } from "environment";
 import { useVisibilityModalItems } from "hooks";
 import { Education, EducationLevel, Permission, User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { History } from "../Form.style";
+import {
+  Container as StyledContainer,
+  Text as StyledText,
+} from "../InformationContainer.style";
 
 interface Props {
-  authenticatedUser: User | null;
   data: Education[] | null;
   level?: EducationLevel;
+  readonly?: boolean;
   user: User;
 }
 
 export function EducationHistory({
-  authenticatedUser,
   data,
   level,
+  readonly = false,
   user,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
   // True if the data is not empty or null, but there is no visible data for the current user
   // i.e: the current user's data private or the data is visible only for friends
   const [isFilteredDataEmpty, setIsFilteredDataEmpty] = useState(false);
@@ -79,44 +86,64 @@ export function EducationHistory({
             return (
               <Item key={index}>
                 <MdSchool color={Colors.PhilippineGray} size={24} />
-                <div style={{ flex: 1 }}>
+                <StyledContainer.Text>
                   {education.level === EducationLevel.COLLEGE ? (
-                    <p>
-                      {education.graduated
-                        ? `Studied ${education.degree} at ${education.school}`
-                        : `Studies ${education.degree} at ${education.school}`}
-                    </p>
-                  ) : (
-                    <p>
-                      {education.graduated
-                        ? `Went to ${education.school}`
-                        : `At ${education.school}`}
-                    </p>
-                  )}
-                  <p>{period}</p>
-                </div>
-                {userIsAuthenticatedUser && (
-                  <div
-                    style={{
-                      alignItems: "center",
-                      display: "flex",
-                      gap: "1em",
-                    }}
-                  >
-                    {VisibilityIcon && <VisibilityIcon size={18} />}
-                    <div
-                      style={{
-                        alignItems: "center",
-                        backgroundColor: Colors.BlackOlive,
-                        borderRadius: "50%",
-                        display: "flex",
-                        justifyContent: "center",
-                        padding: "0.25em",
-                      }}
+                    <StyledText.Normal
+                      isAuthenticated={!!authenticatedUser}
+                      theme={theme}
                     >
+                      {education.graduated ? (
+                        <>
+                          Studied {education.degree} at&nbsp;
+                          <StyledText.SemiBold>
+                            {education.school}
+                          </StyledText.SemiBold>
+                        </>
+                      ) : (
+                        <>
+                          Studies {education.degree} at&nbsp;
+                          <StyledText.SemiBold>
+                            {education.school}
+                          </StyledText.SemiBold>
+                        </>
+                      )}
+                    </StyledText.Normal>
+                  ) : (
+                    <StyledText.Normal
+                      isAuthenticated={!!authenticatedUser}
+                      theme={theme}
+                    >
+                      {education.graduated ? (
+                        <>
+                          Went to&nbsp;
+                          <StyledText.SemiBold>
+                            {education.school}
+                          </StyledText.SemiBold>
+                        </>
+                      ) : (
+                        <>
+                          At&nbsp;
+                          <StyledText.SemiBold>
+                            {education.school}
+                          </StyledText.SemiBold>
+                        </>
+                      )}
+                    </StyledText.Normal>
+                  )}
+                  <StyledText.Period
+                    isAuthenticated={!!authenticatedUser}
+                    theme={theme}
+                  >
+                    {period}
+                  </StyledText.Period>
+                </StyledContainer.Text>
+                {userIsAuthenticatedUser && !readonly && (
+                  <StyledContainer.Visibility>
+                    {VisibilityIcon && <VisibilityIcon size={18} />}
+                    <StyledContainer.MoreOptionsIcon>
                       <MdMoreHoriz color={Colors.Platinum} size={24} />
-                    </div>
-                  </div>
+                    </StyledContainer.MoreOptionsIcon>
+                  </StyledContainer.Visibility>
                 )}
               </Item>
             );
@@ -125,7 +152,9 @@ export function EducationHistory({
       ) : (
         <Container.NoData>
           <MdSchool color={Colors.PhilippineGray} size={24} />
-          <NoDataText>No schools to show</NoDataText>
+          <NoDataText isAuthenticated={!!authenticatedUser} theme={theme}>
+            No schools to show
+          </NoDataText>
         </Container.NoData>
       )}
     </>

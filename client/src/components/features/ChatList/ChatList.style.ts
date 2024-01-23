@@ -1,10 +1,16 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
 
-interface MainContainerProps {
-  isModal?: boolean;
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
 }
+
+type MainContainerProps = {
+  isModal?: boolean;
+} & ThemeProps;
 
 export const Container = {
   GroupedMessages: styled.div`
@@ -14,8 +20,25 @@ export const Container = {
     gap: 0.5em;
     overflow: auto;
   `,
+  Icon: styled.div<ThemeProps>`
+    align-items: center;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    padding: 0.5em;
+
+    &:hover {
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.AntiFlashWhite};
+    }
+  `,
   Main: styled.section<MainContainerProps>`
-    background-color: ${Colors.RaisinBlack};
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.RaisinBlack
+        : Colors.White};
     ${({ isModal }) => isModal && "border-radius: 5px;"};
     ${({ isModal }) => isModal && "bottom: 1em;"};
     ${({ isModal }) => isModal && "box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);"};
@@ -34,15 +57,16 @@ export const Container = {
 export const Footer = {
   Element: styled.footer`
     align-self: center;
-    color: ${Colors.BrilliantAzure};
+    color: ${Colors.BrightNavyBlue};
+    cursor: pointer;
 
     &:hover {
       text-decoration: underline;
     }
   `,
-  Text: styled.p`
-    font-size: medium;
-    font-weight: 500;
+  Text: styled.span`
+    font-size: 15px;
+    font-weight: 600;
   `,
 };
 
@@ -58,8 +82,11 @@ export const Header = {
     display: flex;
     gap: 0.5em;
   `,
-  Title: styled.h2`
-    color: ${Colors.Platinum};
+  Title: styled.h1<ThemeProps>`
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.Platinum
+        : Colors.VampireBlack};
     padding: 0 0.5em;
   `,
 };

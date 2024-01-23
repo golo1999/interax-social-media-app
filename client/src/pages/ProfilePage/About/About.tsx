@@ -15,6 +15,7 @@ import {
 } from "components";
 import { Colors } from "environment";
 import { EducationLevel, User } from "models";
+import { useAuthenticationStore } from "store";
 
 import { List, ListItem } from "./About.style";
 import { Overview } from "./Overview";
@@ -27,11 +28,11 @@ const NAVBAR_ITEMS = [
 ];
 
 interface Props {
-  authenticatedUser: User | null;
   user: User;
 }
 
-export function About({ authenticatedUser, user }: Props) {
+export function About({ user }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [isAddCollegeVisible, setIsAddCollegeVisible] = useState(false);
   const [isAddHighSchoolVisible, setIsAddHighSchoolVisible] = useState(false);
   const [isAddPlaceVisible, setIsAddPlaceVisible] = useState(false);
@@ -102,7 +103,6 @@ export function About({ authenticatedUser, user }: Props) {
       >
         {selectedNavbarItem === "OVERVIEW" ? (
           <Overview
-            authenticatedUser={authenticatedUser}
             isAddCollegeVisible={isAddCollegeVisible}
             isAddHighSchoolVisible={isAddHighSchoolVisible}
             isAddPlaceVisible={isAddPlaceVisible}
@@ -151,11 +151,7 @@ export function About({ authenticatedUser, user }: Props) {
                   )}
                 </>
               )}
-              <WorkHistory
-                authenticatedUser={authenticatedUser}
-                data={workHistory}
-                user={user}
-              />
+              <WorkHistory data={workHistory} user={user} />
             </div>
             <div
               style={{
@@ -190,7 +186,6 @@ export function About({ authenticatedUser, user }: Props) {
                 </>
               )}
               <EducationHistory
-                authenticatedUser={authenticatedUser}
                 data={educationHistory}
                 level={EducationLevel.COLLEGE}
                 user={user}
@@ -229,7 +224,6 @@ export function About({ authenticatedUser, user }: Props) {
                 </>
               )}
               <EducationHistory
-                authenticatedUser={authenticatedUser}
                 data={educationHistory}
                 level={EducationLevel.HIGH_SCHOOL}
                 user={user}
@@ -270,11 +264,7 @@ export function About({ authenticatedUser, user }: Props) {
                   )}
                 </>
               )}
-              <PlacesHistory
-                authenticatedUser={authenticatedUser}
-                data={placesHistory}
-                user={user}
-              />
+              <PlacesHistory data={placesHistory} user={user} />
             </div>
           </div>
         ) : (

@@ -4,15 +4,23 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import { UserComment } from "components";
+import { Colors } from "environment";
 import {
   GetCommentRepliesData,
   GET_COMMENT_REPLIES,
   RemoveCommentReplyData,
   REMOVE_COMMENT_REPLY,
 } from "helpers";
-import { User } from "models";
+import { Theme } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
-const Paragraph = styled.p`
+const Paragraph = styled.p<ThemeProps>`
+  color: ${({ isAuthenticated, theme }) =>
+    isAuthenticated && theme === "DARK"
+      ? Colors.PhilippineSilver
+      : Colors.GraniteGray};
+  font-size: 15px;
+  font-weight: 600;
   margin: 5px 0 5px 37px;
   user-select: none;
   width: fit-content;
@@ -23,23 +31,22 @@ const Paragraph = styled.p`
 `;
 
 interface Props {
-  authenticatedUser?: User;
   commentId: string;
   level: number;
   postOwnerId: string;
 }
 
-export function useCommentReplies({
-  authenticatedUser,
-  commentId,
-  level,
-  postOwnerId,
-}: Props) {
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
+}
+
+export function useCommentReplies({ commentId, level, postOwnerId }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [fetchCommentReplies, { data: replies }] =
     useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
   const [fetchRepliesReplies, { data: repliesReplies }] =
     useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
-
   const [removeCommentReply] = useMutation<RemoveCommentReplyData>(
     REMOVE_COMMENT_REPLY,
     {
@@ -48,7 +55,7 @@ export function useCommentReplies({
       ],
     }
   );
-
+  const { theme } = useSettingsStore();
   const [isMoreRepliesClicked, setIsMoreRepliesClicked] = useState(false);
 
   useEffect(() => {
@@ -93,7 +100,13 @@ export function useCommentReplies({
 
     return (
       <>
-        <Paragraph onClick={handleParagraphClick}>{paragraphText}</Paragraph>
+        <Paragraph
+          isAuthenticated={!!authenticatedUser}
+          theme={theme}
+          onClick={handleParagraphClick}
+        >
+          {paragraphText}
+        </Paragraph>
         {repliesReplies?.commentReplies &&
           isMoreRepliesClicked &&
           repliesReplies.commentReplies.map((reply, index) => {
@@ -102,7 +115,6 @@ export function useCommentReplies({
             return (
               <UserComment
                 key={index}
-                authenticatedUser={authenticatedUser}
                 id={replyId}
                 postOwnerId={postOwnerId}
                 replyLevel={level + 1}
@@ -120,6 +132,7 @@ export function useCommentReplies({
     postOwnerId,
     replies,
     repliesReplies?.commentReplies,
+    theme,
     fetchRepliesReplies,
     removeCommentReply,
   ]);

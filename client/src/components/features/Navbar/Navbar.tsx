@@ -1,6 +1,7 @@
 import { IconType } from "react-icons";
 
 import { Colors } from "environment";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import {
   List,
@@ -84,8 +85,11 @@ interface DefaultProps {
 }
 
 function Default({ items, selectedItem, onItemSelected }: DefaultProps) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
   return (
-    <List>
+    <List isAuthenticated={!!authenticatedUser} theme={theme}>
       {items.map((item, index) => {
         const isSelected = item === selectedItem;
         const text = item
@@ -95,7 +99,9 @@ function Default({ items, selectedItem, onItemSelected }: DefaultProps) {
         return (
           <ListItemContainer key={index}>
             <ListItem
+              isAuthenticated={!!authenticatedUser}
               isSelected={isSelected}
+              theme={theme}
               onClick={() => onItemSelected(item)}
             >
               {text}
@@ -115,25 +121,34 @@ interface IconsProps {
 }
 
 function Icons({ items, selectedItem, onItemSelected }: IconsProps) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
   return (
-    <List>
+    <List isAuthenticated={!!authenticatedUser} theme={theme}>
       {items.map((item, index) => {
         const {
           icon: { NotSelectedIcon, SelectedIcon },
         } = item;
 
         const isSelected = item === selectedItem;
+        const notSelectedIconColor =
+          !!authenticatedUser && theme === "DARK"
+            ? Colors.PhilippineSilver
+            : Colors.GraniteGray;
 
         return (
           <ListItemContainer key={index}>
             <ListItem
+              isAuthenticated={!!authenticatedUser}
               isSelected={isSelected}
+              theme={theme}
               onClick={() => onItemSelected(item)}
             >
               {isSelected ? (
                 <SelectedIcon color={Colors.BrilliantAzure} size={24} />
               ) : (
-                <NotSelectedIcon color="silver" size={24} />
+                <NotSelectedIcon color={notSelectedIconColor} size={24} />
               )}
             </ListItem>
             <ListItemBottomBorder isSelected={isSelected} />

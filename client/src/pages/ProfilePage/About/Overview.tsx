@@ -14,6 +14,7 @@ import {
   WorkHistory,
 } from "components";
 import { User } from "models";
+import { useAuthenticationStore } from "store";
 
 import { Button } from "../ProfilePage.style";
 
@@ -49,12 +50,11 @@ type ConditionalProps =
       setIsAddWorkplaceVisible: (value: SetStateAction<boolean>) => void;
     };
 
-type UserProps = { authenticatedUser: User | null; user: User };
+type UserProps = { user: User };
 
 type Props = ConditionalProps & UserProps;
 
 export function Overview({
-  authenticatedUser,
   isAddCollegeVisible,
   isAddHighSchoolVisible,
   isAddPlaceVisible,
@@ -69,6 +69,8 @@ export function Overview({
   setIsAddRelationshipStatusVisible,
   setIsAddWorkplaceVisible,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+
   const { educationHistory, placesHistory, relationshipStatus, workHistory } =
     user;
 
@@ -77,26 +79,10 @@ export function Overview({
   if (isReadonly) {
     return (
       <>
-        <WorkHistory
-          authenticatedUser={authenticatedUser}
-          data={workHistory}
-          user={user}
-        />
-        <EducationHistory
-          authenticatedUser={authenticatedUser}
-          data={educationHistory}
-          user={user}
-        />
-        <PlacesHistory
-          authenticatedUser={authenticatedUser}
-          data={placesHistory}
-          user={user}
-        />
-        <RelationshipStatus
-          authenticatedUser={authenticatedUser}
-          data={relationshipStatus}
-          user={user}
-        />
+        <WorkHistory data={workHistory} readonly user={user} />
+        <EducationHistory data={educationHistory} readonly user={user} />
+        <PlacesHistory data={placesHistory} readonly user={user} />
+        <RelationshipStatus data={relationshipStatus} readonly user={user} />
         {userIsAuthenticatedUser && (
           <Button
             backgroundColor="BlackOlive"
@@ -137,11 +123,7 @@ export function Overview({
           )}
         </>
       ) : (
-        <WorkHistory
-          authenticatedUser={authenticatedUser}
-          data={workHistory}
-          user={user}
-        />
+        <WorkHistory data={workHistory} user={user} />
       )}
       {userIsAuthenticatedUser && !educationHistory ? (
         <>
@@ -183,11 +165,7 @@ export function Overview({
           )}
         </>
       ) : (
-        <EducationHistory
-          authenticatedUser={authenticatedUser}
-          data={educationHistory}
-          user={user}
-        />
+        <EducationHistory data={educationHistory} user={user} />
       )}
       {userIsAuthenticatedUser && !placesHistory ? (
         <>
@@ -213,11 +191,7 @@ export function Overview({
           )}
         </>
       ) : (
-        <PlacesHistory
-          authenticatedUser={authenticatedUser}
-          data={placesHistory}
-          user={user}
-        />
+        <PlacesHistory data={placesHistory} user={user} />
       )}
       {userIsAuthenticatedUser && !relationshipStatus ? (
         <>
@@ -243,11 +217,7 @@ export function Overview({
           )}
         </>
       ) : (
-        <RelationshipStatus
-          authenticatedUser={authenticatedUser}
-          data={relationshipStatus}
-          user={user}
-        />
+        <RelationshipStatus data={relationshipStatus} user={user} />
       )}
     </>
   );

@@ -9,6 +9,7 @@ import { Colors } from "environment";
 import { CreatePostData, CREATE_POST, GET_USER_BY_USERNAME } from "helpers";
 import { useVisibilityModalItems } from "hooks";
 import { Permission, User } from "models";
+import { useAuthenticationStore } from "store";
 
 import { Button, Container, TextArea, Title } from "./CreatePostModal.style";
 
@@ -38,18 +39,13 @@ const resolver: Resolver<FormValues> = async (values) => {
 type ModalType = "CREATE_POST" | "POST_VISIBILITY";
 
 interface Props {
-  authenticatedUser: User | null;
   user: User;
   onCloseClick: () => void;
   onPostClick: () => void;
 }
 
-export function CreatePostModal({
-  authenticatedUser,
-  user,
-  onCloseClick,
-  onPostClick,
-}: Props) {
+export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [createPost] = useMutation<CreatePostData>(CREATE_POST);
 
   const [modalType, setModalType] = useState<ModalType>("CREATE_POST");
@@ -74,6 +70,7 @@ export function CreatePostModal({
         input: {
           parentId: null,
           receiverId: user.id,
+          receiverUsername: user.username,
           text,
           userId: authenticatedUser?.id,
           visibility,

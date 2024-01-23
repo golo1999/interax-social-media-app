@@ -1,6 +1,12 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
+
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
+}
 
 export const Container = {
   Main: styled.div.attrs({ role: "complementary" })`
@@ -17,9 +23,12 @@ export const Container = {
 };
 
 export const StyledUser = {
-  Active: styled.p`
-    color: silver;
-    font-size: small;
+  Active: styled.span<ThemeProps>`
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.PhilippineSilver
+        : Colors.GraniteGray};
+    font-size: 13px;
   `,
   Container: {
     Details: styled.div`
@@ -36,12 +45,16 @@ export const StyledUser = {
       padding-top: 1em;
     `,
   },
-  DisplayedName: styled.p`
+  DisplayedName: styled.span<ThemeProps>`
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
-    color: ${Colors.Platinum};
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.Platinum
+        : Colors.VampireBlack};
     display: -webkit-box;
-    font-weight: 500;
+    font-size: 17px;
+    font-weight: 600;
     line-clamp: 1;
     overflow: hidden;
     white-space: pre-wrap;

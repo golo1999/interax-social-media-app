@@ -2,9 +2,10 @@ import { IconType } from "react-icons";
 import { useNavigate } from "react-router-dom";
 
 import { Tab, UserTab } from "components";
-import { User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Container, List } from "./Navigation.style";
+import { Colors } from "environment";
 
 export interface NavigationItem {
   endIcon?: IconType;
@@ -184,19 +185,21 @@ export interface NavigationItem {
 // Navigation.Default = Default;
 
 interface NonSelectableProps {
-  authenticatedUser?: User | null;
   items: NavigationItem[];
   selectedItem: NavigationItem | null;
 }
 
-function NonSelectable({
-  authenticatedUser,
-  items,
-  selectedItem,
-}: NonSelectableProps) {
+function NonSelectable({ items, selectedItem }: NonSelectableProps) {
+  const { authenticatedUser } = useAuthenticationStore();
   const navigate = useNavigate();
+  const { theme } = useSettingsStore();
 
   const { username } = { ...authenticatedUser };
+
+  const hoverBackgroundColor: keyof typeof Colors | undefined =
+    !!authenticatedUser && theme === "DARK" ? undefined : "Platinum";
+  const startIconColor: keyof typeof Colors | undefined =
+    !!authenticatedUser && theme === "DARK" ? undefined : "VampireBlack";
 
   return (
     <Container.Main>
@@ -222,7 +225,9 @@ function NonSelectable({
               isSelected={isSelected}
               key={index}
               name={formattedName}
+              selectedBackgroundColor={hoverBackgroundColor}
               startIcon={startIcon}
+              startIconColor={startIconColor}
               onClick={onClick}
             />
           );
@@ -233,25 +238,34 @@ function NonSelectable({
 }
 
 interface SelectableProps {
-  authenticatedUser?: User | null;
+  isUserTabVisible?: boolean;
   items: NavigationItem[];
   selectedItem: NavigationItem | null;
   onItemSelected: (item: NavigationItem) => void;
 }
 
 function Selectable({
-  authenticatedUser,
+  isUserTabVisible = false,
   items,
   selectedItem,
   onItemSelected,
 }: SelectableProps) {
+  const { authenticatedUser } = useAuthenticationStore();
   const navigate = useNavigate();
+  const { theme } = useSettingsStore();
 
   const { username } = { ...authenticatedUser };
 
+  const endIconColor: keyof typeof Colors | undefined =
+    !!authenticatedUser && theme === "DARK" ? undefined : "DarkJungleGreen";
+  const hoverBackgroundColor: keyof typeof Colors | undefined =
+    !!authenticatedUser && theme === "DARK" ? undefined : "AntiFlashWhite";
+  const startIconColor: keyof typeof Colors | undefined =
+    !!authenticatedUser && theme === "DARK" ? undefined : "VampireBlack";
+
   return (
     <Container.Main>
-      {authenticatedUser && (
+      {authenticatedUser && isUserTabVisible && (
         <UserTab
           user={authenticatedUser}
           onClick={() => navigate(`/${username}`)}
@@ -270,10 +284,14 @@ function Selectable({
           return (
             <Tab
               endIcon={endIcon}
+              endIconColor={endIconColor}
               isSelected={isSelected}
               key={index}
               name={formattedName}
+              selectedBackgroundColor={hoverBackgroundColor}
               startIcon={startIcon}
+              startIconColor={startIconColor}
+              textSize={17}
               onClick={() => onItemSelected(item)}
             />
           );

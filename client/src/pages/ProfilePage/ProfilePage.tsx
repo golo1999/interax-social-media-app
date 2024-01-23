@@ -1,46 +1,49 @@
 import { useLazyQuery, useMutation } from "@apollo/client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import {
-  BsMessenger,
-  BsPersonCheckFill,
-  BsPersonPlusFill,
-} from "react-icons/bs";
-import { MdEdit, MdPhotoCamera } from "react-icons/md";
+import { HiDotsHorizontal } from "react-icons/hi";
+import { MdPhotoCamera } from "react-icons/md";
 import { useLocation } from "react-router";
 import { useNavigate } from "react-router-dom";
 
 import { Divider, Header, Navbar, UserPhoto } from "components";
 import { Colors } from "environment";
 import {
-  AddMessageData,
   ADD_MESSAGE,
-  GetAuthenticatedUserData,
-  GetUserByUsernameData,
-  GET_AUTHENTICATED_USER_WITH_FRIENDS,
+  AddMessageData,
   GET_USER_BY_USERNAME,
-  RemoveUserFriendRequestData,
+  GetUserByUsernameData,
+  instanceOfUserError,
   REMOVE_USER_FRIENDSHIP_REQUEST,
-  SendUserFriendRequestData,
+  RemoveUserFriendRequestData,
   SEND_USER_FRIENDSHIP_REQUEST,
+  SendUserFriendRequestData,
 } from "helpers";
 import { useHeaderItems } from "hooks";
+import { NotFoundPage } from "pages";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { About } from "./About";
+import { ButtonsContainer } from "./ButtonsContainer";
+import { Footer } from "./Footer";
 import { Friends } from "./Friends";
 import { Posts } from "./Posts";
-import { Button, Container as StyledContainer } from "./ProfilePage.style";
+import {
+  B,
+  Container as StyledContainer,
+  CoverPhoto,
+  Text,
+} from "./ProfilePage.style";
 import { FriendshipStatus } from "./ProfilePage.types";
 
 export function ProfilePage() {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
   const [
-    fetchAuthenticatedUser,
-    { data: authenticatedUserData = { authenticatedUser: null } },
-  ] = useLazyQuery<GetAuthenticatedUserData>(
-    GET_AUTHENTICATED_USER_WITH_FRIENDS
-  );
-  const [fetchUser, { data: userData = { userByUsername: null } }] =
-    useLazyQuery<GetUserByUsernameData>(GET_USER_BY_USERNAME);
+    fetchUser,
+    { data: userData = { userByUsername: null }, loading: isFetchingUser },
+  ] = useLazyQuery<GetUserByUsernameData>(GET_USER_BY_USERNAME);
 
   const [addMessage] = useMutation<AddMessageData>(ADD_MESSAGE);
   const [removeUserFriendRequest] = useMutation<RemoveUserFriendRequestData>(
@@ -55,10 +58,10 @@ export function ProfilePage() {
     []
   );
 
-  const x = new Date(new Date(2022, 8, 1).setUTCHours(0, 0, 0, 0))
-    .getTime()
-    .toString();
-  console.log(x);
+  // const x = new Date(new Date(2022, 8, 1).setUTCHours(0, 0, 0, 0))
+  //   .getTime()
+  //   .toString();
+  // console.log(x);
 
   const [selectedNavbarItem, setSelectedNavbarItem] = useState(NAVBAR_ITEMS[0]);
 
@@ -66,7 +69,6 @@ export function ProfilePage() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  const authenticatedUser = authenticatedUserData.authenticatedUser;
   const user = userData.userByUsername;
   const username = pathname.split("/")[1];
 
@@ -79,41 +81,43 @@ export function ProfilePage() {
   }, [NAVBAR_ITEMS, pathname]);
 
   useEffect(() => {
-    fetchAuthenticatedUser();
     fetchUser({ variables: { username } });
-  }, [username, fetchAuthenticatedUser, fetchUser]);
+  }, [username, fetchUser]);
 
-  const status = !user
-    ? FriendshipStatus.NOT_EXISTS
-    : username === authenticatedUser?.username
-    ? FriendshipStatus.ME
-    : authenticatedUser?.friends?.some((friend) => friend.username === username)
-    ? FriendshipStatus.FRIEND
-    : user.friendshipRequests?.some(
-        (request) =>
-          request.receiver === authenticatedUser?.id &&
-          request.sender === user.id
-      )
-    ? FriendshipStatus.FRIEND_REQUEST_RECEIVED
-    : user.friendshipRequests?.some(
-        (request) =>
-          request.receiver === user.id &&
-          request.sender === authenticatedUser?.id
-      )
-    ? FriendshipStatus.FRIEND_REQUEST_SENT
-    : FriendshipStatus.NOT_FRIEND;
-
-  if (status === FriendshipStatus.NOT_EXISTS) {
-    return (
-      <div>
-        <p>User does not exist</p>
-      </div>
-    );
-  }
-
-  if (!user) {
+  // First render
+  if (!isFetchingUser && !user) {
     return <></>;
+  } else if (isFetchingUser) {
+    return (
+      // <StyledContainer.Main>
+      //   <Header selectedItem={null} items={headerItems} />
+      // </StyledContainer.Main>
+      <>Loading...</>
+    );
+  } else if (instanceOfUserError(user) || !user) {
+    return <NotFoundPage />;
   }
+
+  const status =
+    username === authenticatedUser?.username
+      ? FriendshipStatus.ME
+      : authenticatedUser?.friends?.some(
+          (friend) => friend.username === username
+        )
+      ? FriendshipStatus.FRIEND
+      : user.friendshipRequests?.some(
+          (request) =>
+            request.receiver === authenticatedUser?.id &&
+            request.sender === user.id
+        )
+      ? FriendshipStatus.FRIEND_REQUEST_RECEIVED
+      : user.friendshipRequests?.some(
+          (request) =>
+            request.receiver === user.id &&
+            request.sender === authenticatedUser?.id
+        )
+      ? FriendshipStatus.FRIEND_REQUEST_SENT
+      : FriendshipStatus.NOT_FRIEND;
 
   const { coverPhotos, firstName, friends, lastName, profilePhotos } = user;
 
@@ -124,61 +128,23 @@ export function ProfilePage() {
   const hasCoverPhoto = !!currentCoverPhoto;
   const hasProfilePhoto = !!currentProfilePhoto;
 
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+
   return (
-    <div
-      style={{
-        backgroundColor: "inherit",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Header
-        // authenticatedUser={authenticatedUserData.authenticatedUser}
-        selectedItem={null}
-        items={headerItems}
-      />
-      <div
-        style={{
-          backgroundColor: Colors.RaisinBlack,
-          display: "flex",
-          flexDirection: "column",
-          marginTop: "55px",
-        }}
-      >
+    <StyledContainer.Main isAuthenticated={!!authenticatedUser} theme={theme}>
+      <Header selectedItem={null} items={headerItems} />
+      <StyledContainer.Top isAuthenticated={!!authenticatedUser} theme={theme}>
         <StyledContainer.CoverPhoto hasCoverPhoto={hasCoverPhoto}>
-          {hasCoverPhoto && (
-            <img
-              alt="COVER_PHOTO"
-              height="100%"
-              src={currentCoverPhoto.url}
-              style={{ borderRadius: "5px", objectFit: "cover" }}
-              width="100%"
-            />
-          )}
+          {hasCoverPhoto && <CoverPhoto src={currentCoverPhoto.url} />}
           {user.id === authenticatedUser?.id && (
-            <button
-              style={{
-                alignItems: "center",
-                backgroundColor: "white",
-                borderRadius: "5px",
-                bottom: 0,
-                color: Colors.EerieBlack,
-                display: "flex",
-                fontWeight: "bold",
-                gap: "0.5em",
-                margin: "0 2em 1em 0",
-                padding: "0.75em 0.5em",
-                position: "absolute",
-                right: 0,
-              }}
-              type="button"
-            >
+            <B.EditCoverPhoto>
               <MdPhotoCamera color={Colors.EerieBlack} size={16} />
               Edit cover photo
-            </button>
+            </B.EditCoverPhoto>
           )}
         </StyledContainer.CoverPhoto>
-        <div style={{ display: "flex", gap: "1em", margin: "0 15vw 1em 15vw" }}>
+        <StyledContainer.UserDetails>
           <UserPhoto
             iconSize="3em"
             containerSize="9em"
@@ -195,271 +161,141 @@ export function ProfilePage() {
             }}
           >
             <b>
-              <h1
-                style={{ color: Colors.LightGray }}
-              >{`${firstName} ${lastName}`}</h1>
-              <p style={{ color: Colors.PhilippineGray }}>
-                {!friends?.length
-                  ? "0 friends"
-                  : friends.length > 1
-                  ? `${friends.length} friends`
-                  : "1 friend"}
-              </p>
+              <Text.Name
+                isAuthenticated={!!authenticatedUser}
+                theme={theme}
+              >{`${firstName} ${lastName}`}</Text.Name>
+              {!!authenticatedUser && (
+                <Text.FriendsCount
+                  isAuthenticated={!!authenticatedUser}
+                  theme={theme}
+                >
+                  {!friends?.length
+                    ? "0 friends"
+                    : friends.length > 1
+                    ? `${friends.length} friends`
+                    : "1 friend"}
+                </Text.FriendsCount>
+              )}
             </b>
-            <div
-              style={{
-                alignItems: "center",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
-              <div style={{ display: "flex" }}>
-                {friends?.map((friend, index) => {
-                  if (index > 7) {
-                    return <Fragment key={index} />;
-                  }
+            {!!authenticatedUser && (
+              <div
+                style={{
+                  alignItems: "center",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <StyledContainer.FriendsIcons>
+                  {friends?.map((friend, index) => {
+                    if (index > 7) {
+                      return <Fragment key={index} />;
+                    }
 
-                  return (
-                    <UserPhoto
-                      key={index}
-                      user={friend}
-                      onPhotoClick={() => navigate(`/${friend.username}`)}
-                    />
-                  );
-                })}
+                    return (
+                      <UserPhoto
+                        key={index}
+                        user={friend}
+                        onPhotoClick={() => navigate(`/${friend.username}`)}
+                      />
+                    );
+                  })}
+                </StyledContainer.FriendsIcons>
+                <ButtonsContainer
+                  friendshipStatus={status}
+                  onAcceptFriendButtonClick={() => {
+                    // TODO
+                  }}
+                  onAddFriendButtonClick={() => {
+                    sendUserFriendRequest({
+                      variables: {
+                        input: {
+                          receiver: user.id,
+                          sender: authenticatedUser?.id,
+                        },
+                      },
+                      refetchQueries: [
+                        {
+                          query: GET_USER_BY_USERNAME,
+                          variables: { username },
+                        },
+                      ],
+                    });
+                  }}
+                  onFriendRequestSentButtonClick={() => {
+                    removeUserFriendRequest({
+                      variables: {
+                        input: {
+                          receiver: user.id,
+                          sender: authenticatedUser?.id,
+                        },
+                      },
+                      refetchQueries: [
+                        {
+                          query: GET_USER_BY_USERNAME,
+                          variables: { username },
+                        },
+                      ],
+                    });
+                  }}
+                  onMessageButtonClick={() => {
+                    addMessage({
+                      variables: {
+                        input: {
+                          emoji: null,
+                          parentId: null,
+                          receiverId: user.id,
+                          senderId: authenticatedUser?.id,
+                          text: "first message",
+                        },
+                      },
+                      onCompleted: (data) => {
+                        console.log(data.addMessage);
+                      },
+                    });
+                  }}
+                />
               </div>
-              <ButtonsContainer
-                friendshipStatus={status}
-                onAcceptFriendButtonClick={() => {
-                  // TODO
-                }}
-                onAddFriendButtonClick={() => {
-                  sendUserFriendRequest({
-                    variables: {
-                      input: {
-                        receiver: user.id,
-                        sender: authenticatedUser?.id,
-                      },
-                    },
-                    refetchQueries: [
-                      {
-                        query: GET_USER_BY_USERNAME,
-                        variables: { username },
-                      },
-                    ],
-                  });
-                }}
-                onFriendRequestSentButtonClick={() => {
-                  removeUserFriendRequest({
-                    variables: {
-                      input: {
-                        receiver: user.id,
-                        sender: authenticatedUser?.id,
-                      },
-                    },
-                    refetchQueries: [
-                      {
-                        query: GET_USER_BY_USERNAME,
-                        variables: { username },
-                      },
-                    ],
-                  });
-                }}
-                onMessageButtonClick={() => {
-                  addMessage({
-                    variables: {
-                      input: {
-                        emoji: null,
-                        parentId: null,
-                        receiverId: user.id,
-                        senderId: authenticatedUser?.id,
-                        text: "first message",
-                      },
-                    },
-                    onCompleted: (data) => {
-                      console.log(data.addMessage);
-                    },
-                  });
-                }}
-              />
-            </div>
+            )}
           </div>
-        </div>
-        <Divider margin="0 15vw" thickness="2px" />
-        <div
-          style={{
-            alignItems: "center",
-            backgroundColor: Colors.RaisinBlack,
-            display: "flex",
-            justifyContent: "space-between",
-            margin: "0 15vw",
-          }}
+        </StyledContainer.UserDetails>
+        <Divider color={dividerColor} margin="0 15vw" />
+        <StyledContainer.Navigation
+          isAuthenticated={!!authenticatedUser}
+          theme={theme}
         >
           <Navbar.Default
             items={NAVBAR_ITEMS}
-            selectedItem={selectedNavbarItem}
+            selectedItem={!!authenticatedUser ? selectedNavbarItem : null}
             onItemSelected={(item) => {
-              if (selectedNavbarItem !== item) {
+              if (!authenticatedUser) {
+                console.log("LOGIN MODAL");
+              } else if (selectedNavbarItem !== item) {
                 setSelectedNavbarItem(item as string);
               }
             }}
           />
-          <button
-            style={{
-              backgroundColor: Colors.BlackOlive,
-              borderRadius: "5px",
-              color: Colors.LightGray,
-              fontWeight: "bold",
-              padding: "0.5em 1em",
-            }}
-          >
-            ...
-          </button>
-        </div>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1em",
-          margin: "1em 15vw",
-        }}
-      >
+          <B.ShowMore isAuthenticated={!!authenticatedUser} theme={theme}>
+            <HiDotsHorizontal size={16} />
+          </B.ShowMore>
+        </StyledContainer.Navigation>
+      </StyledContainer.Top>
+      <StyledContainer.Bottom>
         {selectedNavbarItem === "ABOUT" ? (
           <>
-            <About authenticatedUser={authenticatedUser} user={user} />
-            <Friends authenticatedUser={authenticatedUser} user={user} />
+            <About user={user} />
+            <Friends user={user} />
           </>
         ) : selectedNavbarItem === "FRIENDS" ? (
-          <Friends authenticatedUser={authenticatedUser} user={user} />
+          <Friends user={user} />
         ) : selectedNavbarItem === "POSTS" ? (
-          <Posts
-            authenticatedUser={authenticatedUser}
-            status={status}
-            user={user}
-          />
+          <Posts status={status} user={user} />
         ) : (
           <Photos />
         )}
-      </div>
-    </div>
-  );
-}
-
-interface ButtonsContainerProps {
-  friendshipStatus: FriendshipStatus;
-  onAcceptFriendButtonClick: () => void;
-  onAddFriendButtonClick: () => void;
-  onFriendRequestSentButtonClick: () => void;
-  onMessageButtonClick: () => void;
-}
-
-function ButtonsContainer({
-  friendshipStatus,
-  onAcceptFriendButtonClick,
-  onAddFriendButtonClick,
-  onFriendRequestSentButtonClick,
-  onMessageButtonClick,
-}: ButtonsContainerProps) {
-  return (
-    <div
-      style={{
-        alignItems: "flex-end",
-        display: "flex",
-        gap: "0.5em",
-      }}
-    >
-      {friendshipStatus === FriendshipStatus.ME ? (
-        <Button
-          backgroundColor="BlackOlive"
-          color="White"
-          hoverBackgroundColor="DarkLiver"
-        >
-          <MdEdit color="white" />
-          Edit profile
-        </Button>
-      ) : friendshipStatus === FriendshipStatus.FRIEND ? (
-        <>
-          <Button
-            backgroundColor="BlackOlive"
-            color="White"
-            hoverBackgroundColor="DarkLiver"
-          >
-            <BsPersonCheckFill color="white" />
-            Friends
-          </Button>
-          <Button
-            backgroundColor="BlackOlive"
-            color="White"
-            hoverBackgroundColor="DarkLiver"
-            onClick={onMessageButtonClick}
-          >
-            <BsMessenger color="white" />
-            Message
-          </Button>
-        </>
-      ) : friendshipStatus === FriendshipStatus.FRIEND_REQUEST_RECEIVED ? (
-        <>
-          <Button
-            backgroundColor="BrightNavyBlue"
-            color="White"
-            hoverBackgroundColor="BleuDeFrance"
-            onClick={onAcceptFriendButtonClick}
-          >
-            <BsPersonPlusFill color="white" />
-            Accept friend request
-          </Button>
-          <Button
-            backgroundColor="BlackOlive"
-            color="White"
-            hoverBackgroundColor="DarkLiver"
-          >
-            <BsMessenger color="white" />
-            Message
-          </Button>
-        </>
-      ) : friendshipStatus === FriendshipStatus.FRIEND_REQUEST_SENT ? (
-        <>
-          <Button
-            backgroundColor="BrightNavyBlue"
-            color="White"
-            hoverBackgroundColor="BleuDeFrance"
-            onClick={onFriendRequestSentButtonClick}
-          >
-            <BsPersonPlusFill color="white" />
-            Friend request sent
-          </Button>
-          <Button
-            backgroundColor="BlackOlive"
-            color="White"
-            hoverBackgroundColor="DarkLiver"
-          >
-            <BsMessenger color="white" />
-            Message
-          </Button>
-        </>
-      ) : (
-        <>
-          <Button
-            backgroundColor="BrightNavyBlue"
-            color="White"
-            hoverBackgroundColor="BleuDeFrance"
-            onClick={onAddFriendButtonClick}
-          >
-            <BsPersonPlusFill color="white" />
-            Add friend
-          </Button>
-          <Button
-            backgroundColor="BlackOlive"
-            color="White"
-            hoverBackgroundColor="DarkLiver"
-          >
-            <BsMessenger color="white" />
-            Message
-          </Button>
-        </>
-      )}
-    </div>
+      </StyledContainer.Bottom>
+      {!authenticatedUser && <Footer user={user} />}
+    </StyledContainer.Main>
   );
 }
 

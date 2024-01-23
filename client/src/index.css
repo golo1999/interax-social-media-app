@@ -21,7 +21,7 @@ code {
 }
 
 #root {
-  background-color: #18191a;
+  /* background-color: #18191a; */
   display: flex;
   flex-direction: column;
   height: 100vh;

@@ -1,5 +1,5 @@
 import { Divider, IconItem } from "components";
-import { useAuthenticationStore } from "store";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { AuthenticatedHeader } from "./AuthenticatedHeader";
 import { Container } from "./Header.style";
@@ -12,13 +12,17 @@ interface Props {
 
 export function Header({ items, selectedItem }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
 
-  const isUserAuthenticated = !!authenticatedUser;
+  const isAuthenticated = !!authenticatedUser;
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
 
   return (
-    <Container.Main isUserAuthenticated={isUserAuthenticated}>
+    <Container.Main isAuthenticated={isAuthenticated} theme={theme}>
       <Container.Top>
-        {isUserAuthenticated ? (
+        {isAuthenticated ? (
           <AuthenticatedHeader
             authenticatedUser={authenticatedUser}
             items={items}
@@ -28,7 +32,7 @@ export function Header({ items, selectedItem }: Props) {
           <NotAuthenticatedHeader />
         )}
       </Container.Top>
-      <Divider />
+      <Divider color={dividerColor} />
     </Container.Main>
   );
 }

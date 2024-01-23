@@ -3,7 +3,13 @@ import styled from "styled-components";
 
 import { UserPhoto } from "components";
 import { Colors } from "environment";
-import { Message as MessageModel, User } from "models";
+import { Message as MessageModel, Theme, User } from "models";
+import { useSettingsStore } from "store";
+
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
+}
 
 interface ContainerProps {
   isAuthenticatedUser: boolean;
@@ -18,16 +24,25 @@ const Container = styled.div<ContainerProps>`
     isAuthenticatedUser && "justify-content: flex-end;"};
 `;
 
-interface TextProps {
+type TextProps = {
   isAuthenticatedUser: boolean;
-  theme: string;
-}
+  messageTheme: string;
+  theme: Theme;
+};
 
-const Text = styled.p<TextProps>`
-  background-color: ${({ isAuthenticatedUser, theme }) =>
-    isAuthenticatedUser ? theme : Colors.Arsenic};
+const Text = styled.span<TextProps>`
+  background-color: ${({ isAuthenticatedUser, messageTheme, theme }) =>
+    isAuthenticatedUser
+      ? messageTheme
+      : theme === "DARK"
+      ? Colors.Arsenic
+      : Colors.Platinum};
   border-radius: 1em;
-  color: white;
+  color: ${({ isAuthenticatedUser, theme }) =>
+    isAuthenticatedUser || theme === "DARK"
+      ? Colors.White
+      : Colors.VampireBlack};
+  font-size: 15px;
   max-width: 100%;
   overflow-wrap: break-word;
   padding: 0.25em 0.75em;
@@ -49,6 +64,8 @@ export function Message({
   messageTheme,
   user,
 }: Props) {
+  const { theme } = useSettingsStore();
+
   const { id: authenticatedUserId } = { ...authenticatedUser };
   const { senderId, text } = message;
 
@@ -58,7 +75,11 @@ export function Message({
     <Container isAuthenticatedUser={isAuthenticatedUser}>
       {!isAuthenticatedUser && <UserPhoto user={user} />}
       {text ? (
-        <Text isAuthenticatedUser={isAuthenticatedUser} theme={messageTheme}>
+        <Text
+          isAuthenticatedUser={isAuthenticatedUser}
+          messageTheme={messageTheme}
+          theme={theme}
+        >
           {text}
         </Text>
       ) : (

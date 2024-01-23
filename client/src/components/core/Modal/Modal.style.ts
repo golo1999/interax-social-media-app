@@ -25,8 +25,10 @@ export const Container = styled.div<ContainerProps>`
   box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
   display: flex;
   flex-direction: column;
+  /* min-height: 50vh; */
   min-height: ${({ minHeight }) => minHeight || "fit-content"};
   max-height: 75vh;
+  /* width: 550px; */
   width: ${({ width }) => width || "fit-content"};
 `;
 

@@ -1,17 +1,19 @@
 import { useLazyQuery } from "@apollo/client";
 
-import { useEffect } from "react";
+import { MutableRefObject, useEffect, useRef, useState } from "react";
 
 import { Chat, Divider, UserPhoto } from "components";
 import { Colors } from "environment";
 import {
-  GetAuthenticatedUserData,
   GetUserByIdData,
-  GET_AUTHENTICATED_USER,
   GET_USER_BY_ID,
   GET_CONVERSATION_BETWEEN,
   GetConversationBetweenData,
+  instanceOfUserError,
+  instanceOfUserWithMessage,
 } from "helpers";
+import { useOutsideClick } from "hooks";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Container, Header, Icon, User } from "./MessageBox.style";
 
@@ -22,43 +24,59 @@ interface Props {
 }
 
 export function MessageBox({ userId, onCloseClick, onMinimizeClick }: Props) {
-  const [
-    fetchAuthenticatedUser,
-    { data: authenticatedUserData = { authenticatedUser: null } },
-  ] = useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
+  const { authenticatedUser } = useAuthenticationStore();
   const [
     fetchConversationBetween,
     { data: conversation = { conversationBetween: null } },
   ] = useLazyQuery<GetConversationBetweenData>(GET_CONVERSATION_BETWEEN);
   const [fetchUserById, { data: user = { userById: null } }] =
     useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+  const mainContainerRef = useRef() as MutableRefObject<HTMLDivElement>;
+  const { theme } = useSettingsStore();
+  const [isFocused, setIsFocused] = useState(false);
+
+  useOutsideClick({
+    ref: mainContainerRef,
+    handle: () => {
+      if (isFocused) {
+        setIsFocused((val) => !val);
+      }
+    },
+  });
 
   useEffect(() => {
-    fetchAuthenticatedUser();
-    fetchUserById({ variables: { id: userId } });
+    console.log({ isFocused });
+  }, [isFocused]);
 
-    if (authenticatedUserData.authenticatedUser) {
+  useEffect(() => {
+    fetchUserById({
+      variables: { input: { id: userId, returnUserIfBlocked: true } },
+    });
+
+    if (authenticatedUser) {
       fetchConversationBetween({
         variables: {
           input: {
-            first: authenticatedUserData.authenticatedUser.id,
+            first: authenticatedUser.id,
             second: userId,
           },
         },
       });
     }
-  }, [
-    authenticatedUserData.authenticatedUser,
-    userId,
-    fetchAuthenticatedUser,
-    fetchConversationBetween,
-    fetchUserById,
-  ]);
+  }, [authenticatedUser, userId, fetchConversationBetween, fetchUserById]);
+
+  if (!user.userById || instanceOfUserError(user.userById)) {
+    return <></>;
+  }
 
   const { first, firstNickname, secondNickname } = {
     ...conversation.conversationBetween,
   };
-  const { firstName, lastName } = { ...user.userById };
+  const { firstName, lastName } = {
+    ...(instanceOfUserWithMessage(user.userById)
+      ? user.userById.user
+      : user.userById),
+  };
 
   function getDisplayedName() {
     if (!firstNickname && !secondNickname) {
@@ -73,27 +91,59 @@ export function MessageBox({ userId, onCloseClick, onMinimizeClick }: Props) {
     return secondNickname;
   }
 
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+  const iconColor = isFocused ? Colors.Azure : Colors.SilverSand;
+
   return (
-    <Container.Main>
+    <Container.Main
+      $isAuthenticated={!!authenticatedUser}
+      $theme={theme}
+      isFocused={isFocused}
+      ref={mainContainerRef}
+      onClick={() => {
+        if (!isFocused) {
+          setIsFocused((val) => !val);
+        }
+      }}
+    >
       <Header>
-        <Container.User>
-          <UserPhoto user={user.userById} />
+        <Container.User $isAuthenticated={!!authenticatedUser} $theme={theme}>
+          <UserPhoto
+            user={
+              instanceOfUserWithMessage(user.userById)
+                ? user.userById.user
+                : user.userById
+            }
+          />
           <User.DetailsContainer>
-            <User.Name>{getDisplayedName()}</User.Name>
-            <User.Active>Active 2h ago</User.Active>
+            <User.Name $isAuthenticated={!!authenticatedUser} $theme={theme}>
+              {getDisplayedName()}
+            </User.Name>
+            <User.Active $isAuthenticated={!!authenticatedUser} $theme={theme}>
+              Active 2h ago
+            </User.Active>
           </User.DetailsContainer>
         </Container.User>
         <Container.Icons>
           <Icon.Minimize
-            color={Colors.Azure}
+            $isAuthenticated={!!authenticatedUser}
+            $theme={theme}
+            color={iconColor}
             size={24}
             onClick={onMinimizeClick}
           />
-          <Icon.Close color={Colors.Azure} size={24} onClick={onCloseClick} />
+          <Icon.Close
+            $isAuthenticated={!!authenticatedUser}
+            $theme={theme}
+            color={iconColor}
+            size={24}
+            onClick={onCloseClick}
+          />
         </Container.Icons>
       </Header>
-      <Divider />
-      <Chat chatHeight="350px" userId={userId} />
+      <Divider color={dividerColor} />
+      <Chat userId={userId} />
     </Container.Main>
   );
 }

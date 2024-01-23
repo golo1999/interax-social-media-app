@@ -26,7 +26,7 @@ const Photo = styled.img<PhotoProps>`
   width: 100%;
 `;
 
-type CommonProps = { user: User | null; onPhotoClick?: () => void };
+type CommonProps = { user?: User | null; onPhotoClick?: () => void };
 
 type ContainerCommonProps = { hasProfilePhoto: boolean };
 
@@ -53,7 +53,7 @@ export function UserPhoto({
   iconStyle,
   isSquare,
   photoStyle,
-  user,
+  user = null,
   onPhotoClick,
 }: Props) {
   if (!user) {

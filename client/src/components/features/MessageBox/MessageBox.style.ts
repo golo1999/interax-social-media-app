@@ -2,6 +2,12 @@ import { MdClose, MdHorizontalRule } from "react-icons/md";
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
+
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
+}
 
 export const Body = styled.div`
   display: flex;
@@ -49,20 +55,30 @@ export const Body = styled.div`
   }
 `;
 
+type MainContainerProps = { isFocused: boolean } & ThemeProps;
+
 export const Container = {
-  Main: styled.div`
-    background-color: ${Colors.RaisinBlack};
+  Main: styled.div<MainContainerProps>`
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.RaisinBlack
+        : Colors.White};
     border-radius: 5px 5px 0 0;
-    box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
+    box-shadow: ${({ isFocused }) =>
+      isFocused
+        ? "rgba(0, 0, 0, 0.2) 0px 12px 28px 0px, rgba(0, 0, 0, 0.2) 0px 2px 4px 0px"
+        : "rgba(0, 0, 0, 0.1) 0px 12px 28px 0px, rgba(0, 0, 0, 0.1) 0px 2px 4px 0px"};
     display: flex;
     flex-direction: column;
-    width: 300px;
+    height: 455px;
+    transition: box-shadow 0.3s ease;
+    width: 328px;
   `,
   Icons: styled.div`
     align-items: center;
     display: flex;
   `,
-  User: styled.div`
+  User: styled.div<ThemeProps>`
     align-items: center;
     border-radius: 5px;
     display: flex;
@@ -72,7 +88,10 @@ export const Container = {
     padding: 0.25em;
 
     &:hover {
-      background-color: ${Colors.BlackOlive};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.AntiFlashWhite};
     }
   `,
 };
@@ -93,18 +112,26 @@ export const Header = styled.div`
 `;
 
 export const Icon = {
-  Close: styled(MdClose)`
+  Close: styled(MdClose)<ThemeProps>`
     border-radius: 50%;
+    transition: 0.3s ease;
 
     &:hover {
-      background-color: ${Colors.BlackOlive};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.AntiFlashWhite};
     }
   `,
-  Minimize: styled(MdHorizontalRule)`
+  Minimize: styled(MdHorizontalRule)<ThemeProps>`
     border-radius: 50%;
+    transition: 0.3s ease;
 
     &:hover {
-      background-color: ${Colors.BlackOlive};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.AntiFlashWhite};
     }
   `,
 };
@@ -122,18 +149,25 @@ export const Input = styled.input.attrs({ type: "text" })`
 `;
 
 export const User = {
-  Active: styled.p`
-    color: silver;
-    font-size: small;
+  Active: styled.span<ThemeProps>`
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.PhilippineSilver
+        : Colors.GraniteGray};
+    font-size: 13px;
   `,
   DetailsContainer: styled.div`
     display: flex;
     flex-direction: column;
     min-width: 0;
   `,
-  Name: styled.p`
-    color: ${Colors.Platinum};
-    font-weight: 500;
+  Name: styled.span<ThemeProps>`
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.Platinum
+        : Colors.VampireBlack};
+    font-size: 15px;
+    font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

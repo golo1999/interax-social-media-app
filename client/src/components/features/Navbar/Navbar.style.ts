@@ -1,13 +1,25 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
 
-interface ListItemProps {
+interface CommonProps {
   isSelected?: boolean;
 }
 
-export const List = styled.ul`
-  color: ${Colors.PhilippineSilver};
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
+}
+
+type ListItemProps = CommonProps & ThemeProps;
+
+export const List = styled.ul<ThemeProps>`
+  /* color: ${Colors.PhilippineSilver}; */
+  color: ${({ isAuthenticated, theme }) =>
+    isAuthenticated && theme === "DARK"
+      ? Colors.PhilippineSilver
+      : Colors.GraniteGray};
   display: flex;
   list-style-type: none;
   padding-top: 5px;
@@ -21,12 +33,19 @@ export const ListItem = styled.li<ListItemProps>`
   padding: 0.5em 1em;
 
   &:hover {
-    ${({ isSelected }) =>
-      !isSelected && `background-color: ${Colors.BlackOlive};`}
+    ${({ isAuthenticated, isSelected, theme }) =>
+      !isSelected &&
+      (!isAuthenticated || theme === "LIGHT") &&
+      `background-color: ${Colors.AntiFlashWhite};`}
+    ${({ isAuthenticated, isSelected, theme }) =>
+      !isSelected &&
+      isAuthenticated &&
+      theme === "DARK" &&
+      `background-color: ${Colors.BlackOlive};`}
   }
 `;
 
-export const ListItemBottomBorder = styled.div<ListItemProps>`
+export const ListItemBottomBorder = styled.div<CommonProps>`
   ${({ isSelected }) =>
     isSelected && `background-color: ${Colors.BrilliantAzure};`}
   height: 3px;

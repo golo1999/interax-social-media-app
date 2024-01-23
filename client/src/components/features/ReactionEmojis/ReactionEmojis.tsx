@@ -1,9 +1,10 @@
 import { CSSProperties } from "react";
 
-import { Colors } from "environment";
 import { ReactionType } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { REACTIONS } from "./ReactionEmojis.consts";
+import { Container, Emoji } from "./ReactionEmojis.style";
 
 interface Props {
   size: number;
@@ -20,30 +21,19 @@ export function ReactionEmojis({
   onMouseLeave,
   onReactionClick,
 }: Props) {
-  function getContainerStyle(): CSSProperties {
-    return {
-      ...{
-        alignItems: "center",
-        backgroundColor: Colors.RaisinBlack,
-        border: `2px solid ${Colors.Onyx}`,
-        borderRadius: "20px",
-        display: "flex",
-        gap: "0.5em",
-        padding: "0.5em",
-        position: "absolute",
-      },
-      ...style,
-    };
-  }
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
 
   return (
-    <div
-      style={getContainerStyle()}
+    <Container
+      isAuthenticated={!!authenticatedUser}
+      style={style}
+      theme={theme}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       {REACTIONS.map((reaction, index) => (
-        <img
+        <Emoji
           key={index}
           alt={reaction.type
             .slice(0, 1)
@@ -54,6 +44,6 @@ export function ReactionEmojis({
           onClick={() => onReactionClick(reaction.type)}
         />
       ))}
-    </div>
+    </Container>
   );
 }

@@ -1,15 +1,17 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "models";
 
-interface MainContainerProps {
-  isUserAuthenticated: boolean;
+interface ThemeProps {
+  isAuthenticated: boolean;
+  theme: Theme;
 }
 
 export const Container = {
-  Main: styled.div<MainContainerProps>`
-    background-color: ${({ isUserAuthenticated }) =>
-      isUserAuthenticated ? Colors.RaisinBlack : "white"};
+  Main: styled.div<ThemeProps>`
+    background-color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK" ? Colors.RaisinBlack : Colors.White};
     display: flex;
     flex-direction: column;
     position: fixed;

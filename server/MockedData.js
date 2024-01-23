@@ -36,6 +36,8 @@ const RelationshipStatus = {
 
 const AUTHENTICATED_USER_ID = "1";
 
+const BLOCKED_USERS_LIST = [];
+
 const COMMENTS_LIST = [
   {
     id: "post-0-comment-0",
@@ -134,6 +136,106 @@ const COMMENTS_LIST = [
   },
 ];
 
+/* COMMENTS_LIST with parentId
+const COMMENTS_LIST = [
+  {
+    id: "post-0-comment-0",
+    dateTime: "Sun, 22 Jan 2023 18:02:47 GMT",
+    owner: {
+      id: "1",
+      email: "darius.fieraru@mail.com",
+      firstName: "Darius",
+      lastName: "Fieraru",
+      username: "darius.fieraru",
+    },
+    parentId: null,
+    postId: "post-0",
+    reactions: [
+      {
+        id: "post-0-comment-0-reaction-0",
+        dateTime: "Sun, 22 Jan 2023 20:01:39 GMT",
+        owner: {
+          id: "0",
+          email: "olivia.constantin@mail.com",
+          firstName: "Olivia",
+          lastName: "Constantin",
+          username: "olivia.constantin",
+        },
+        type: "LIKE",
+      },
+    ],
+    text: "So beautiful...",
+  },
+  {
+    id: "post-0-comment-1",
+    dateTime: "Tue, 24 Jan 2023 08:26:02 GMT",
+    owner: {
+      id: "0",
+      email: "olivia.constantin@mail.com",
+      firstName: "Olivia",
+      lastName: "Constantin",
+      username: "olivia.constantin",
+    },
+    parentId: null,
+    postId: "post-0",
+    reactions: null,
+    replies: null,
+    text: "The best trip ever!",
+  },
+  {
+    id: "post-0-comment-2",
+    dateTime: "Mon, 23 Jan 2023 14:01:47 GMT",
+    owner: {
+      id: "0",
+      email: "olivia.constantin@mail.com",
+      firstName: "Olivia",
+      lastName: "Constantin",
+      username: "olivia.constantin",
+    },
+    parentId: "post-0-comment-0",
+    postId: "post-0",
+    reactions: null,
+    text: "TY",
+  },
+  {
+    id: "post-0-comment-3",
+    dateTime: "Tue, 24 Jan 2023 15:27:58 GMT",
+    owner: {
+      id: "1",
+      email: "darius.fieraru@mail.com",
+      firstName: "Darius",
+      lastName: "Fieraru",
+      username: "darius.fieraru",
+    },
+    parentId: "post-0-comment-2",
+    postId: "post-0",
+    reactions: null,
+    replies: null,
+    text: "ez",
+  },
+  {
+    id: "post-0-comment-4",
+    dateTime: "Tue, 24 Jan 2023 16:29:51 GMT",
+    owner: {
+      id: "1",
+      email: "darius.fieraru@mail.com",
+      firstName: "Darius",
+      lastName: "Fieraru",
+      username: "darius.fieraru",
+    },
+    parentId: "post-0-comment-2",
+    postId: "post-0",
+    reactions: null,
+    replies: null,
+    text: "lejerrr",
+  },
+];
+*/
+
+const CommentReactionsList = [];
+
+const CommentRepliesList = [];
+
 const CONVERSATIONS_LIST = [
   {
     emoji: Emoji.LOVE,
@@ -182,6 +284,111 @@ const CONVERSATIONS_LIST = [
     secondNickname: "Dariusss",
     theme: ConversationTheme.VIVID_MALACHITE,
   },
+];
+
+/*
+emoji: Emoji!
+    first: ID!
+    firstNickname: String
+    second: ID!
+    secondNickname: String
+    theme: ConversationTheme!
+*/
+
+const FOLLOWING_USERS_LIST = [
+  {
+    followingUsers: [
+      "1",
+      "3",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44",
+      "45",
+      "46",
+      "47",
+      "48",
+      "49",
+      "50",
+    ],
+    userId: "0",
+  },
+  { followingUsers: ["0"], userId: "1" },
+  { followingUsers: ["0", "4"], userId: "3" },
+  { followingUsers: ["3"], userId: "4" },
+  { followingUsers: ["0"], userId: "6" },
+  { followingUsers: ["0"], userId: "7" },
+  { followingUsers: ["0"], userId: "8" },
+  { followingUsers: ["0"], userId: "9" },
+  { followingUsers: ["0"], userId: "10" },
+];
+
+const FRIEND_REQUESTS_LIST = [
+  { receiver: "1", sender: "2" },
+  { receiver: "1", sender: "3" },
+  { receiver: "1", sender: "4" },
+  { receiver: "1", sender: "6" },
+  { receiver: "1", sender: "7" },
+  { receiver: "1", sender: "8" },
+  { receiver: "1", sender: "9" },
+  { receiver: "1", sender: "10" },
+  { receiver: "1", sender: "11" },
+  { receiver: "1", sender: "12" },
+  { receiver: "1", sender: "13" },
+  { receiver: "1", sender: "14" },
+  { receiver: "1", sender: "15" },
+  { receiver: "1", sender: "16" },
+  { receiver: "1", sender: "17" },
+  { receiver: "1", sender: "18" },
+  { receiver: "1", sender: "19" },
+  { receiver: "1", sender: "20" },
+  { receiver: "1", sender: "21" },
+  { receiver: "1", sender: "22" },
+  { receiver: "1", sender: "23" },
+  { receiver: "1", sender: "24" },
+  { receiver: "1", sender: "25" },
+  { receiver: "1", sender: "26" },
+  { receiver: "1", sender: "27" },
+  { receiver: "1", sender: "28" },
+  { receiver: "1", sender: "29" },
+  { receiver: "1", sender: "30" },
+  { receiver: "1", sender: "31" },
+  { receiver: "5", sender: "1" },
 ];
 
 const FRIENDS_LIST = [
@@ -235,38 +442,7 @@ const FRIENDS_LIST = [
   { first: "0", second: "50" },
 ];
 
-const FRIEND_REQUESTS_LIST = [
-  { receiver: "1", sender: "2" },
-  { receiver: "1", sender: "3" },
-  { receiver: "1", sender: "4" },
-  { receiver: "1", sender: "6" },
-  { receiver: "1", sender: "7" },
-  { receiver: "1", sender: "8" },
-  { receiver: "1", sender: "9" },
-  { receiver: "1", sender: "10" },
-  { receiver: "1", sender: "11" },
-  { receiver: "1", sender: "12" },
-  { receiver: "1", sender: "13" },
-  { receiver: "1", sender: "14" },
-  { receiver: "1", sender: "15" },
-  { receiver: "1", sender: "16" },
-  { receiver: "1", sender: "17" },
-  { receiver: "1", sender: "18" },
-  { receiver: "1", sender: "19" },
-  { receiver: "1", sender: "20" },
-  { receiver: "1", sender: "21" },
-  { receiver: "1", sender: "22" },
-  { receiver: "1", sender: "23" },
-  { receiver: "1", sender: "24" },
-  { receiver: "1", sender: "25" },
-  { receiver: "1", sender: "26" },
-  { receiver: "1", sender: "27" },
-  { receiver: "1", sender: "28" },
-  { receiver: "1", sender: "29" },
-  { receiver: "1", sender: "30" },
-  { receiver: "1", sender: "31" },
-  { receiver: "5", sender: "1" },
-];
+const HIDDEN_POSTS_LIST = [];
 
 const MESSAGES_LIST = [
   {
@@ -361,6 +537,10 @@ const POST_PHOTOS_LIST = [
   },
 ];
 
+const PostReactionsList = [];
+
+const PostSharesList = [];
+
 const POSTS_LIST = [
   {
     id: "post-0",
@@ -391,6 +571,7 @@ const POSTS_LIST = [
       },
     ],
     receiverId: "0",
+    receiverUsername: "olivia.constantin",
     shares: [
       {
         id: "post-0-share-0",
@@ -426,6 +607,7 @@ const POSTS_LIST = [
     photos: null,
     reactions: null,
     receiverId: "0",
+    receiverUsername: "olivia.constantin",
     shares: null,
     text: "Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!",
     video: null,
@@ -950,12 +1132,15 @@ const USERS_LIST = [
 
 module.exports = {
   AUTHENTICATED_USER_ID,
+  BLOCKED_USERS_LIST,
   COMMENTS_LIST,
   CONVERSATIONS_LIST,
   ConversationTheme,
   Emoji,
+  FOLLOWING_USERS_LIST,
   FRIEND_REQUESTS_LIST,
   FRIENDS_LIST,
+  HIDDEN_POSTS_LIST,
   MESSAGES_LIST,
   POST_PHOTOS_LIST,
   POSTS_LIST,

@@ -45,6 +45,14 @@ export enum Month {
   DECEMBER = "DECEMBER",
 }
 
+export type NotificationType =
+  | "BIRTHDAY"
+  | "COMMENT"
+  | "GROUP/POST_ADDED"
+  | "GROUP/WELCOME"
+  | "POST_ADDED"
+  | "POST_REACTED";
+
 export enum Permission {
   FRIENDS = "FRIENDS",
   ONLY_ME = "ONLY_ME",
@@ -188,6 +196,13 @@ export interface NavigationItem {
   onClick?: () => void;
 }
 
+export interface Notification {
+  dateTime: string;
+  eventProducerId: string;
+  isRead: boolean;
+  type: NotificationType;
+}
+
 export interface PostPhoto {
   __typename?: "PostPhoto";
   id: string;
@@ -242,6 +257,7 @@ export interface Post {
   photos: PostPhoto[] | null;
   reactions: Reaction[] | null;
   receiverId: string;
+  receiverUsername: string;
   shares: Share[] | null;
   text: string | null;
   video: string | null;
@@ -275,6 +291,8 @@ export interface Share {
   owner: User;
 }
 
+export type Theme = "DARK" | "LIGHT";
+
 export type Time = {
   __typename?: "Time";
   hour: string;
@@ -301,6 +319,22 @@ export interface User {
   relationshipStatus: RelationshipStatus | null;
   username: string;
   workHistory: Work[] | null;
+}
+
+export interface Users {
+  __typename?: "Users";
+  users: User[];
+}
+
+export interface UserError {
+  __typename?: "UserError";
+  message: string;
+}
+
+export interface UserWithMessage {
+  __typename?: "UserWithMessage";
+  message: string;
+  user: User;
 }
 
 type WorkCommonTypes = {

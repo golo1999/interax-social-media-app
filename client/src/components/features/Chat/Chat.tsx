@@ -19,13 +19,15 @@ import {
   GET_CONVERSATION_BETWEEN,
   GET_MESSAGES_BETWEEN,
   GET_USER_BY_ID,
-  GetAuthenticatedUserData,
   GetConversationBetweenData,
   GetMessagesBetweenData,
   GetUserByIdData,
   getDisplayedTime,
+  instanceOfUserError,
+  instanceOfUserWithMessage,
 } from "helpers";
 import { Emoji } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { getDisplayedEmoji, getMessageTheme } from "./Chat.helpers";
 import {
@@ -47,11 +49,8 @@ interface Props {
 }
 
 export function Chat({ chatHeight, userId }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [addMessage] = useMutation<AddMessageData>(ADD_MESSAGE);
-  const [
-    fetchAuthenticatedUser,
-    { data: authenticatedUserData = { authenticatedUser: null } },
-  ] = useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
   const [
     fetchConversationBetween,
     { data: conversation = { conversationBetween: null } },
@@ -60,20 +59,20 @@ export function Chat({ chatHeight, userId }: Props) {
     useLazyQuery<GetMessagesBetweenData>(GET_MESSAGES_BETWEEN);
   const [fetchUserById, { data: user = { userById: null } }] =
     useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
-
+  const inputRef = useRef() as MutableRefObject<HTMLInputElement>;
+  const { theme } = useSettingsStore();
   const [footerIcon, setFooterIcon] = useState<FooterIcon>("THUMB_UP");
 
-  const inputRef = useRef() as MutableRefObject<HTMLInputElement>;
-
   useEffect(() => {
-    fetchAuthenticatedUser();
-    fetchUserById({ variables: { id: userId } });
+    fetchUserById({
+      variables: { input: { id: userId, returnUserIfBlocked: true } },
+    });
 
-    if (authenticatedUserData.authenticatedUser) {
+    if (authenticatedUser) {
       fetchConversationBetween({
         variables: {
           input: {
-            first: authenticatedUserData.authenticatedUser.id,
+            first: authenticatedUser.id,
             second: userId,
           },
         },
@@ -81,25 +80,19 @@ export function Chat({ chatHeight, userId }: Props) {
       fetchMessagesBetween({
         variables: {
           input: {
-            first: authenticatedUserData.authenticatedUser.id,
+            first: authenticatedUser.id,
             second: userId,
           },
         },
       });
     }
   }, [
-    authenticatedUserData.authenticatedUser,
+    authenticatedUser,
     userId,
-    fetchAuthenticatedUser,
     fetchConversationBetween,
     fetchUserById,
     fetchMessagesBetween,
   ]);
-
-  const { emoji, first, firstNickname, secondNickname, theme } = {
-    ...conversation.conversationBetween,
-  };
-  const { firstName, lastName } = { ...user.userById };
 
   const uniqueDateTimes = useMemo(() => {
     const list: Date[] = [];
@@ -155,6 +148,25 @@ export function Chat({ chatHeight, userId }: Props) {
     return secondNickname;
   }
 
+  if (!user.userById || instanceOfUserError(user.userById)) {
+    return <></>;
+  }
+
+  const {
+    emoji,
+    first,
+    firstNickname,
+    secondNickname,
+    theme: conversationTheme,
+  } = {
+    ...conversation.conversationBetween,
+  };
+  const { firstName, lastName } = {
+    ...(instanceOfUserWithMessage(user.userById)
+      ? user.userById.user
+      : user.userById),
+  };
+
   const DisplayedEmoji = getDisplayedEmoji(emoji);
 
   return (
@@ -163,20 +175,35 @@ export function Chat({ chatHeight, userId }: Props) {
         {messages.messagesBetween?.length === 0 ? (
           <Container.NoMessages>
             <UserPhoto
-              user={user.userById}
+              user={
+                instanceOfUserWithMessage(user.userById)
+                  ? user.userById.user
+                  : user.userById
+              }
               containerSize="4em"
               iconSize="2em"
             />
-            <DisplayedName>{getDisplayedName()}</DisplayedName>
+            <DisplayedName isAuthenticated={!!authenticatedUser} theme={theme}>
+              {getDisplayedName()}
+            </DisplayedName>
           </Container.NoMessages>
         ) : (
           <>
             {uniqueDateTimes.map((dateTime, index) => (
               <Container.UniqueDateTime key={index}>
-                <DisplayedTime>{getDisplayedTime(dateTime)}</DisplayedTime>
+                <DisplayedTime
+                  isAuthenticated={!!authenticatedUser}
+                  theme={theme}
+                >
+                  {getDisplayedTime(dateTime)}
+                </DisplayedTime>
                 {messages.messagesBetween && (
                   <Container.Messages>
                     {messages.messagesBetween.map((m, i) => {
+                      if (instanceOfUserError(user.userById)) {
+                        return <Fragment key={i} />;
+                      }
+
                       const dt = new Date(
                         new Date(Number(m.dateTime)).setSeconds(0)
                       );
@@ -188,13 +215,15 @@ export function Chat({ chatHeight, userId }: Props) {
                       return (
                         <Message
                           key={i}
-                          authenticatedUser={
-                            authenticatedUserData.authenticatedUser
-                          }
+                          authenticatedUser={authenticatedUser}
                           displayedEmoji={DisplayedEmoji}
                           message={m}
-                          messageTheme={getMessageTheme(theme)}
-                          user={user.userById}
+                          messageTheme={getMessageTheme(conversationTheme)}
+                          user={
+                            instanceOfUserWithMessage(user.userById)
+                              ? user.userById.user
+                              : user.userById
+                          }
                         />
                       );
                     })}
@@ -205,94 +234,108 @@ export function Chat({ chatHeight, userId }: Props) {
           </>
         )}
       </Container.Main>
-      <Footer>
-        <HiddenInput.FileUpload
-          id="file-upload-input"
-          onChange={(e) => {
-            const selectedFiles = e.target.files;
+      {instanceOfUserWithMessage(user.userById) ? (
+        <Footer.Blocked>You can't reply to this conversation.</Footer.Blocked>
+      ) : (
+        <Footer.Normal>
+          <HiddenInput.FileUpload
+            id="file-upload-input"
+            onChange={(e) => {
+              const selectedFiles = e.target.files;
 
-            if (selectedFiles) {
-              console.log(selectedFiles[0]);
-            }
-          }}
-        />
-        <label htmlFor="file-upload-input">
-          <MdPhotoLibrary color={getMessageTheme(theme)} size={24} />
-        </label>
-        <Input placeholder="Aa" ref={inputRef} onChange={handleInputChange} />
-        {footerIcon === "SEND" ? (
-          <SendIcon
-            color={getMessageTheme(theme)}
-            size={24}
-            onClick={() => {
-              addMessage({
-                variables: {
-                  input: {
-                    emoji: null,
-                    parentId: null,
-                    receiverId: userId,
-                    senderId: authenticatedUserData.authenticatedUser?.id,
-                    text: inputRef.current.value,
-                  },
-                },
-                refetchQueries: [
-                  { query: GET_AUTHENTICATED_USER },
-                  {
-                    query: GET_MESSAGES_BETWEEN,
-                    variables: {
-                      input: {
-                        first: authenticatedUserData.authenticatedUser?.id,
-                        second: userId,
-                      },
-                    },
-                  },
-                ],
-                onCompleted: () => {
-                  inputRef.current.value = "";
-                  setFooterIcon("THUMB_UP");
-                  return;
-                },
-              });
+              if (selectedFiles) {
+                console.log(selectedFiles[0]);
+              }
             }}
           />
-        ) : (
-          <DisplayedEmoji
-            color={getMessageTheme(theme)}
-            size={24}
-            style={{ userSelect: "none" }}
-            onClick={() => {
-              addMessage({
-                variables: {
-                  input: {
-                    emoji: Emoji.LIKE,
-                    parentId: null,
-                    receiverId: userId,
-                    senderId: authenticatedUserData.authenticatedUser?.id,
-                    text: null,
-                  },
-                },
-                refetchQueries: [
-                  { query: GET_AUTHENTICATED_USER },
-                  {
-                    query: GET_MESSAGES_BETWEEN,
-                    variables: {
-                      input: {
-                        first: authenticatedUserData.authenticatedUser?.id,
-                        second: userId,
-                      },
+          <label htmlFor="file-upload-input">
+            <MdPhotoLibrary
+              color={getMessageTheme(conversationTheme)}
+              size={24}
+            />
+          </label>
+          <Input
+            isAuthenticated={!!authenticatedUser}
+            placeholder="Aa"
+            ref={inputRef}
+            theme={theme}
+            onChange={handleInputChange}
+          />
+          {footerIcon === "SEND" ? (
+            <SendIcon
+              color={getMessageTheme(conversationTheme)}
+              size={24}
+              onClick={() => {
+                addMessage({
+                  variables: {
+                    input: {
+                      emoji: null,
+                      parentId: null,
+                      receiverId: userId,
+                      senderId: authenticatedUser?.id,
+                      text: inputRef.current.value,
                     },
                   },
-                ],
-                onCompleted: () => {
-                  inputRef.current.value = "";
-                  setFooterIcon("THUMB_UP");
-                  return;
-                },
-              });
-            }}
-          />
-        )}
-      </Footer>
+                  refetchQueries: [
+                    { query: GET_AUTHENTICATED_USER },
+                    {
+                      query: GET_MESSAGES_BETWEEN,
+                      variables: {
+                        input: {
+                          first: authenticatedUser?.id,
+                          second: userId,
+                        },
+                      },
+                    },
+                    { query: GET_AUTHENTICATED_USER },
+                  ],
+                  onCompleted: () => {
+                    inputRef.current.value = "";
+                    setFooterIcon("THUMB_UP");
+                    return;
+                  },
+                });
+              }}
+            />
+          ) : (
+            <DisplayedEmoji
+              color={getMessageTheme(conversationTheme)}
+              size={24}
+              style={{ userSelect: "none" }}
+              onClick={() => {
+                addMessage({
+                  variables: {
+                    input: {
+                      emoji: Emoji.LIKE,
+                      parentId: null,
+                      receiverId: userId,
+                      senderId: authenticatedUser?.id,
+                      text: null,
+                    },
+                  },
+                  refetchQueries: [
+                    { query: GET_AUTHENTICATED_USER },
+                    {
+                      query: GET_MESSAGES_BETWEEN,
+                      variables: {
+                        input: {
+                          first: authenticatedUser?.id,
+                          second: userId,
+                        },
+                      },
+                    },
+                  ],
+                  onCompleted: () => {
+                    inputRef.current.value = "";
+                    setFooterIcon("THUMB_UP");
+                    return;
+                  },
+                });
+              }}
+            />
+          )}
+        </Footer.Normal>
+      )}
     </>
   );
 }

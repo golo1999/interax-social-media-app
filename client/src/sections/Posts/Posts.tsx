@@ -74,11 +74,7 @@ export function Posts({ style }: Props) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "1em" }}>
         {friendsPosts.map((post, index) => (
-          <UserPost
-            key={index}
-            authenticatedUser={authenticatedUserData?.authenticatedUser}
-            id={post.id}
-          />
+          <UserPost key={index} id={post.id} />
         ))}
       </div>
     );

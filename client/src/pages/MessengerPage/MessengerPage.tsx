@@ -2,36 +2,64 @@ import { useLazyQuery } from "@apollo/client";
 
 import { useEffect, useState } from "react";
 import { MdInfo } from "react-icons/md";
-import { useLocation, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 import { Chat, ChatList, Divider, Header, UserPhoto } from "components";
 import {
-  GET_AUTHENTICATED_USER,
   GET_CONVERSATION_BETWEEN,
   GET_USER_BY_ID,
-  GetAuthenticatedUserData,
   GetConversationBetweenData,
   GetUserByIdData,
+  instanceOfUserError,
+  instanceOfUserWithMessage,
 } from "helpers";
 import { useHeaderItems } from "hooks";
-import { useMessagesStore } from "store";
+import { User as UserModel } from "models";
+import {
+  useAuthenticationStore,
+  useMessagesStore,
+  useSettingsStore,
+} from "store";
 
 import { Complementary } from "./Complementary";
 import { getDisplayedEmoji, getMessageTheme } from "./MessengerPage.helpers";
 import { Container, User } from "./MessengerPage.style";
 
 export function MessengerPage() {
-  const [
-    fetchAuthenticatedUser,
-    { data: authenticatedUserData = { authenticatedUser: null } },
-  ] = useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
+  const { authenticatedUser, isFinishedLoading } = useAuthenticationStore();
+
+  if (!isFinishedLoading) {
+    return <>Loading...</>;
+  }
+
+  return !!authenticatedUser ? (
+    <AuthenticatedMessengerPage authenticatedUser={authenticatedUser} />
+  ) : (
+    <NotAuthenticatedMessengerPage />
+  );
+}
+
+interface AuthenticatedMessengerPageProps {
+  authenticatedUser: UserModel;
+}
+
+function AuthenticatedMessengerPage({
+  authenticatedUser,
+}: AuthenticatedMessengerPageProps) {
   const [
     fetchConversationBetween,
     { data: conversation = { conversationBetween: null } },
   ] = useLazyQuery<GetConversationBetweenData>(GET_CONVERSATION_BETWEEN);
-  const [fetchUserById, { data: user = { userById: null } }] =
-    useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
-
+  const [
+    fetchUserById,
+    { data: user = { userById: null }, loading: isFetchingUser },
+  ] = useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+  const { theme } = useSettingsStore();
   const [isComplementaryVisible, setIsComplementaryVisible] = useState(true);
 
   const headerItems = useHeaderItems();
@@ -48,26 +76,21 @@ export function MessengerPage() {
   const userId = pathname.split("/")[3];
 
   useEffect(() => {
-    fetchAuthenticatedUser();
-    fetchUserById({ variables: { id: userId } });
+    fetchUserById({
+      variables: { input: { id: userId, returnUserIfBlocked: true } },
+    });
 
-    if (authenticatedUserData.authenticatedUser) {
+    if (authenticatedUser) {
       fetchConversationBetween({
         variables: {
           input: {
-            first: authenticatedUserData.authenticatedUser.id,
+            first: authenticatedUser.id,
             second: userId,
           },
         },
       });
     }
-  }, [
-    authenticatedUserData.authenticatedUser,
-    userId,
-    fetchAuthenticatedUser,
-    fetchConversationBetween,
-    fetchUserById,
-  ]);
+  }, [authenticatedUser, userId, fetchConversationBetween, fetchUserById]);
 
   console.log(user.userById);
 
@@ -75,10 +98,29 @@ export function MessengerPage() {
     console.log(conversation.conversationBetween);
   }
 
-  const { emoji, first, firstNickname, secondNickname, theme } = {
+  if (!isFetchingUser && !user.userById) {
+    return <></>;
+  } else if (isFetchingUser) {
+    return <></>;
+  } else if (instanceOfUserError(user.userById)) {
+    console.log(user.userById);
+    return <BlockedMessengerPage />;
+  }
+
+  const {
+    emoji,
+    first,
+    firstNickname,
+    secondNickname,
+    theme: conversationTheme,
+  } = {
     ...conversation.conversationBetween,
   };
-  const { firstName, lastName, username } = { ...user.userById };
+  const { firstName, lastName, username } = {
+    ...(instanceOfUserWithMessage(user.userById)
+      ? user.userById.user
+      : user.userById),
+  };
 
   function getDisplayedName() {
     if (!firstName || !lastName) {
@@ -95,42 +137,62 @@ export function MessengerPage() {
     return secondNickname;
   }
 
-  const isAuthenticatedUser =
-    userId === authenticatedUserData.authenticatedUser?.id;
-  const isAuthenticatedUserFriend =
-    authenticatedUserData.authenticatedUser?.friends?.find(
-      (friend) => friend.id === userId
-    );
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+  const isAuthenticatedUser = userId === authenticatedUser?.id;
+  const isAuthenticatedUserFriend = authenticatedUser?.friends?.find(
+    (friend) => friend.id === userId
+  );
   const DisplayedEmoji = getDisplayedEmoji(emoji);
+
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
 
   return (
     <Container.Main>
       <Header items={headerItems} selectedItem={null} />
       <Container.Content>
         <ChatList />
-        <Divider vertical />
+        <Divider color={dividerColor} vertical />
         <Container.Chat>
           <Container.ChatHeader>
             <Container.User
+              {...themeProps}
               onClick={() => {
-                if (username) {
+                if (!instanceOfUserWithMessage(user.userById) && username) {
                   navigate(`/${username}`);
                 }
               }}
             >
-              <UserPhoto user={user.userById} />
+              <UserPhoto
+                user={
+                  instanceOfUserWithMessage(user.userById)
+                    ? user.userById.user
+                    : user.userById
+                }
+              />
               <User.DetailsContainer>
-                <User.Name>{getDisplayedName()}</User.Name>
-                {(isAuthenticatedUser || isAuthenticatedUserFriend) && (
-                  <User.Active>Active 47m ago</User.Active>
-                )}
+                <User.Name
+                  $isAuthenticated={!!authenticatedUser}
+                  $theme={theme}
+                >
+                  {getDisplayedName()}
+                </User.Name>
+                {(isAuthenticatedUser || isAuthenticatedUserFriend) &&
+                  !instanceOfUserWithMessage(user.userById) && (
+                    <User.Active
+                      $isAuthenticated={!!authenticatedUser}
+                      $theme={theme}
+                    >
+                      Active 47m ago
+                    </User.Active>
+                  )}
               </User.DetailsContainer>
             </Container.User>
             <Container.Icons>
               <Container.Icon
                 onClick={() => setIsComplementaryVisible((value) => !value)}
               >
-                <MdInfo color={getMessageTheme(theme)} size={24} />
+                <MdInfo color={getMessageTheme(conversationTheme)} size={24} />
               </Container.Icon>
             </Container.Icons>
           </Container.ChatHeader>
@@ -138,9 +200,8 @@ export function MessengerPage() {
         </Container.Chat>
         {isComplementaryVisible && (
           <>
-            <Divider vertical />
+            <Divider color={dividerColor} vertical />
             <Complementary
-              authenticatedUser={authenticatedUserData.authenticatedUser}
               conversation={conversation.conversationBetween}
               displayedEmoji={DisplayedEmoji}
               displayedName={getDisplayedName()}
@@ -151,4 +212,14 @@ export function MessengerPage() {
       </Container.Content>
     </Container.Main>
   );
+}
+
+function BlockedMessengerPage() {
+  return <>BLOCKED</>;
+}
+
+function NotAuthenticatedMessengerPage() {
+  const { userId } = useParams<{ userId: string }>();
+
+  return <Navigate state={{ next: `/messages/t/${userId}` }} to="/login" />;
 }

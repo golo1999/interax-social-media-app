@@ -3,6 +3,7 @@ import { MdArrowDropDown } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
 import { User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import {
   List,
@@ -16,7 +17,6 @@ import { Item } from "./Item";
 import { Button, Container } from "./Suggestions.style";
 
 interface Props {
-  authenticatedUser: User | null;
   displayedSuggestions: number;
   suggestions: User[] | null;
   onSeeAllClick: () => void;
@@ -24,13 +24,14 @@ interface Props {
 }
 
 export function Suggestions({
-  authenticatedUser,
   displayedSuggestions,
   suggestions,
   onSeeAllClick,
   onSeeMoreClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const navigate = useNavigate();
+  const { theme } = useSettingsStore();
 
   const suggestionsCount = suggestions?.length || 0;
 
@@ -46,14 +47,18 @@ export function Suggestions({
     // TODO
   }
 
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
   return (
     <Container.Main>
       <SectionHeader>
-        <SectionTitle>People You May Know</SectionTitle>
+        <SectionTitle {...themeProps}>People You May Know</SectionTitle>
         {suggestions &&
           suggestionsCount > 0 &&
           displayedSuggestions < suggestionsCount && (
-            <SeeButton onClick={onSeeAllClick}>See all</SeeButton>
+            <SeeButton {...themeProps} onClick={onSeeAllClick}>
+              See all
+            </SeeButton>
           )}
       </SectionHeader>
       {suggestions && suggestionsCount > 0 ? (
@@ -71,7 +76,6 @@ export function Suggestions({
               return (
                 <Item
                   key={index}
-                  authenticatedUser={authenticatedUser}
                   user={user}
                   onAddFriendClick={handleAddFriendClick}
                   onItemClick={handleItemClick}
@@ -81,7 +85,7 @@ export function Suggestions({
             })}
           </List>
           {displayedSuggestions < suggestionsCount && (
-            <Button.SeeMore onClick={onSeeMoreClick}>
+            <Button.SeeMore {...themeProps} onClick={onSeeMoreClick}>
               See more
               <MdArrowDropDown size={24} />
             </Button.SeeMore>

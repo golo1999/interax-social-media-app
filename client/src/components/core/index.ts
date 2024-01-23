@@ -3,5 +3,5 @@ export { Container } from "./Container";
 export { Divider } from "./Divider";
 export { Dropdown } from "./Dropdown";
 export { Input } from "./Input";
-export * from "./Modal";
+export { Modal } from "./Modal";
 export { RadioButton } from "./RadioButton";

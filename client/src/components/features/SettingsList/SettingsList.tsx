@@ -1,21 +1,60 @@
-import { ImExit } from "react-icons/im";
+import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Tab, UserTab } from "components";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
+import { Default } from "./Default";
+import { Display } from "./Display";
+import { Language } from "./Language";
+import { Settings } from "./Settings";
 import { Container } from "./SettingsList.style";
+
+type Content = "DEFAULT" | "DISPLAY" | "SETTINGS" | "SETTINGS/LANGUAGE";
 
 export function SettingsList() {
   const { authenticatedUser, setAuthenticatedUser } = useAuthenticationStore();
   const navigate = useNavigate();
-  const { closeSettingsList } = useSettingsStore();
+  const mainContainerRef = useRef() as MutableRefObject<HTMLDivElement>;
+  const { theme, changeTheme, closeSettingsList } = useSettingsStore();
+  const [content, setContent] = useState<Content>("DEFAULT");
+  const [mainContainerHeight, setMainContainerHeight] = useState(0);
+
+  useEffect(() => {
+    setMainContainerHeight(mainContainerRef.current?.clientHeight);
+  }, [content]);
 
   const { username } = { ...authenticatedUser };
 
-  function handleUserTabClick() {
-    closeSettingsList();
-    navigate(`/${username}`);
+  function handleBackIconClick(content: Content) {
+    if (content === "SETTINGS/LANGUAGE") {
+      setContent("SETTINGS");
+    } else {
+      setContent("DEFAULT");
+    }
+  }
+
+  function handleDarkModeOffTabClick() {
+    // TODO
+    if (theme === "DARK") {
+      changeTheme("LIGHT");
+    }
+  }
+
+  function handleDarkModeOnTabClick() {
+    // TODO
+    if (theme === "LIGHT") {
+      changeTheme("DARK");
+    }
+  }
+
+  function handleDisplayTabClick() {
+    // TODO
+    setContent("DISPLAY");
+  }
+
+  function handleLanguageTabClick() {
+    // TODO
+    setContent("SETTINGS/LANGUAGE");
   }
 
   function handleLogOutTabClick() {
@@ -24,10 +63,45 @@ export function SettingsList() {
     setAuthenticatedUser(null);
   }
 
+  function handleSettingsTabClick() {
+    // TODO
+    setContent("SETTINGS");
+  }
+
+  function handleUserTabClick() {
+    closeSettingsList();
+    navigate(`/${username}`);
+  }
+
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
   return (
-    <Container.Main>
-      <UserTab user={authenticatedUser} onClick={handleUserTabClick} />
-      <Tab name="Log Out" startIcon={ImExit} onClick={handleLogOutTabClick} />
+    <Container.Main
+      {...themeProps}
+      height={mainContainerHeight}
+      ref={mainContainerRef}
+    >
+      {content === "DEFAULT" ? (
+        <Default
+          onDisplayTabClick={handleDisplayTabClick}
+          onLogOutTabClick={handleLogOutTabClick}
+          onSettingsTabClick={handleSettingsTabClick}
+          onUserTabClick={handleUserTabClick}
+        />
+      ) : content === "DISPLAY" ? (
+        <Display
+          onBackIconClick={() => handleBackIconClick(content)}
+          onDarkModeOffTabClick={handleDarkModeOffTabClick}
+          onDarkModeOnTabClick={handleDarkModeOnTabClick}
+        />
+      ) : content === "SETTINGS" ? (
+        <Settings
+          onBackIconClick={() => handleBackIconClick(content)}
+          onLanguageTabClick={handleLanguageTabClick}
+        />
+      ) : (
+        <Language onBackIconClick={() => handleBackIconClick(content)} />
+      )}
     </Container.Main>
   );
 }

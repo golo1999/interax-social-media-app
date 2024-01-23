@@ -1,11 +1,8 @@
-import { useLazyQuery } from "@apollo/client";
-
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import { Header } from "components";
-import { GET_AUTHENTICATED_USER, GetAuthenticatedUserData } from "helpers";
 import { useHeaderItems } from "hooks";
+import { useAuthenticationStore } from "store";
 
 import {
   Button,
@@ -16,16 +13,22 @@ import {
 } from "./NotFoundPage.style";
 
 export function NotFoundPage() {
-  const [fetchAuthenticatedUser] = useLazyQuery<GetAuthenticatedUserData>(
-    GET_AUTHENTICATED_USER
-  );
+  const { authenticatedUser, isFinishedLoading } = useAuthenticationStore();
 
+  if (!isFinishedLoading) {
+    return <>Loading...</>;
+  }
+
+  return !!authenticatedUser ? (
+    <AuthenticatedNotFoundPage />
+  ) : (
+    <NotAuthenticatedNotFoundPage />
+  );
+}
+
+function AuthenticatedNotFoundPage() {
   const headerItems = useHeaderItems();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchAuthenticatedUser();
-  }, [fetchAuthenticatedUser]);
 
   return (
     <Container.Main>
@@ -40,4 +43,10 @@ export function NotFoundPage() {
       </Container.Content>
     </Container.Main>
   );
+}
+
+function NotAuthenticatedNotFoundPage() {
+  const { userId } = useParams<{ userId: string }>();
+
+  return <Navigate state={{ next: `/${userId}` }} to="/login" />;
 }

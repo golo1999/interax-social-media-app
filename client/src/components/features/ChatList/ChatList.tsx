@@ -1,13 +1,15 @@
-import { useLazyQuery } from "@apollo/client";
-
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { BsPencilSquare } from "react-icons/bs";
 import { HiOutlineArrowsExpand } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 
 import { SearchInput } from "components";
-import { GET_AUTHENTICATED_USER, GetAuthenticatedUserData } from "helpers";
-import { useMessagesStore } from "store";
+import { Colors } from "environment";
+import {
+  useAuthenticationStore,
+  useMessagesStore,
+  useSettingsStore,
+} from "store";
 
 import { Container, Footer, Header, List } from "./ChatList.style";
 import { GroupedMessage } from "./ChatList.types";
@@ -18,21 +20,16 @@ interface Props {
 }
 
 export function ChatList({ isModal }: Props) {
-  const [
-    fetchAuthenticatedUser,
-    { data: authenticatedUserData = { authenticatedUser: null } },
-  ] = useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
-
-  useEffect(() => {
-    fetchAuthenticatedUser();
-  }, [fetchAuthenticatedUser]);
-
-  const { id: authenticatedUserId, messages } = {
-    ...authenticatedUserData.authenticatedUser,
-  };
-
+  const { authenticatedUser } = useAuthenticationStore();
   const { closeChatModal } = useMessagesStore();
   const navigate = useNavigate();
+  const { theme } = useSettingsStore();
+
+  const { id: authenticatedUserId, messages } = {
+    ...authenticatedUser,
+  };
+
+  console.log({ messages });
 
   const groupedMessages = useMemo(() => {
     const list: GroupedMessage[] = [];
@@ -57,6 +54,8 @@ export function ChatList({ isModal }: Props) {
     return list.length > 0 ? list : null;
   }, [authenticatedUserId, messages]);
 
+  console.log({ groupedMessages });
+
   function handleSeeInMessengerClick() {
     closeChatModal();
 
@@ -66,22 +65,33 @@ export function ChatList({ isModal }: Props) {
     }
   }
 
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
+  const iconColor =
+    !!authenticatedUser && theme === "DARK"
+      ? Colors.PhilippineSilver
+      : Colors.GraniteGray;
+
   return (
-    <Container.Main isModal={isModal}>
+    <Container.Main {...themeProps} isModal={isModal}>
       {groupedMessages && (
         <>
           <Container.GroupedMessages>
             <Header.Element>
-              <Header.Title>Chats</Header.Title>
+              <Header.Title {...themeProps}>Chats</Header.Title>
               <Header.IconsContainer>
                 {isModal && (
-                  <HiOutlineArrowsExpand
-                    color="silver"
-                    size={18}
-                    onClick={handleSeeInMessengerClick}
-                  />
+                  <Container.Icon {...themeProps}>
+                    <HiOutlineArrowsExpand
+                      color={iconColor}
+                      size={18}
+                      onClick={handleSeeInMessengerClick}
+                    />
+                  </Container.Icon>
                 )}
-                <BsPencilSquare color="silver" size={18} />
+                <Container.Icon {...themeProps}>
+                  <BsPencilSquare color={iconColor} size={18} />
+                </Container.Icon>
               </Header.IconsContainer>
             </Header.Element>
             <SearchInput placeholder="Search Messenger" />
@@ -89,9 +99,6 @@ export function ChatList({ isModal }: Props) {
               {groupedMessages.map((groupedMessage, index) => (
                 <ChatListItem
                   key={index}
-                  authenticatedUserId={
-                    authenticatedUserData.authenticatedUser?.id || null
-                  }
                   isModal={isModal}
                   groupedMessage={groupedMessage}
                 />

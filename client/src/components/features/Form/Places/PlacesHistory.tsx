@@ -11,18 +11,24 @@ import {
 } from "helpers";
 import { useVisibilityModalItems } from "hooks";
 import { Permission, Place, User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { History } from "../Form.style";
+import {
+  Container as StyledContainer,
+  Text as StyledText,
+} from "../InformationContainer.style";
 
 interface Props {
-  authenticatedUser: User | null;
   data: Place[] | null;
+  readonly?: boolean;
   user: User;
 }
 
-export function PlacesHistory({ authenticatedUser, data, user }: Props) {
+export function PlacesHistory({ data, readonly = false, user }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [updateUserPlace] = useMutation<UpdateUserPlaceData>(UPDATE_USER_PLACE);
-
+  const { theme } = useSettingsStore();
   // True if the data is not empty or null, but there is no visible data for the current user
   // i.e: the current user's data private or the data is visible only for friends
   const [isFilteredDataEmpty, setIsFilteredDataEmpty] = useState(false);
@@ -67,6 +73,9 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
 
             const parsedFrom = new Date(Number(from));
             const parsedTo = !isCurrent ? new Date(Number(to)) : null;
+            const period = parsedTo
+              ? `From ${parsedFrom.getUTCFullYear()} to ${parsedTo.getUTCFullYear()}`
+              : `From ${parsedFrom.getUTCFullYear()} to present`;
 
             const VisibilityIcon = visibilities.find(
               (v) => v.title === visibility
@@ -75,37 +84,34 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
             return (
               <Item key={index}>
                 <MdHouse color={Colors.PhilippineGray} size={24} />
-                <div style={{ flex: 1 }}>
-                  {parsedTo ? (
-                    <>
-                      <p>{`Lived in ${place.city}`}</p>
-                      <p>{`From ${parsedFrom.getUTCFullYear()} to ${parsedTo.getUTCFullYear()}`}</p>
-                    </>
-                  ) : (
-                    <>
-                      <p>{`Lives in ${place.city}`}</p>
-                      <p>{`From ${parsedFrom.getUTCFullYear()} to present`}</p>
-                    </>
-                  )}
-                </div>
-                {userIsAuthenticatedUser && (
-                  <div
-                    style={{
-                      alignItems: "center",
-                      display: "flex",
-                      gap: "1em",
-                    }}
+                <StyledContainer.Text>
+                  <StyledText.Normal
+                    isAuthenticated={!!authenticatedUser}
+                    theme={theme}
                   >
+                    {parsedTo ? (
+                      <>
+                        Lived in&nbsp;
+                        <StyledText.SemiBold>{place.city}</StyledText.SemiBold>
+                      </>
+                    ) : (
+                      <>
+                        Lives in&nbsp;
+                        <StyledText.SemiBold>{place.city}</StyledText.SemiBold>
+                      </>
+                    )}
+                  </StyledText.Normal>
+                  <StyledText.Period
+                    isAuthenticated={!!authenticatedUser}
+                    theme={theme}
+                  >
+                    {period}
+                  </StyledText.Period>
+                </StyledContainer.Text>
+                {userIsAuthenticatedUser && !readonly && (
+                  <StyledContainer.Visibility>
                     {VisibilityIcon && <VisibilityIcon size={18} />}
-                    <div
-                      style={{
-                        alignItems: "center",
-                        backgroundColor: Colors.BlackOlive,
-                        borderRadius: "50%",
-                        display: "flex",
-                        justifyContent: "center",
-                        padding: "0.25em",
-                      }}
+                    <StyledContainer.MoreOptionsIcon
                       onClick={() => {
                         const city = "UPDATED_CITY";
                         const from = {
@@ -168,8 +174,8 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
                       }}
                     >
                       <MdMoreHoriz color={Colors.Platinum} size={24} />
-                    </div>
-                  </div>
+                    </StyledContainer.MoreOptionsIcon>
+                  </StyledContainer.Visibility>
                 )}
               </Item>
             );
@@ -178,7 +184,9 @@ export function PlacesHistory({ authenticatedUser, data, user }: Props) {
       ) : (
         <Container.NoData>
           <MdHouse color={Colors.PhilippineGray} size={24} />
-          <NoDataText>No places to show</NoDataText>
+          <NoDataText isAuthenticated={!!authenticatedUser} theme={theme}>
+            No places to show
+          </NoDataText>
         </Container.NoData>
       )}
     </>

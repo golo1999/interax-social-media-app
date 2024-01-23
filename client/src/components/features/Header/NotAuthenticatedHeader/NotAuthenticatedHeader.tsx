@@ -53,6 +53,7 @@ export function NotAuthenticatedHeader() {
     // const { email, password } = data;
     console.log(data);
     // TODO
+    reset();
   };
 
   return (
@@ -62,7 +63,7 @@ export function NotAuthenticatedHeader() {
         <Controller
           control={control}
           name="email"
-          render={({ field: { onChange } }) => (
+          render={({ field: { onChange, value } }) => (
             <Input
               borderColor="LightGray"
               borderStyle="solid"
@@ -79,6 +80,7 @@ export function NotAuthenticatedHeader() {
               placeholderColor="PhilippineSilver"
               spellCheck="false"
               type="email"
+              value={value}
               width="188px"
               onChange={onChange}
             />
@@ -87,7 +89,7 @@ export function NotAuthenticatedHeader() {
         <Controller
           control={control}
           name="password"
-          render={({ field: { onChange } }) => (
+          render={({ field: { onChange, value } }) => (
             <Input
               borderColor="LightGray"
               borderStyle="solid"
@@ -104,6 +106,7 @@ export function NotAuthenticatedHeader() {
               placeholderColor="PhilippineSilver"
               spellCheck="false"
               type="password"
+              value={value}
               width="188px"
               onChange={onChange}
             />

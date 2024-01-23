@@ -4,16 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { HiUserAdd } from "react-icons/hi";
 import { HiUsers } from "react-icons/hi2";
 import { IoIosArrowForward } from "react-icons/io";
+import { Navigate } from "react-router-dom";
 
 import { Divider, Header, Navigation } from "components";
 import {
-  GET_AUTHENTICATED_USER,
   GET_FRIENDSHIP_SUGGESTIONS_BY_ID,
-  GetAuthenticatedUserData,
   GetFriendshipSuggestionsByIdData,
 } from "helpers";
 import { useHeaderItems } from "hooks";
-import { NavigationItem } from "models";
+import { NavigationItem, User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { FriendRequests } from "./FriendRequests";
 import { Container, NavigationTitle } from "./FriendsPage.style";
@@ -24,16 +24,33 @@ const INITIALLY_DISPLAYED_FRIENDSHIP_REQUESTS = 7;
 const INITIALLY_DISPLAYED_SUGGESTIONS = 7;
 
 export function FriendsPage() {
-  const [
-    fetchAuthenticatedUser,
-    { data: authenticatedUserData = { authenticatedUser: null } },
-  ] = useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER);
+  const { authenticatedUser, isFinishedLoading } = useAuthenticationStore();
+
+  if (!isFinishedLoading) {
+    return <>Loading...</>;
+  }
+
+  return !!authenticatedUser ? (
+    <AuthenticatedFriendsPage authenticatedUser={authenticatedUser} />
+  ) : (
+    <NotAuthenticatedFriendsPage />
+  );
+}
+
+interface AuthenticatedFriendsPageProps {
+  authenticatedUser: User;
+}
+
+function AuthenticatedFriendsPage({
+  authenticatedUser,
+}: AuthenticatedFriendsPageProps) {
   const [
     fetchFriendshipSuggestionsById,
     { data: friendshipSuggestions = { friendshipSuggestionsById: null } },
   ] = useLazyQuery<GetFriendshipSuggestionsByIdData>(
     GET_FRIENDSHIP_SUGGESTIONS_BY_ID
   );
+  const { theme } = useSettingsStore();
 
   const headerItems = useHeaderItems();
   const NAVIGATION_ITEMS = useMemo<NavigationItem[]>(
@@ -59,20 +76,12 @@ export function FriendsPage() {
   );
 
   useEffect(() => {
-    fetchAuthenticatedUser();
+    fetchFriendshipSuggestionsById({
+      variables: { id: authenticatedUser.id },
+    });
+  }, [authenticatedUser, fetchFriendshipSuggestionsById]);
 
-    if (authenticatedUserData.authenticatedUser) {
-      fetchFriendshipSuggestionsById({
-        variables: { id: authenticatedUserData.authenticatedUser.id },
-      });
-    }
-  }, [
-    authenticatedUserData.authenticatedUser,
-    fetchAuthenticatedUser,
-    fetchFriendshipSuggestionsById,
-  ]);
-
-  const { friendshipRequests } = { ...authenticatedUserData.authenticatedUser };
+  const { friendshipRequests } = authenticatedUser;
   const friendshipRequestsCount = friendshipRequests?.length || 0;
   const suggestions = friendshipSuggestions.friendshipSuggestionsById;
   const suggestionsCount = suggestions?.length || 0;
@@ -132,23 +141,27 @@ export function FriendsPage() {
     }
   }
 
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+
   return (
     <Container.Main>
       <Header items={headerItems} selectedItem={null} />
       <Container.Content>
-        <Container.Navigation>
-          <NavigationTitle>Friends</NavigationTitle>
+        <Container.Navigation {...themeProps}>
+          <NavigationTitle {...themeProps}>Friends</NavigationTitle>
           <Navigation.Selectable
             items={NAVIGATION_ITEMS}
             selectedItem={selectedNavigationItem}
             onItemSelected={handleNavigationItemClick}
           />
         </Container.Navigation>
-        <Divider vertical />
-        <Container.NavigationItem>
+        <Divider color={dividerColor} vertical />
+        <Container.NavigationItem {...themeProps}>
           {selectedNavigationItem === NAVIGATION_ITEMS[1] ? (
             <FriendRequests
-              authenticatedUser={authenticatedUserData.authenticatedUser}
               displayedRequests={displayedFriendshipRequests}
               friendshipRequests={friendshipRequests || null}
               onSeeAllClick={() => handleSeeAllClick("FRIEND_REQUESTS")}
@@ -156,7 +169,6 @@ export function FriendsPage() {
             />
           ) : selectedNavigationItem === NAVIGATION_ITEMS[2] ? (
             <Suggestions
-              authenticatedUser={authenticatedUserData.authenticatedUser}
               displayedSuggestions={displayedSuggestions}
               suggestions={suggestions}
               onSeeAllClick={() => handleSeeAllClick("SUGGESTIONS")}
@@ -164,7 +176,6 @@ export function FriendsPage() {
             />
           ) : (
             <Home
-              authenticatedUser={authenticatedUserData.authenticatedUser}
               displayedRequests={displayedFriendshipRequests}
               displayedSuggestions={displayedSuggestions}
               friendshipRequests={friendshipRequests || null}
@@ -185,4 +196,8 @@ export function FriendsPage() {
       </Container.Content>
     </Container.Main>
   );
+}
+
+function NotAuthenticatedFriendsPage() {
+  return <Navigate state={{ next: "/friends" }} to="/login" />;
 }
