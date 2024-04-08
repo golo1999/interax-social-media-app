@@ -10,7 +10,13 @@ import {
   NotificationsList,
   SettingsList,
 } from "components";
-import { GET_AUTHENTICATED_USER, GetAuthenticatedUserData } from "helpers";
+import {
+  GET_AUTHENTICATED_USER,
+  GET_USER_BY_ID,
+  GetAuthenticatedUserData,
+  GetUserByIdData,
+} from "helpers";
+import { User } from "models";
 import {
   AuthenticationPage,
   ForgotPasswordPage,
@@ -40,6 +46,8 @@ export function Router() {
   const [fetchAuthenticatedUser] = useLazyQuery<GetAuthenticatedUserData>(
     GET_AUTHENTICATED_USER
   );
+  const [fetchUserById, { data: user = { userById: null } }] =
+    useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
   const isForgotPasswordPage = useMatch("/forgot-password");
   const isLoginRoute = useMatch("/login");
   const isMessagesRoute = useMatch("/messages/t/:userId");
@@ -49,29 +57,52 @@ export function Router() {
     useSettingsStore();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log({ user });
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setIsLoading(true);
+      fetchUserById({
+        variables: {
+          input: { id: firebaseUser?.uid, returnUserIfBlocked: true },
+        },
+      });
+      setIsLoading(false);
+      setIsFinishedLoading(true);
+      console.log({ firebaseUser });
+      if (user.userById) {
+        console.log({ userById: user.userById });
+        setAuthenticatedUser(user.userById as User);
+      }
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [
+    auth,
+    user.userById,
+    fetchUserById,
+    setAuthenticatedUser,
+    setIsFinishedLoading,
+    setIsLoading,
+  ]);
 
   useEffect(() => {
-    async function fetchAndSetData() {
-      setIsLoading(true);
-      const { data } = await fetchAuthenticatedUser();
-      setIsLoading(false);
-      setIsFinishedLoading(true);
+    console.log({ authenticatedUser });
+  }, [authenticatedUser]);
 
-      if (data?.authenticatedUser) {
-        console.log({ authenticatedUser: data.authenticatedUser });
-        setAuthenticatedUser(data.authenticatedUser);
-      }
-    }
+  // useEffect(() => {
+  //   async function fetchAndSetData() {
+  //     setIsLoading(true);
+  //     const { data } = await fetchAuthenticatedUser();
+  //     setIsLoading(false);
+  //     setIsFinishedLoading(true);
 
-    fetchAndSetData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  //     if (data?.authenticatedUser) {
+  //       console.log({ authenticatedUser: data.authenticatedUser });
+  //       setAuthenticatedUser(data.authenticatedUser);
+  //     }
+  //   }
+
+  //   fetchAndSetData();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   return (
     <>

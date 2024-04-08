@@ -30,8 +30,8 @@ type FormValues = {
   emailConfirmation: string;
   firstName: string;
   gender: Gender | null;
+  lastName: string;
   password: string;
-  surname: string;
 };
 
 type Gender = "Female" | "Male";
@@ -41,7 +41,7 @@ interface Data {
   firstName: string;
   gender: Gender | null;
   id: string;
-  surname: string;
+  lastName: string;
 }
 
 const DEFAULT_FORM_VALUES: FormValues = {
@@ -49,8 +49,8 @@ const DEFAULT_FORM_VALUES: FormValues = {
   emailConfirmation: "",
   firstName: "",
   gender: null,
+  lastName: "",
   password: "",
-  surname: "",
 };
 
 const resolver: Resolver<FormValues> = async (values) => {
@@ -59,10 +59,10 @@ const resolver: Resolver<FormValues> = async (values) => {
     emailConfirmation?: { message: string };
     firstName?: { message: string };
     gender?: { message: string };
+    lastName?: { message: string };
     password?: { message: string };
-    surname?: { message: string };
   } = {};
-  const { email, emailConfirmation, firstName, gender, password, surname } =
+  const { email, emailConfirmation, firstName, gender, lastName, password } =
     values;
 
   if (!email || !emailValidation(email)) {
@@ -96,6 +96,10 @@ const resolver: Resolver<FormValues> = async (values) => {
     };
   }
 
+  if (!lastName) {
+    errors = { ...errors, lastName: { message: "What's your name?" } };
+  }
+
   if (!password || password.length < 8) {
     errors = {
       ...errors,
@@ -104,10 +108,6 @@ const resolver: Resolver<FormValues> = async (values) => {
           "Enter a combination of at least eight numbers, letters and punctuation marks (such as ! and &).",
       },
     };
-  }
-
-  if (!surname) {
-    errors = { ...errors, surname: { message: "What's your name?" } };
   }
 
   return {
@@ -139,7 +139,7 @@ export function RegistrationPage() {
   }
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    const { email, firstName, gender, password, surname } = data;
+    const { email, firstName, gender, lastName, password } = data;
 
     try {
       const { user } = await createUserWithEmailAndPassword(
@@ -155,7 +155,7 @@ export function RegistrationPage() {
         firstName,
         gender,
         id: user.uid,
-        surname,
+        lastName,
       };
       await setDoc(
         doc(firestoreDb, "users", firestoreUser.id),
@@ -237,9 +237,9 @@ export function RegistrationPage() {
           />
           <Controller
             control={control}
-            name="surname"
+            name="lastName"
             render={({ field: { onChange }, fieldState: { error } }) => (
-              <StyledInput.Surname
+              <StyledInput.LastName
                 borderColor={error ? "Red" : "LightGray"}
                 borderStyle="solid"
                 borderWidth="1px"
@@ -247,7 +247,7 @@ export function RegistrationPage() {
                 fontSize="15px"
                 fontWeight="400"
                 padding="11px"
-                placeholder="Surname"
+                placeholder="Last name"
                 placeholderColor="PhilippineSilver"
                 spellCheck="false"
                 type="text"
