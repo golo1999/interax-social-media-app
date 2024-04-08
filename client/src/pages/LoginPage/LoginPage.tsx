@@ -44,6 +44,7 @@ const resolver: Resolver<FormValues> = async (values) => {
   };
 };
 
+// UNUSED
 export function LoginPage() {
   const { authenticatedUser, isFinishedLoading } = useAuthenticationStore();
 

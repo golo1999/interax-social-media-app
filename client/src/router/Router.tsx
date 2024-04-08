@@ -1,5 +1,6 @@
 import { useLazyQuery } from "@apollo/client";
 
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect } from "react";
 import { Route, Routes, useMatch } from "react-router-dom";
 
@@ -11,10 +12,10 @@ import {
 } from "components";
 import { GET_AUTHENTICATED_USER, GetAuthenticatedUserData } from "helpers";
 import {
+  AuthenticationPage,
   ForgotPasswordPage,
   FriendsPage,
   HomePage,
-  LoginPage,
   MessengerPage,
   NotFoundPage,
   NotificationsPage,
@@ -29,6 +30,7 @@ import {
 } from "store";
 
 export function Router() {
+  const auth = getAuth();
   const {
     authenticatedUser,
     setAuthenticatedUser,
@@ -47,6 +49,14 @@ export function Router() {
     useSettingsStore();
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log({ user });
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  useEffect(() => {
     async function fetchAndSetData() {
       setIsLoading(true);
       const { data } = await fetchAuthenticatedUser();
@@ -54,6 +64,7 @@ export function Router() {
       setIsFinishedLoading(true);
 
       if (data?.authenticatedUser) {
+        console.log({ authenticatedUser: data.authenticatedUser });
         setAuthenticatedUser(data.authenticatedUser);
       }
     }
@@ -68,7 +79,7 @@ export function Router() {
         <Route path="/" element={<HomePage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/friends" element={<FriendsPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<AuthenticationPage />} />
         <Route path="/messages/t/:userId" element={<MessengerPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/:userId" element={<ProfilePage />} />

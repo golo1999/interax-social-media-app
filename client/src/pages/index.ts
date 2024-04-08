@@ -1,3 +1,4 @@
+export { AuthenticationPage } from "./AuthenticationPage";
 export { ForgotPasswordPage } from "./ForgotPasswordPage";
 export { FriendsPage } from "./FriendsPage";
 export { HomePage } from "./HomePage";
