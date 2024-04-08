@@ -1,6 +1,8 @@
 const crypto = require("crypto");
 const _ = require("lodash");
 
+const { firestore } = require("../db");
+
 const EducationLevel = { COLLEGE: "COLLEGE", HIGH_SCHOOL: "HIGH_SCHOOL" };
 
 // TODO: This should be converted to TS and moved to a "helpers" file
@@ -339,9 +341,13 @@ const resolvers = {
 
       return posts.length > 0 ? posts : null;
     },
-    userById: (_parent, { input: { id, returnUserIfBlocked = false } }) => {
-      // Searched user
-      const matchedUser = _.find(USERS_LIST, (user) => user.id === id);
+    userById: async (
+      _parent,
+      { input: { id, returnUserIfBlocked = false } }
+    ) => {
+      const userSnapshot = firestore.collection("users").doc(id);
+      const userData = await userSnapshot.get();
+      const matchedUser = userData.data();
 
       if (!matchedUser) {
         return { message: "NOT_FOUND" };
@@ -369,12 +375,12 @@ const resolvers = {
 
       return matchedUser;
     },
-    userByUsername: (_parent, { username }) => {
-      // Searched user
-      const matchedUser = _.find(
-        USERS_LIST,
-        (user) => user.username === username
-      );
+    userByUsername: async (_parent, { username }) => {
+      const userSnapshot = firestore
+        .collection("users")
+        .where("username", "==", username);
+      const userData = await userSnapshot.get();
+      const matchedUser = userData.docs[0].data();
 
       if (!matchedUser) {
         return { message: "NOT_FOUND" };

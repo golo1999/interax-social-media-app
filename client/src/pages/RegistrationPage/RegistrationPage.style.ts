@@ -117,14 +117,14 @@ export const StyledInput = {
     grid-column: 1 / span 1;
     grid-row: 1 / span 1;
   `,
+  LastName: styled(Input)`
+    grid-column: 2 / span 1;
+    grid-row: 1 / span 1;
+  `,
   Password: styled(Input)<PasswordInputProps>`
     grid-column: 1 / span 2;
     ${({ rowCount }) => rowCount === 3 && "grid-row: 3 / span 1;"};
     ${({ rowCount }) => rowCount === 4 && "grid-row: 4 / span 1;"};
-  `,
-  Surname: styled(Input)`
-    grid-column: 2 / span 1;
-    grid-row: 1 / span 1;
   `,
 };
 
