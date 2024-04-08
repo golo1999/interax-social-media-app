@@ -23,6 +23,7 @@ export const Container = {
     /* height: 350px; */
     overflow: auto;
     padding: 0.5em;
+    scrollbar-width: thin;
 
     &::-webkit-scrollbar {
       width: auto;

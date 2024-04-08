@@ -10,7 +10,9 @@
   "author": "George-Alexandru Gologan",
   "license": "ISC",
   "dependencies": {
-    "apollo-server": "^3.11.1",
+    "apollo-server-core": "^3.13.0",
+    "apollo-server-express": "^3.13.0",
+    "express": "^4.18.2",
     "graphql": "^16.6.0",
     "lodash": "^4.17.21",
     "nodemon": "^2.0.20"

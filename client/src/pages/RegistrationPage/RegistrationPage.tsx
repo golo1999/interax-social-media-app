@@ -1,10 +1,17 @@
+import { FirebaseError } from "firebase/app";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signOut,
+} from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { CSSProperties, useMemo } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 
 import { Divider, RadioButton } from "components";
 import { Colors } from "environment";
-import { emailValidation } from "helpers";
+import { emailValidation, firebaseAuth, firestoreDb } from "helpers";
 import { useAuthenticationStore } from "store";
 
 import {
@@ -28,6 +35,14 @@ type FormValues = {
 };
 
 type Gender = "Female" | "Male";
+
+interface Data {
+  email: string;
+  firstName: string;
+  gender: Gender | null;
+  id: string;
+  surname: string;
+}
 
 const DEFAULT_FORM_VALUES: FormValues = {
   email: "",
@@ -103,23 +118,6 @@ const resolver: Resolver<FormValues> = async (values) => {
 
 export function RegistrationPage() {
   const { authenticatedUser, isFinishedLoading } = useAuthenticationStore();
-
-  if (!isFinishedLoading) {
-    return <>Loading...</>;
-  }
-
-  return !!authenticatedUser ? (
-    <AuthenticatedRegistrationPage />
-  ) : (
-    <NotAuthenticatedRegistrationPage />
-  );
-}
-
-function AuthenticatedRegistrationPage() {
-  return <Navigate to="/" />;
-}
-
-function NotAuthenticatedRegistrationPage() {
   const {
     control,
     formState,
@@ -140,10 +138,42 @@ function NotAuthenticatedRegistrationPage() {
     navigate("/login");
   }
 
-  const onSubmit: SubmitHandler<FormValues> = (data) => {
-    // const { email, emailConfirmation, firstName, gender, password, surname } =
-    //   data;
-    console.log(data);
+  const onSubmit: SubmitHandler<FormValues> = async (data) => {
+    const { email, firstName, gender, password, surname } = data;
+
+    try {
+      const { user } = await createUserWithEmailAndPassword(
+        firebaseAuth,
+        email,
+        password
+      );
+      await sendEmailVerification(user).then(() => {
+        console.log("Please check your mail for more details");
+      });
+      const firestoreUser: Data = {
+        email,
+        firstName,
+        gender,
+        id: user.uid,
+        surname,
+      };
+      await setDoc(
+        doc(firestoreDb, "users", firestoreUser.id),
+        firestoreUser
+      ).then(() => {
+        console.log("ADDED INTO DATABASE");
+      });
+      await signOut(firebaseAuth).then(() => {
+        console.log("SIGNED OUT");
+      });
+      navigate("/login");
+    } catch (error) {
+      if (error instanceof FirebaseError) {
+        console.log(error.message);
+      }
+    }
+
+    // console.log(data);
     // reset(DEFAULT_FORM_VALUES); // NOT WORKING FOR TOP INPUTS
     // TODO
   };
@@ -168,6 +198,14 @@ function NotAuthenticatedRegistrationPage() {
     () => (!isEmailFieldDirty || isEmailFieldInvalid ? 3 : 4),
     [isEmailFieldDirty, isEmailFieldInvalid]
   );
+
+  if (!isFinishedLoading) {
+    return <>Loading...</>;
+  }
+
+  if (!!authenticatedUser) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <Container.Main>

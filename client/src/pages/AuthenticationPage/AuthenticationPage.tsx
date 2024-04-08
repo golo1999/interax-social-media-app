@@ -1,6 +1,14 @@
+import {
+  browserLocalPersistence,
+  getAuth,
+  setPersistence,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import { Divider, Input, TertiaryButton } from "components";
+import { useAuthenticationStore } from "store";
 
 import {
   Button,
@@ -9,7 +17,8 @@ import {
   Subtitle,
   Text,
   Title,
-} from "./NotAuthenticatedHomePage.style";
+} from "./AuthenticationPage.style";
+import { FirebaseError } from "firebase/app";
 
 type FormValues = {
   email: string;
@@ -50,7 +59,9 @@ const resolver: Resolver<FormValues> = async (values) => {
   };
 };
 
-export function NotAuthenticatedHomePage() {
+export function AuthenticationPage() {
+  const auth = getAuth();
+  const { authenticatedUser, isFinishedLoading } = useAuthenticationStore();
   const {
     control,
     formState: { errors, isValid },
@@ -61,11 +72,39 @@ export function NotAuthenticatedHomePage() {
     mode: "onChange",
     resolver,
   });
-  const onSubmit: SubmitHandler<FormValues> = (data) => {
+  const navigate = useNavigate();
+
+  if (!isFinishedLoading) {
+    return <>Loading...</>;
+  }
+
+  if (!!authenticatedUser) {
+    return <Navigate to="/" />;
+  }
+
+  function handleCreateNewAccountClick() {
+    navigate("/registration");
+  }
+
+  function handleForgottenPasswordClick() {
+    navigate("/forgot-password");
+  }
+
+  const onSubmit: SubmitHandler<FormValues> = async ({ email, password }) => {
     // const { email, password } = data;
-    console.log(data);
+    console.log({ email, password });
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      console.log({ user });
+    } catch (error) {
+      if (error instanceof FirebaseError) {
+        console.log(error.message);
+      }
+    }
+
     // TODO: LOG IN
-    reset();
+    // reset();
   };
 
   return (
@@ -138,10 +177,14 @@ export function NotAuthenticatedHomePage() {
           type="submit"
           value="Log in"
         />
-        <Text.ForgottenPassword>Forgotten password?</Text.ForgottenPassword>
+        <Text.ForgottenPassword onClick={handleForgottenPasswordClick}>
+          Forgotten password?
+        </Text.ForgottenPassword>
         <Divider color="AmericanSilver" />
         <Container.CreateAccountButton>
-          <Button.CreateAccount>Create new account</Button.CreateAccount>
+          <Button.CreateAccount onClick={handleCreateNewAccountClick}>
+            Create new account
+          </Button.CreateAccount>
         </Container.CreateAccountButton>
       </Form>
     </Container.Main>
