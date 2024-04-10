@@ -5,13 +5,18 @@ import {
   signOut,
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { CSSProperties, useMemo } from "react";
+import { CSSProperties } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 
-import { Divider, RadioButton } from "components";
+import { Divider, Input, RadioButton } from "components";
 import { Colors } from "environment";
-import { emailValidation, firebaseAuth, firestoreDb } from "helpers";
+import {
+  emailValidation,
+  firebaseAuth,
+  firestoreDb,
+  passwordValidation,
+} from "helpers";
 import { useAuthenticationStore } from "store";
 
 import {
@@ -21,7 +26,7 @@ import {
   GenderText,
   Link,
   Logo,
-  StyledInput,
+  Text,
   Title,
 } from "./RegistrationPage.style";
 
@@ -101,12 +106,12 @@ const resolver: Resolver<FormValues> = async (values) => {
     errors = { ...errors, lastName: { message: "What's your name?" } };
   }
 
-  if (!password || password.length < 8) {
+  if (!passwordValidation(password)) {
     errors = {
       ...errors,
       password: {
         message:
-          "Enter a combination of at least eight numbers, letters and punctuation marks (such as ! and &).",
+          "Enter a combination of at least eight numbers, letters and symbols (such as ! and &).",
       },
     };
   }
@@ -125,8 +130,6 @@ export function RegistrationPage() {
     getFieldState,
     getValues,
     handleSubmit,
-    register,
-    reset,
     setError,
     setValue,
   } = useForm<FormValues>({
@@ -179,13 +182,9 @@ export function RegistrationPage() {
         setError("email", { message: error.message });
       }
     }
-
-    // console.log(data);
-    // reset(DEFAULT_FORM_VALUES); // NOT WORKING FOR TOP INPUTS
-    // TODO
   };
 
-  const { isValid } = formState;
+  const { errors, isValid } = formState;
   const { invalid: isEmailFieldInvalid, isDirty: isEmailFieldDirty } =
     getFieldState("email", formState);
   const { gender } = getValues();
@@ -201,11 +200,6 @@ export function RegistrationPage() {
     padding: "10px",
   };
 
-  const topInputsRowCount: number = useMemo(
-    () => (!isEmailFieldDirty || isEmailFieldInvalid ? 3 : 4),
-    [isEmailFieldDirty, isEmailFieldInvalid]
-  );
-
   if (!isFinishedLoading) {
     return <>Loading...</>;
   }
@@ -220,75 +214,70 @@ export function RegistrationPage() {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <Title>Create a new account</Title>
         <Divider color="LightGray" />
-        <Container.TopInputs rowCount={topInputsRowCount}>
-          <Controller
-            control={control}
-            name="firstName"
-            render={({ field: { onChange }, fieldState: { error } }) => (
-              <StyledInput.FirstName
-                borderColor={error ? "Red" : "LightGray"}
-                borderStyle="solid"
-                borderWidth="1px"
-                color="DarkJungleGreen"
-                fontSize="15px"
-                fontWeight="400"
-                padding="11px"
-                placeholder="First name"
-                placeholderColor="PhilippineSilver"
-                spellCheck="false"
-                type="text"
-                width="194px"
-                onChange={onChange}
-              />
+        <Container.TopInputs>
+          <Container.NameInputs.Outer>
+            <Container.NameInputs.Inner>
+              <Container.FullWidth>
+                <Controller
+                  control={control}
+                  name="firstName"
+                  render={({ field: { onChange }, fieldState: { error } }) => (
+                    <Input
+                      borderColor={error ? "Red" : "LightGray"}
+                      borderStyle="solid"
+                      borderWidth="1px"
+                      color="DarkJungleGreen"
+                      fontSize="15px"
+                      fontWeight="400"
+                      padding="11px"
+                      placeholder="First name"
+                      placeholderColor="PhilippineSilver"
+                      spellCheck="false"
+                      type="text"
+                      width="194px"
+                      onChange={onChange}
+                    />
+                  )}
+                />
+              </Container.FullWidth>
+              <Container.FullWidth>
+                <Controller
+                  control={control}
+                  name="lastName"
+                  render={({ field: { onChange }, fieldState: { error } }) => (
+                    <Input
+                      borderColor={error ? "Red" : "LightGray"}
+                      borderStyle="solid"
+                      borderWidth="1px"
+                      color="DarkJungleGreen"
+                      fontSize="15px"
+                      fontWeight="400"
+                      padding="11px"
+                      placeholder="Last name"
+                      placeholderColor="PhilippineSilver"
+                      spellCheck="false"
+                      type="text"
+                      width="194px"
+                      onChange={onChange}
+                    />
+                  )}
+                />
+              </Container.FullWidth>
+            </Container.NameInputs.Inner>
+            {(errors.firstName || errors.lastName) && (
+              <Text.Error>
+                {errors.firstName
+                  ? errors.firstName.message
+                  : errors.lastName?.message}
+              </Text.Error>
             )}
-          />
-          <Controller
-            control={control}
-            name="lastName"
-            render={({ field: { onChange }, fieldState: { error } }) => (
-              <StyledInput.LastName
-                borderColor={error ? "Red" : "LightGray"}
-                borderStyle="solid"
-                borderWidth="1px"
-                color="DarkJungleGreen"
-                fontSize="15px"
-                fontWeight="400"
-                padding="11px"
-                placeholder="Last name"
-                placeholderColor="PhilippineSilver"
-                spellCheck="false"
-                type="text"
-                width="194px"
-                onChange={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { onChange }, fieldState: { error } }) => (
-              <StyledInput.Email
-                borderColor={error ? "Red" : "LightGray"}
-                borderStyle="solid"
-                borderWidth="1px"
-                color="DarkJungleGreen"
-                fontSize="15px"
-                fontWeight="400"
-                padding="11px"
-                placeholder="Email address"
-                placeholderColor="PhilippineSilver"
-                spellCheck="false"
-                type="email"
-                onChange={onChange}
-              />
-            )}
-          />
-          {isEmailFieldDirty && !isEmailFieldInvalid && (
+          </Container.NameInputs.Outer>
+          <Container.Controller>
             <Controller
               control={control}
-              name="emailConfirmation"
+              name="email"
               render={({ field: { onChange }, fieldState: { error } }) => (
-                <StyledInput.EmailConfirmation
+                <Input
                   borderColor={error ? "Red" : "LightGray"}
                   borderStyle="solid"
                   borderWidth="1px"
@@ -296,7 +285,7 @@ export function RegistrationPage() {
                   fontSize="15px"
                   fontWeight="400"
                   padding="11px"
-                  placeholder="Re-enter email address"
+                  placeholder="Email address"
                   placeholderColor="PhilippineSilver"
                   spellCheck="false"
                   type="email"
@@ -304,28 +293,60 @@ export function RegistrationPage() {
                 />
               )}
             />
-          )}
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange }, fieldState: { error } }) => (
-              <StyledInput.Password
-                borderColor={error ? "Red" : "LightGray"}
-                borderStyle="solid"
-                borderWidth="1px"
-                color="DarkJungleGreen"
-                fontSize="15px"
-                fontWeight="400"
-                padding="11px"
-                placeholder="Password"
-                placeholderColor="PhilippineSilver"
-                rowCount={topInputsRowCount}
-                spellCheck="false"
-                type="password"
-                onChange={onChange}
+            {errors.email && <Text.Error>{errors.email.message}</Text.Error>}
+          </Container.Controller>
+          {isEmailFieldDirty && !isEmailFieldInvalid && (
+            <Container.Controller>
+              <Controller
+                control={control}
+                name="emailConfirmation"
+                render={({ field: { onChange }, fieldState: { error } }) => (
+                  <Input
+                    borderColor={error ? "Red" : "LightGray"}
+                    borderStyle="solid"
+                    borderWidth="1px"
+                    color="DarkJungleGreen"
+                    fontSize="15px"
+                    fontWeight="400"
+                    padding="11px"
+                    placeholder="Re-enter email address"
+                    placeholderColor="PhilippineSilver"
+                    spellCheck="false"
+                    type="email"
+                    onChange={onChange}
+                  />
+                )}
               />
+              {errors.emailConfirmation && (
+                <Text.Error>{errors.emailConfirmation.message}</Text.Error>
+              )}
+            </Container.Controller>
+          )}
+          <Container.Controller>
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange }, fieldState: { error } }) => (
+                <Input
+                  borderColor={error ? "Red" : "LightGray"}
+                  borderStyle="solid"
+                  borderWidth="1px"
+                  color="DarkJungleGreen"
+                  fontSize="15px"
+                  fontWeight="400"
+                  padding="11px"
+                  placeholder="Password"
+                  placeholderColor="PhilippineSilver"
+                  spellCheck="false"
+                  type="password"
+                  onChange={onChange}
+                />
+              )}
+            />
+            {errors.password && (
+              <Text.Error>{errors.password.message}</Text.Error>
             )}
-          />
+          </Container.Controller>
         </Container.TopInputs>
         <GenderText>Gender</GenderText>
         <Container.Genders>

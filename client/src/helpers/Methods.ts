@@ -42,3 +42,32 @@ export function instanceOfUserWithMessage(
 
   return "message" in object && "user" in object;
 }
+
+export function passwordValidation(password: string) {
+  if (!password || password.length < 8) return false;
+
+  let digitCount = 0;
+  let letterCount = 0;
+  let symbolCount = 0;
+
+  Array.from(password).forEach((character) => {
+    if (character.charCodeAt(0) >= 48 && character.charCodeAt(0) <= 57) {
+      ++digitCount;
+    } else if (
+      (character.charCodeAt(0) >= 65 && character.charCodeAt(0) <= 90) ||
+      (character.charCodeAt(0) >= 97 && character.charCodeAt(0) <= 122)
+    ) {
+      ++letterCount;
+    } else if (
+      (character.charCodeAt(0) >= 32 && character.charCodeAt(0) <= 47) ||
+      (character.charCodeAt(0) >= 58 && character.charCodeAt(0) <= 64) ||
+      (character.charCodeAt(0) >= 91 && character.charCodeAt(0) <= 96) ||
+      (character.charCodeAt(0) >= 123 && character.charCodeAt(0) <= 126)
+    ) {
+      ++symbolCount;
+    }
+  });
+
+  if (digitCount === 0 || letterCount === 0 || symbolCount === 0) return false;
+  return true;
+}
