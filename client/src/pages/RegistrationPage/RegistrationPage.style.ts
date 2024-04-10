@@ -1,6 +1,5 @@
 import styled from "styled-components";
 
-import { Input } from "components";
 import { Colors } from "environment";
 
 export const Button = styled.input.attrs({ type: "submit" })`
@@ -25,16 +24,19 @@ export const Button = styled.input.attrs({ type: "submit" })`
   }
 `;
 
-interface TopInputsContainerProps {
-  rowCount: number;
-}
-
 export const Container = {
   Button: styled.div`
     align-items: center;
     display: flex;
     justify-content: center;
     padding: 6px 0;
+  `,
+  Controller: styled.div`
+    display: flex;
+    flex-direction: column;
+  `,
+  FullWidth: styled.div`
+    flex: 1;
   `,
   Genders: styled.div`
     display: flex;
@@ -56,13 +58,22 @@ export const Container = {
     gap: 1em;
     justify-content: center;
   `,
-  TopInputs: styled.div<TopInputsContainerProps>`
-    display: grid;
+  NameInputs: {
+    Inner: styled.div`
+      display: flex;
+      gap: 8px;
+    `,
+    Outer: styled.div`
+      display: flex;
+      flex-direction: column;
+    `,
+  },
+  TopInputs: styled.div`
+    display: flex;
+    flex-direction: column;
     gap: 8px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: ${({ rowCount }) =>
-      `repeat(${rowCount}, minmax(0, 1fr))`};
     padding: 6px 16px 0;
+    width: 428px;
   `,
 };
 
@@ -100,31 +111,10 @@ export const Logo = styled.p`
   user-select: none;
 `;
 
-interface PasswordInputProps {
-  rowCount: number;
-}
-
-export const StyledInput = {
-  Email: styled(Input)`
-    grid-column: 1 / span 2;
-    grid-row: 2 / span 1;
-  `,
-  EmailConfirmation: styled(Input)`
-    grid-column: 1 / span 2;
-    grid-row: 3 / span 1;
-  `,
-  FirstName: styled(Input)`
-    grid-column: 1 / span 1;
-    grid-row: 1 / span 1;
-  `,
-  LastName: styled(Input)`
-    grid-column: 2 / span 1;
-    grid-row: 1 / span 1;
-  `,
-  Password: styled(Input)<PasswordInputProps>`
-    grid-column: 1 / span 2;
-    ${({ rowCount }) => rowCount === 3 && "grid-row: 3 / span 1;"};
-    ${({ rowCount }) => rowCount === 4 && "grid-row: 4 / span 1;"};
+export const Text = {
+  Error: styled.span`
+    color: ${Colors.RedCrayola};
+    font-size: 13px;
   `,
 };
 

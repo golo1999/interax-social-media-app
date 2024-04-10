@@ -67,7 +67,6 @@ export function AuthenticationPage() {
     control,
     formState: { errors, isValid },
     handleSubmit,
-    reset,
     setError,
   } = useForm<FormValues>({
     defaultValues: DEFAULT_FORM_VALUES,
