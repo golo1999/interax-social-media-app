@@ -3,6 +3,7 @@ import {
   getAuth,
   setPersistence,
   signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -67,6 +68,7 @@ export function AuthenticationPage() {
     formState: { errors, isValid },
     handleSubmit,
     reset,
+    setError,
   } = useForm<FormValues>({
     defaultValues: DEFAULT_FORM_VALUES,
     mode: "onChange",
@@ -91,21 +93,29 @@ export function AuthenticationPage() {
   }
 
   const onSubmit: SubmitHandler<FormValues> = async ({ email, password }) => {
-    // const { email, password } = data;
-    console.log({ email, password });
     try {
       await setPersistence(auth, browserLocalPersistence);
       const { user } = await signInWithEmailAndPassword(auth, email, password);
+      if (!user.emailVerified) {
+        await signOut(auth);
+        throw new Error("Please verify your email first.");
+      }
       console.log({ user });
     } catch (error) {
       if (error instanceof FirebaseError) {
         console.log(error.message);
+        setError("email", { message: error.message });
+      } else if (error instanceof Error) {
+        console.log({ error });
+        setError("email", { message: error.message });
       }
     }
 
     // TODO: LOG IN
     // reset();
   };
+
+  console.log({ errors });
 
   return (
     <Container.Main>
@@ -116,60 +126,66 @@ export function AuthenticationPage() {
         </Subtitle>
       </Container.TitleSubtitle>
       <Form onSubmit={handleSubmit(onSubmit)}>
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, value } }) => (
-            <Input
-              borderColor={errors.email ? "RedCrayola" : "LightGray"}
-              borderStyle="solid"
-              borderWidth="1px"
-              color="DarkJungleGreen"
-              focusedBorderColor={
-                errors.email ? "RedCrayola" : "BrightNavyBlue"
-              }
-              focusedPlaceholderColor="LightGray"
-              fontSize="17px"
-              hoveredBorderColor={errors.email ? "RedCrayola" : "SonicSilver"}
-              padding="14px 16px"
-              placeholder="Email address"
-              placeholderColor="PhilippineSilver"
-              spellCheck="false"
-              type="email"
-              value={value}
-              onChange={onChange}
-            />
+        <Container.Controller>
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, value } }) => (
+              <Input
+                borderColor={errors.email ? "RedCrayola" : "LightGray"}
+                borderStyle="solid"
+                borderWidth="1px"
+                color="DarkJungleGreen"
+                focusedBorderColor={
+                  errors.email ? "RedCrayola" : "BrightNavyBlue"
+                }
+                focusedPlaceholderColor="LightGray"
+                fontSize="17px"
+                hoveredBorderColor={errors.email ? "RedCrayola" : "SonicSilver"}
+                padding="14px 16px"
+                placeholder="Email address"
+                placeholderColor="PhilippineSilver"
+                spellCheck="false"
+                type="email"
+                value={value}
+                onChange={onChange}
+              />
+            )}
+          />
+          {errors.email && <Text.Error>{errors.email.message}</Text.Error>}
+        </Container.Controller>
+        <Container.Controller>
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <Input
+                borderColor={errors.password ? "RedCrayola" : "LightGray"}
+                borderStyle="solid"
+                borderWidth="1px"
+                color="DarkJungleGreen"
+                focusedBorderColor={
+                  errors.password ? "RedCrayola" : "BrightNavyBlue"
+                }
+                focusedPlaceholderColor="LightGray"
+                fontSize="17px"
+                hoveredBorderColor={
+                  errors.password ? "RedCrayola" : "SonicSilver"
+                }
+                padding="14px 16px"
+                placeholder="Password"
+                placeholderColor="PhilippineSilver"
+                spellCheck="false"
+                type="password"
+                value={value}
+                onChange={onChange}
+              />
+            )}
+          />
+          {errors.password && (
+            <Text.Error>{errors.password.message}</Text.Error>
           )}
-        />
-        {errors.email && <Text.Error>{errors.email.message}</Text.Error>}
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, value } }) => (
-            <Input
-              borderColor={errors.password ? "RedCrayola" : "LightGray"}
-              borderStyle="solid"
-              borderWidth="1px"
-              color="DarkJungleGreen"
-              focusedBorderColor={
-                errors.password ? "RedCrayola" : "BrightNavyBlue"
-              }
-              focusedPlaceholderColor="LightGray"
-              fontSize="17px"
-              hoveredBorderColor={
-                errors.password ? "RedCrayola" : "SonicSilver"
-              }
-              padding="14px 16px"
-              placeholder="Password"
-              placeholderColor="PhilippineSilver"
-              spellCheck="false"
-              type="password"
-              value={value}
-              onChange={onChange}
-            />
-          )}
-        />
-        {errors.password && <Text.Error>{errors.password.message}</Text.Error>}
+        </Container.Controller>
         <TertiaryButton
           disabled={!isValid}
           fontSize="20px"

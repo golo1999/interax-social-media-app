@@ -1,6 +1,8 @@
+import { signOut } from "firebase/auth";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { firebaseAuth } from "helpers";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Default } from "./Default";
@@ -57,10 +59,10 @@ export function SettingsList() {
     setContent("SETTINGS/LANGUAGE");
   }
 
-  function handleLogOutTabClick() {
-    // TODO
-    closeSettingsList();
+  async function handleLogOutTabClick() {
+    await signOut(firebaseAuth);
     setAuthenticatedUser(null);
+    closeSettingsList();
   }
 
   function handleSettingsTabClick() {

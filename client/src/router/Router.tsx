@@ -58,19 +58,24 @@ export function Router() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setIsLoading(true);
-      fetchUserById({
-        variables: {
-          input: { id: firebaseUser?.uid, returnUserIfBlocked: true },
-        },
-      });
-      setIsLoading(false);
-      setIsFinishedLoading(true);
       console.log({ firebaseUser });
-      if (user.userById) {
-        console.log({ userById: user.userById });
-        setAuthenticatedUser(user.userById as User);
+
+      if (firebaseUser && firebaseUser.emailVerified) {
+        setIsLoading(true);
+        fetchUserById({
+          variables: {
+            input: { id: firebaseUser?.uid, returnUserIfBlocked: true },
+          },
+        });
+        setIsLoading(false);
+
+        if (user.userById) {
+          console.log({ userById: user.userById });
+          setAuthenticatedUser(user.userById as User);
+        }
       }
+
+      setIsFinishedLoading(true);
     });
 
     return () => unsubscribe();
