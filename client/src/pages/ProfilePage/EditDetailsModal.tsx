@@ -1,7 +1,9 @@
+import { Divider } from "@mui/material";
+
 import { createRef, MutableRefObject } from "react";
 import { MdAddCircleOutline, MdClose } from "react-icons/md";
 
-import { AddData, Divider, Modal } from "components";
+import { AddData, Modal } from "components";
 import { Colors } from "environment";
 import { useOutsideClick } from "hooks";
 
@@ -37,7 +39,7 @@ export function EditDetailsModal({ onCloseClick, onSaveClick }: Props) {
           <MdClose color={Colors.PhilippineGray} size={24} />
         </CloseIconContainer>
       </Modal.Header>
-      <Divider />
+      <Divider color="Onyx" />
       <Modal.Body
         color="Platinum"
         direction="column"
@@ -69,7 +71,7 @@ export function EditDetailsModal({ onCloseClick, onSaveClick }: Props) {
           <h4>Relationship</h4>
         </div>
       </Modal.Body>
-      <Divider />
+      <Divider color="Onyx" />
       <Modal.Footer gap="0.5em" justifyContent="space-between" padding="0.75em">
         <h4 style={{ color: Colors.BrightNavyBlue }}>
           Update Your Information

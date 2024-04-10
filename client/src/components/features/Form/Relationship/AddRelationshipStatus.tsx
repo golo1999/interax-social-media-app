@@ -1,9 +1,10 @@
 import { useMutation } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
-import { Divider, Dropdown, VisibilityModal } from "components";
+import { Dropdown, VisibilityModal } from "components";
 import {
   AddRelationshipStatusData,
   ADD_USER_RELATIONSHIP_STATUS,
@@ -126,7 +127,7 @@ export function AddRelationshipStatus({
           );
         }}
       />
-      <Divider thickness="2px" />
+      <Divider color="Onyx" />
       <Container.Buttons.Element>
         <Controller
           control={control}

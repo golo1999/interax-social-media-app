@@ -1,10 +1,15 @@
 import { useMutation } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
-import { Divider, Dropdown, VisibilityModal } from "components";
-import { AddUserWorkplaceData, ADD_USER_WORKPLACE, GET_USER_BY_USERNAME } from "helpers";
+import { Dropdown, VisibilityModal } from "components";
+import {
+  AddUserWorkplaceData,
+  ADD_USER_WORKPLACE,
+  GET_USER_BY_USERNAME,
+} from "helpers";
 import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
 import { Date as CustomDate, Permission, User } from "models";
 
@@ -396,7 +401,7 @@ export function AddWorkplace({ user, onCancelClick, onSaveClick }: Props) {
           </>
         )}
       </Container.Dates>
-      <Divider thickness="2px" />
+      <Divider color="Onyx" />
       <Container.Buttons.Element>
         <Controller
           control={control}

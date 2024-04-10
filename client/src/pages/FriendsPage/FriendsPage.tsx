@@ -1,4 +1,5 @@
 import { useLazyQuery } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useEffect, useMemo, useState } from "react";
 import { HiUserAdd } from "react-icons/hi";
@@ -6,7 +7,7 @@ import { HiUsers } from "react-icons/hi2";
 import { IoIosArrowForward } from "react-icons/io";
 import { Navigate } from "react-router-dom";
 
-import { Divider, Header, Navigation } from "components";
+import { Header, Navigation } from "components";
 import {
   GET_FRIENDSHIP_SUGGESTIONS_BY_ID,
   GetFriendshipSuggestionsByIdData,
@@ -144,7 +145,7 @@ function AuthenticatedFriendsPage({
   const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
 
   const dividerColor =
-    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <Container.Main>
@@ -158,7 +159,7 @@ function AuthenticatedFriendsPage({
             onItemSelected={handleNavigationItemClick}
           />
         </Container.Navigation>
-        <Divider color={dividerColor} vertical />
+        <Divider color={dividerColor} orientation="vertical" />
         <Container.NavigationItem {...themeProps}>
           {selectedNavigationItem === NAVIGATION_ITEMS[1] ? (
             <FriendRequests

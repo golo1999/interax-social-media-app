@@ -1,8 +1,10 @@
+import { Divider } from "@mui/material";
+
 import { useMemo, useState } from "react";
 import { IconType } from "react-icons";
 import { MdBlock, MdClose } from "react-icons/md";
 
-import { Divider, Modal } from "components";
+import { Modal } from "components";
 import { Colors } from "environment";
 import { ConversationTheme } from "models";
 
@@ -75,7 +77,7 @@ export function ThemesModal({
         title="Themes"
         onRightIconClick={onCloseClick}
       />
-      <Divider />
+      <Divider color="Onyx" />
       <Modal.Body padding="1.5em">
         <List>
           {ITEMS.map((item, index) => {

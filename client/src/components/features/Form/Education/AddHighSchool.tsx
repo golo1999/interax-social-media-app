@@ -1,9 +1,10 @@
 import { useMutation } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
-import { Divider, Dropdown, VisibilityModal } from "components";
+import { Dropdown, VisibilityModal } from "components";
 import {
   AddHighSchoolEducationData,
   ADD_USER_HIGH_SCHOOL_EDUCATION,
@@ -392,7 +393,7 @@ export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
           <Label>Graduated</Label>
         </b>
       </Container.Checkbox>
-      <Divider thickness="2px" />
+      <Divider color="Onyx" />
       <Container.Buttons.Element>
         <Controller
           control={control}

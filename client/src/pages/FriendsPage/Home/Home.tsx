@@ -1,6 +1,7 @@
+import { Divider } from "@mui/material";
+
 import styled from "styled-components";
 
-import { Divider } from "components";
 import { FriendshipRequest, User } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
@@ -38,7 +39,7 @@ export function Home({
   const { theme } = useSettingsStore();
 
   const dividerColor =
-    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <Container>

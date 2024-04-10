@@ -1,3 +1,5 @@
+import { Divider } from "@mui/material";
+
 import { FirebaseError } from "firebase/app";
 import {
   createUserWithEmailAndPassword,
@@ -9,7 +11,7 @@ import { CSSProperties } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 
-import { Divider, Input, RadioButton } from "components";
+import { Input, RadioButton } from "components";
 import { Colors } from "environment";
 import {
   emailValidation,

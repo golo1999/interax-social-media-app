@@ -1,7 +1,9 @@
+import { Divider } from "@mui/material";
+
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
-import { Divider, Input } from "components";
+import { Input } from "components";
 import { useAuthenticationStore } from "store";
 
 import {

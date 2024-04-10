@@ -1,3 +1,5 @@
+import { Divider } from "@mui/material";
+
 import {
   browserLocalPersistence,
   getAuth,
@@ -8,7 +10,7 @@ import {
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 
-import { Divider, Input, TertiaryButton } from "components";
+import { Input, TertiaryButton } from "components";
 import { useAuthenticationStore } from "store";
 
 import {
@@ -114,8 +116,6 @@ export function AuthenticationPage() {
     // reset();
   };
 
-  console.log({ errors });
-
   return (
     <Container.Main>
       <Container.TitleSubtitle>
@@ -195,7 +195,7 @@ export function AuthenticationPage() {
         <Text.ForgottenPassword onClick={handleForgottenPasswordClick}>
           Forgotten password?
         </Text.ForgottenPassword>
-        <Divider color="AmericanSilver" />
+        <Divider color="LightGray" />
         <Container.CreateAccountButton>
           <Button.CreateAccount onClick={handleCreateNewAccountClick}>
             Create new account

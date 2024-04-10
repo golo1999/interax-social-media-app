@@ -1,4 +1,5 @@
 import { useLazyQuery, useMutation } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { HiDotsHorizontal } from "react-icons/hi";
@@ -6,7 +7,7 @@ import { MdPhotoCamera } from "react-icons/md";
 import { useLocation } from "react-router";
 import { useNavigate } from "react-router-dom";
 
-import { Divider, Header, Navbar, UserPhoto } from "components";
+import { Header, Navbar, UserPhoto } from "components";
 import { Colors } from "environment";
 import {
   ADD_MESSAGE,
@@ -252,6 +253,9 @@ export function ProfilePage() {
                       onCompleted: (data) => {
                         console.log(data.addMessage);
                       },
+                      onError: (error) => {
+                        console.log({ error });
+                      },
                     });
                   }}
                 />
@@ -259,7 +263,7 @@ export function ProfilePage() {
             )}
           </div>
         </StyledContainer.UserDetails>
-        <Divider color={dividerColor} margin="0 15vw" />
+        <Divider color={dividerColor} style={{ margin: "0 15vw" }} />
         <StyledContainer.Navigation
           isAuthenticated={!!authenticatedUser}
           theme={theme}

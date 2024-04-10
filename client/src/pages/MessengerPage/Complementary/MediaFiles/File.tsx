@@ -1,6 +1,7 @@
+import { Divider } from "@mui/material";
+
 import { FiFileText } from "react-icons/fi";
 
-import { Divider } from "components";
 import { Colors } from "environment";
 import { File as FileModel } from "models";
 
@@ -26,7 +27,7 @@ export function File({ isDividerVisible, item }: Props) {
           <Size>{formatSize(size)}</Size>
         </Container.Details>
       </Container.Main>
-      {isDividerVisible && <Divider />}
+      {isDividerVisible && <Divider color="Onyx" />}
     </>
   );
 }

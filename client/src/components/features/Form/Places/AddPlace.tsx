@@ -1,9 +1,10 @@
 import { useMutation } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useMemo, useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
-import { Divider, Dropdown, VisibilityModal } from "components";
+import { Dropdown, VisibilityModal } from "components";
 import {
   AddUserPlaceData,
   ADD_USER_PLACE,
@@ -385,7 +386,7 @@ export function AddPlace({ user, onCancelClick, onSaveClick }: Props) {
           </>
         )}
       </Container.Dates>
-      <Divider thickness="2px" />
+      <Divider color="Onyx" />
       <Container.Buttons.Element>
         <Controller
           control={control}
