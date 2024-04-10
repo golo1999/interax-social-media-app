@@ -1,9 +1,10 @@
+import { Radio } from "@mui/material";
 import { CSSProperties, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { Colors } from "environment";
 
-import { Label, Radio, Wrapper } from "./RadioButton.style";
+import { Label, Wrapper } from "./RadioButton.style";
 
 type CommonProps = {
   isChecked: boolean;
@@ -18,7 +19,6 @@ type LabelProps =
 
 type StyleProps = {
   color: keyof typeof Colors;
-  inputStyle?: CSSProperties;
   labelStyle?: CSSProperties;
   wrapperStyle?: CSSProperties;
 };
@@ -27,7 +27,6 @@ type Props = CommonProps & LabelProps & StyleProps;
 
 export function RadioButton({
   color,
-  inputStyle,
   isChecked,
   label,
   labelPosition = "end",
@@ -39,6 +38,9 @@ export function RadioButton({
     () => (label ? `radio-button-${label}-${uuidv4()}` : undefined),
     [label]
   );
+  const radioStyle: CSSProperties = useMemo(() => {
+    return { cursor: "default", padding: 0 };
+  }, []);
 
   return (
     <Wrapper style={wrapperStyle} onClick={onChange}>
@@ -48,11 +50,10 @@ export function RadioButton({
         </Label>
       )}
       <Radio
-        id={radioId}
-        color={color}
         checked={isChecked}
-        style={inputStyle}
-        onChange={onChange}
+        color="primary"
+        id={radioId}
+        style={radioStyle}
       />
       {label && labelPosition === "end" && (
         <Label color={color} htmlFor={radioId} style={labelStyle}>
