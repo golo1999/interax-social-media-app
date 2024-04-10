@@ -1,4 +1,6 @@
-import { Divider, IconItem } from "components";
+import { Divider } from "@mui/material";
+
+import { IconItem } from "components";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { AuthenticatedHeader } from "./AuthenticatedHeader";
@@ -17,7 +19,7 @@ export function Header({ items, selectedItem }: Props) {
   const isAuthenticated = !!authenticatedUser;
 
   const dividerColor =
-    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <Container.Main isAuthenticated={isAuthenticated} theme={theme}>

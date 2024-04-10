@@ -1,8 +1,9 @@
 import { useLazyQuery } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 
-import { Chat, Divider, UserPhoto } from "components";
+import { Chat, UserPhoto } from "components";
 import { Colors } from "environment";
 import {
   GetUserByIdData,

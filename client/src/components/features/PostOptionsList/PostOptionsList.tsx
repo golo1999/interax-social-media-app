@@ -1,4 +1,5 @@
 import { useLazyQuery, useMutation } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useEffect } from "react";
 import { AiOutlineCloseSquare } from "react-icons/ai";
@@ -7,7 +8,7 @@ import { ImBin } from "react-icons/im";
 import { MdBlock } from "react-icons/md";
 import { VscCloseAll } from "react-icons/vsc";
 
-import { Divider, Tab } from "components";
+import { Tab } from "components";
 import {
   BLOCK_USER,
   BlockUserData,
@@ -258,7 +259,7 @@ export function PostOptionsList({
           onClick={handleSavePostClick}
         />
       )}
-      <Divider margin="8px 0" />
+      <Divider color="LightGray" style={{ margin: "8px 0" }} />
       {isAuthenticatedUserPost && (
         <Tab
           name="Delete post"

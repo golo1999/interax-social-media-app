@@ -1,3 +1,5 @@
+import { Divider } from "@mui/material";
+
 import { useState } from "react";
 import { MdAddCircleOutline } from "react-icons/md";
 
@@ -8,7 +10,6 @@ import {
   AddPlace,
   AddWorkplace,
   Container,
-  Divider,
   EducationHistory,
   PlacesHistory,
   WorkHistory,
@@ -92,7 +93,7 @@ export function About({ user }: Props) {
           })}
         </List>
       </div>
-      <Divider thickness="2px" vertical />
+      <Divider color="Onyx" orientation="vertical" />
       <div
         style={{
           display: "flex",

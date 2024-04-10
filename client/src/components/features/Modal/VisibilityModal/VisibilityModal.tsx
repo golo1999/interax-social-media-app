@@ -1,8 +1,10 @@
+import { Divider } from "@mui/material";
+
 import { createRef, MutableRefObject, ReactNode, useState } from "react";
 import { IconType } from "react-icons";
 import { MdClose } from "react-icons/md";
 
-import { Divider, Modal, RadioButton } from "components";
+import { Modal, RadioButton } from "components";
 import { Colors } from "environment";
 import { useOutsideClick } from "hooks";
 import { Permission } from "models";
@@ -70,7 +72,7 @@ export function VisibilityModal({
   return (
     <Modal minHeight="50vh" ref={modalContainerRef}>
       <>{ModalHeader}</>
-      <Divider />
+      <Divider color="Onyx" />
       <Modal.Body color="PhilippineGray" direction="column">
         {bodyDescription}
         <List>

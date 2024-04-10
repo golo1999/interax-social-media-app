@@ -1,10 +1,12 @@
+import { Divider } from "@mui/material";
+
 import { useMemo, useState } from "react";
 import { IconType } from "react-icons";
 import { HiHeart, HiThumbUp } from "react-icons/hi";
 import { MdClose } from "react-icons/md";
 import styled from "styled-components";
 
-import { Divider, Modal } from "components";
+import { Modal } from "components";
 import { Colors } from "environment";
 import { Emoji } from "models";
 
@@ -105,7 +107,7 @@ export function EmojisModal({
         title="Emoji"
         onRightIconClick={onCloseClick}
       />
-      <Divider />
+      <Divider color="Onyx" />
       <Modal.Body padding="1.5em">
         <List>
           {ITEMS.map((item, index) => {

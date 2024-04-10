@@ -1,10 +1,11 @@
 import { useLazyQuery } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useEffect, useMemo, useState } from "react";
 import { BsSaveFill } from "react-icons/bs";
 import { MdOndemandVideo, MdPlayCircle } from "react-icons/md";
 
-import { Divider, Header, Navigation } from "components";
+import { Header, Navigation } from "components";
 import { useHeaderItems } from "hooks";
 import { NavigationItem } from "models";
 import { useAuthenticationStore } from "store";
@@ -45,7 +46,7 @@ export function WatchPage() {
             onItemSelected={handleNavigationItemClick}
           />
         </Container.Navigation>
-        <Divider vertical />
+        <Divider color="Onyx" orientation="vertical" />
         <Container.NavigationItem></Container.NavigationItem>
       </Container.Content>
     </Container.Main>

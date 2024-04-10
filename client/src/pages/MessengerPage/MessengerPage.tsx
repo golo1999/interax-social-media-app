@@ -1,4 +1,5 @@
 import { useLazyQuery } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useEffect, useState } from "react";
 import { MdInfo } from "react-icons/md";
@@ -9,7 +10,7 @@ import {
   useParams,
 } from "react-router-dom";
 
-import { Chat, ChatList, Divider, Header, UserPhoto } from "components";
+import { Chat, ChatList, Header, UserPhoto } from "components";
 import {
   GET_CONVERSATION_BETWEEN,
   GET_USER_BY_ID,
@@ -138,7 +139,7 @@ function AuthenticatedMessengerPage({
   }
 
   const dividerColor =
-    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
   const isAuthenticatedUser = userId === authenticatedUser?.id;
   const isAuthenticatedUserFriend = authenticatedUser?.friends?.find(
     (friend) => friend.id === userId
@@ -152,7 +153,7 @@ function AuthenticatedMessengerPage({
       <Header items={headerItems} selectedItem={null} />
       <Container.Content>
         <ChatList />
-        <Divider color={dividerColor} vertical />
+        <Divider color={dividerColor} orientation="vertical" />
         <Container.Chat>
           <Container.ChatHeader>
             <Container.User
@@ -200,7 +201,7 @@ function AuthenticatedMessengerPage({
         </Container.Chat>
         {isComplementaryVisible && (
           <>
-            <Divider color={dividerColor} vertical />
+            <Divider color={dividerColor} orientation="vertical" />
             <Complementary
               conversation={conversation.conversationBetween}
               displayedEmoji={DisplayedEmoji}

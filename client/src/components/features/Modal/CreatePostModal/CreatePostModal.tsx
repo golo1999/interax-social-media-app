@@ -1,10 +1,11 @@
 import { useMutation } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { MdArrowDropDown, MdClose, MdKeyboardBackspace } from "react-icons/md";
 
-import { Divider, Modal, UserPhoto, VisibilityModal } from "components";
+import { Modal, UserPhoto, VisibilityModal } from "components";
 import { Colors } from "environment";
 import { CreatePostData, CREATE_POST, GET_USER_BY_USERNAME } from "helpers";
 import { useVisibilityModalItems } from "hooks";
@@ -145,7 +146,7 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
             <MdClose color={Colors.PhilippineGray} size={24} />
           </Container.Icon>
         </Modal.Header>
-        <Divider />
+        <Divider color="Onyx" />
         <Modal.Body direction="column" gap="1em" padding="1em">
           <div style={{ alignItems: "center", display: "flex", gap: "0.5em" }}>
             <UserPhoto user={authenticatedUser} />

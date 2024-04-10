@@ -1,9 +1,10 @@
 import { useMutation } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
-import { Divider, Dropdown, VisibilityModal } from "components";
+import { Dropdown, VisibilityModal } from "components";
 import {
   AddCollegeEducationData,
   ADD_USER_COLLEGE_EDUCATION,
@@ -405,7 +406,7 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
         isValid={!errors.degree}
         placeholder="Degree"
       />
-      <Divider thickness="2px" />
+      <Divider color="Onyx" />
       <Container.Buttons.Element>
         <Controller
           control={control}

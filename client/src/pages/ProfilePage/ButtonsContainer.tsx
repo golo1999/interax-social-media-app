@@ -116,6 +116,7 @@ export function ButtonsContainer({
             backgroundColor="BlackOlive"
             color="White"
             hoverBackgroundColor="DarkLiver"
+            onClick={onMessageButtonClick}
           >
             <BsMessenger color="white" />
             Message

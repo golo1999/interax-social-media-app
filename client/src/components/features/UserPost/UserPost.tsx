@@ -1,4 +1,5 @@
 import { useLazyQuery, useMutation } from "@apollo/client";
+import { Divider } from "@mui/material";
 
 import {
   Fragment,
@@ -16,7 +17,6 @@ import { useNavigate } from "react-router-dom";
 
 import {
   Container,
-  Divider,
   PostComments,
   PostOptionsList,
   PostPhotos,
@@ -330,7 +330,7 @@ export function UserPost({ id: postId }: Props) {
   } = owner;
 
   const dividerColor =
-    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
   const moreOptionsIconColor =
     !!authenticatedUser && theme === "DARK" ? "PhilippineGray" : "GraniteGray";
   const postOwnerNameText = `${ownerFirstName} ${ownerLastName}`;
