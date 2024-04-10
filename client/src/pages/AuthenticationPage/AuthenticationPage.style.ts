@@ -20,6 +20,10 @@ export const Button = {
 };
 
 export const Container = {
+  Controller: styled.div`
+    display: flex;
+    flex-direction: column;
+  `,
   CreateAccountButton: styled.div`
     display: flex;
     justify-content: center;

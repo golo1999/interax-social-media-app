@@ -42,6 +42,7 @@ interface Data {
   gender: Gender | null;
   id: string;
   lastName: string;
+  username: string;
 }
 
 const DEFAULT_FORM_VALUES: FormValues = {
@@ -126,6 +127,7 @@ export function RegistrationPage() {
     handleSubmit,
     register,
     reset,
+    setError,
     setValue,
   } = useForm<FormValues>({
     defaultValues: DEFAULT_FORM_VALUES,
@@ -156,6 +158,7 @@ export function RegistrationPage() {
         gender,
         id: user.uid,
         lastName,
+        username: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${new Date().getTime()}`,
       };
       await setDoc(
         doc(firestoreDb, "users", firestoreUser.id),
@@ -170,6 +173,10 @@ export function RegistrationPage() {
     } catch (error) {
       if (error instanceof FirebaseError) {
         console.log(error.message);
+        setError("email", { message: error.message });
+      } else if (error instanceof Error) {
+        console.log(error.message);
+        setError("email", { message: error.message });
       }
     }
 
