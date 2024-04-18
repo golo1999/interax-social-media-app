@@ -1,5 +1,5 @@
+import { ReactionType } from "enums";
 import { Icons as AppIcons } from "environment";
-import { ReactionType } from "models";
 
 export const REACTIONS = [
   { icon: AppIcons.Like, type: ReactionType.LIKE },

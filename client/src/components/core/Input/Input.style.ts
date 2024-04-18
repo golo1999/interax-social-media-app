@@ -1,10 +1,7 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
-
-import type { FontWeight } from "../Button/BaseButton.types";
-
-import type { BorderStyle } from "./Input.types";
+import type { BorderStyle, FontWeight } from "types";
 
 interface Props {
   backgroundColor: keyof typeof Colors;

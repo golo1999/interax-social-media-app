@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { IconType } from "react-icons";
 
 import { Colors } from "environment";
+import { FlexAlignItems, FlexDirection, FlexJustifyContent } from "types";
 
 type ChildrenProps = { children?: ReactNode };
 
@@ -24,34 +25,14 @@ type HeaderTemplateProps =
       onRightIconClick?: () => void;
     }
   | {
-      alignItems?:
-        | "baseline"
-        | "center"
-        | "flex-end"
-        | "flex-start"
-        | "stretch";
+      alignItems?: FlexAlignItems;
       color?: keyof typeof Colors;
-      direction?: "column" | "column-reverse" | "row" | "row-reverse";
+      direction?: FlexDirection;
       gap?: string;
       iconColor?: never;
       iconSize?: never;
       isTemplate?: never;
-      justifyContent?:
-        | "baseline"
-        | "center"
-        | "end"
-        | "first baseline"
-        | "flex-end"
-        | "flex-start"
-        | "last baseline"
-        | "left"
-        | "right"
-        | "safe"
-        | "space-around"
-        | "space-between"
-        | "space-evenly"
-        | "start"
-        | "stretch";
+      justifyContent?: FlexJustifyContent;
       leftIcon?: never;
       padding?: string;
       rightIcon?: never;
@@ -64,26 +45,11 @@ type HeaderTemplateProps =
 export type ModalProps = ChildrenProps & { minHeight?: string; width?: string };
 
 export type StyleProps = {
-  alignItems?: "baseline" | "center" | "flex-end" | "flex-start" | "stretch";
+  alignItems?: FlexAlignItems;
   color?: keyof typeof Colors;
-  direction?: "column" | "column-reverse" | "row" | "row-reverse";
+  direction?: FlexDirection;
   gap?: string;
-  justifyContent?:
-    | "baseline"
-    | "center"
-    | "end"
-    | "first baseline"
-    | "flex-end"
-    | "flex-start"
-    | "last baseline"
-    | "left"
-    | "right"
-    | "safe"
-    | "space-around"
-    | "space-between"
-    | "space-evenly"
-    | "start"
-    | "stretch";
+  justifyContent?: FlexJustifyContent;
   padding?: string;
 };
 

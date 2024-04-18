@@ -3,11 +3,12 @@ import { MdArrowDropDown } from "react-icons/md";
 
 import { useOutsideClick } from "hooks";
 import { DropdownItem } from "models";
+import { DropdownDirection } from "types";
 
 import { Container, Header, List, ListItem } from "./Dropdown.style";
 
 interface Props {
-  direction?: "BOTTOM" | "TOP";
+  direction?: DropdownDirection;
   displayedItems: number;
   itemHeight: number;
   items: DropdownItem[];

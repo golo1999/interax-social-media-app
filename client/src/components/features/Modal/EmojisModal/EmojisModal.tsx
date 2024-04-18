@@ -7,8 +7,8 @@ import { MdClose } from "react-icons/md";
 import styled from "styled-components";
 
 import { Modal } from "components";
+import { Emoji } from "enums";
 import { Colors } from "environment";
-import { Emoji } from "models";
 
 const Button = {
   Cancel: styled.button.attrs({ type: "button" })`

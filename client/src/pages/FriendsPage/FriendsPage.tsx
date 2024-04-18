@@ -21,6 +21,8 @@ import { Container, NavigationTitle } from "./FriendsPage.style";
 import { Home } from "./Home";
 import { Suggestions } from "./Suggestions";
 
+type NavigationComponent = "FRIEND_REQUESTS" | "SUGGESTIONS";
+
 const INITIALLY_DISPLAYED_FRIENDSHIP_REQUESTS = 7;
 const INITIALLY_DISPLAYED_SUGGESTIONS = 7;
 
@@ -93,7 +95,7 @@ function AuthenticatedFriendsPage({
     }
   }
 
-  function handleSeeAllClick(type: "FRIEND_REQUESTS" | "SUGGESTIONS") {
+  function handleSeeAllClick(type: NavigationComponent) {
     if (
       type === "FRIEND_REQUESTS" &&
       displayedFriendshipRequests < friendshipRequestsCount
@@ -107,7 +109,7 @@ function AuthenticatedFriendsPage({
     }
   }
 
-  function handleSeeMoreClick(type: "FRIEND_REQUESTS" | "SUGGESTIONS") {
+  function handleSeeMoreClick(type: NavigationComponent) {
     if (!suggestions || suggestionsCount === 0) {
       return;
     }

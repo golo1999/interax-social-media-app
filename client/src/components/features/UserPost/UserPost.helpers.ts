@@ -1,15 +1,16 @@
+import { ReactionType } from "enums";
 import { Colors, Icons as AppIcons } from "environment";
-import { Reaction, ReactionType } from "models";
+import { PostReaction } from "models";
 
 interface ReactionButtonTextProps {
   currentUserId?: string;
   hasReacted: boolean;
-  reactions: Reaction[] | null;
+  reactions: PostReaction[] | null;
 }
 
 interface ReactionButtonTextColorProps {
   currentUserId?: string;
-  reactions: Reaction[] | null;
+  reactions: PostReaction[] | null;
 }
 
 interface ReactionIconProps {
@@ -18,14 +19,14 @@ interface ReactionIconProps {
 
 interface UserPostReactionProps {
   currentUserId?: string;
-  reactions: Reaction[] | null;
+  reactions: PostReaction[] | null;
 }
 
 export function getCommentsText(commentsCount: number) {
   return commentsCount > 1 ? `${commentsCount} comments` : "1 comment";
 }
 
-export function getPostReactionsCount(reactions: Reaction[] | null) {
+export function getPostReactionsCount(reactions: PostReaction[] | null) {
   let reactionsCount = [
     { count: 0, icon: AppIcons.Like, type: ReactionType.LIKE },
     { count: 0, icon: AppIcons.Love, type: ReactionType.LOVE },
@@ -38,7 +39,7 @@ export function getPostReactionsCount(reactions: Reaction[] | null) {
 
   reactions?.forEach((reaction) => {
     const matchedReaction = reactionsCount.find(
-      (r) => r.type === reaction.type
+      (r) => r.type === reaction.reactionType
     );
 
     if (!matchedReaction) {
@@ -65,10 +66,10 @@ export function getReactionButtonText({
   }
 
   const userReaction = getUserPostReaction({ currentUserId, reactions });
-  const formattedReactionType = userReaction?.type
+  const formattedReactionType = userReaction?.reactionType
     .toString()
     .slice(0, 1)
-    .concat(userReaction.type.toString().slice(1).toLowerCase());
+    .concat(userReaction.reactionType.toString().slice(1).toLowerCase());
 
   return !hasReacted ? "Like" : formattedReactionType;
 }
@@ -78,7 +79,8 @@ export function getReactionButtonTextColor({
   reactions,
 }: ReactionButtonTextColorProps) {
   const userReactionType = reactions
-    ? reactions.find((reaction) => reaction.owner.id === currentUserId)?.type
+    ? reactions.find((reaction) => reaction.userId === currentUserId)
+        ?.reactionType
     : undefined;
 
   if (typeof userReactionType === "undefined") {
@@ -127,7 +129,7 @@ export function getUserPostReaction({
   reactions,
 }: UserPostReactionProps) {
   const userReaction = reactions?.find(
-    (reaction) => reaction.owner.id === currentUserId
+    (reaction) => reaction.userId === currentUserId
   );
   return userReaction;
 }

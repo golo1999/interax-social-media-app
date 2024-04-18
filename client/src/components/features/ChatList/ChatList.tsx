@@ -51,7 +51,7 @@ export function ChatList({ isModal }: Props) {
       }
     });
 
-    return list.length > 0 ? list : null;
+    return list.length > 0 ? list : [];
   }, [authenticatedUserId, messages]);
 
   console.log({ groupedMessages });
@@ -59,7 +59,7 @@ export function ChatList({ isModal }: Props) {
   function handleSeeInMessengerClick() {
     closeChatModal();
 
-    if (groupedMessages) {
+    if (groupedMessages.length > 0) {
       // navigating to the first chat
       navigate(`/messages/t/${groupedMessages[0].userId}`);
     }
@@ -74,26 +74,29 @@ export function ChatList({ isModal }: Props) {
 
   return (
     <Container.Main {...themeProps} isModal={isModal}>
-      {groupedMessages && (
-        <>
-          <Container.GroupedMessages>
-            <Header.Element>
-              <Header.Title {...themeProps}>Chats</Header.Title>
-              <Header.IconsContainer>
-                {isModal && (
-                  <Container.Icon {...themeProps}>
-                    <HiOutlineArrowsExpand
-                      color={iconColor}
-                      size={18}
-                      onClick={handleSeeInMessengerClick}
-                    />
-                  </Container.Icon>
-                )}
+      <Container.GroupedMessages>
+        <Header.Element>
+          <Header.Title {...themeProps}>Chats</Header.Title>
+          {groupedMessages.length > 0 && (
+            <Header.IconsContainer>
+              {isModal && (
                 <Container.Icon {...themeProps}>
-                  <BsPencilSquare color={iconColor} size={18} />
+                  <HiOutlineArrowsExpand
+                    color={iconColor}
+                    size={18}
+                    onClick={handleSeeInMessengerClick}
+                  />
                 </Container.Icon>
-              </Header.IconsContainer>
-            </Header.Element>
+              )}
+              <Container.Icon {...themeProps}>
+                {/* TODO */}
+                <BsPencilSquare color={iconColor} size={18} />
+              </Container.Icon>
+            </Header.IconsContainer>
+          )}
+        </Header.Element>
+        {groupedMessages.length > 0 ? (
+          <>
             <SearchInput placeholder="Search Messenger" />
             <List>
               {groupedMessages.map((groupedMessage, index) => (
@@ -104,13 +107,15 @@ export function ChatList({ isModal }: Props) {
                 />
               ))}
             </List>
-          </Container.GroupedMessages>
-          {isModal && (
-            <Footer.Element onClick={handleSeeInMessengerClick}>
-              <Footer.Text>See all in Messenger</Footer.Text>
-            </Footer.Element>
-          )}
-        </>
+          </>
+        ) : (
+          <p>No messages found...</p>
+        )}
+      </Container.GroupedMessages>
+      {groupedMessages.length > 0 && isModal && (
+        <Footer.Element onClick={handleSeeInMessengerClick}>
+          <Footer.Text>See all in Messenger</Footer.Text>
+        </Footer.Element>
       )}
     </Container.Main>
   );

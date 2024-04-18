@@ -8,10 +8,13 @@ import { useLocation } from "react-router";
 import { useNavigate } from "react-router-dom";
 
 import { Header, Navbar, UserPhoto } from "components";
+import { FriendshipStatus } from "enums";
 import { Colors } from "environment";
 import {
   ADD_MESSAGE,
+  ADD_USER_FRIEND,
   AddMessageData,
+  AddUserFriendData,
   GET_USER_BY_USERNAME,
   GetUserByUsernameData,
   instanceOfUserError,
@@ -22,7 +25,11 @@ import {
 } from "helpers";
 import { useHeaderItems } from "hooks";
 import { NotFoundPage } from "pages";
-import { useAuthenticationStore, useSettingsStore } from "store";
+import {
+  useAuthenticationStore,
+  useMessagesStore,
+  useSettingsStore,
+} from "store";
 
 import { About } from "./About";
 import { ButtonsContainer } from "./ButtonsContainer";
@@ -35,10 +42,10 @@ import {
   CoverPhoto,
   Text,
 } from "./ProfilePage.style";
-import { FriendshipStatus } from "./ProfilePage.types";
 
 export function ProfilePage() {
   const { authenticatedUser } = useAuthenticationStore();
+  const { addMessageBox } = useMessagesStore();
   const { theme } = useSettingsStore();
 
   const [
@@ -47,6 +54,7 @@ export function ProfilePage() {
   ] = useLazyQuery<GetUserByUsernameData>(GET_USER_BY_USERNAME);
 
   const [addMessage] = useMutation<AddMessageData>(ADD_MESSAGE);
+  const [addUserFriend] = useMutation<AddUserFriendData>(ADD_USER_FRIEND);
   const [removeUserFriendRequest] = useMutation<RemoveUserFriendRequestData>(
     REMOVE_USER_FRIENDSHIP_REQUEST
   );
@@ -84,6 +92,8 @@ export function ProfilePage() {
   useEffect(() => {
     fetchUser({ variables: { username } });
   }, [username, fetchUser]);
+
+  console.log({ user });
 
   // First render
   if (!isFetchingUser && !user) {
@@ -130,7 +140,7 @@ export function ProfilePage() {
   const hasProfilePhoto = !!currentProfilePhoto;
 
   const dividerColor =
-    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <StyledContainer.Main isAuthenticated={!!authenticatedUser} theme={theme}>
@@ -205,7 +215,21 @@ export function ProfilePage() {
                 <ButtonsContainer
                   friendshipStatus={status}
                   onAcceptFriendButtonClick={() => {
-                    // TODO
+                    addUserFriend({
+                      variables: {
+                        input: { first: authenticatedUser.id, second: user.id },
+                      },
+                      onCompleted: ({ addUserFriend }) => {
+                        removeUserFriendRequest({
+                          variables: {
+                            input: {
+                              receiver: user.id,
+                              sender: authenticatedUser?.id,
+                            },
+                          },
+                        });
+                      },
+                    });
                   }}
                   onAddFriendButtonClick={() => {
                     sendUserFriendRequest({
@@ -239,25 +263,7 @@ export function ProfilePage() {
                       ],
                     });
                   }}
-                  onMessageButtonClick={() => {
-                    addMessage({
-                      variables: {
-                        input: {
-                          emoji: null,
-                          parentId: null,
-                          receiverId: user.id,
-                          senderId: authenticatedUser?.id,
-                          text: "first message",
-                        },
-                      },
-                      onCompleted: (data) => {
-                        console.log(data.addMessage);
-                      },
-                      onError: (error) => {
-                        console.log({ error });
-                      },
-                    });
-                  }}
+                  onMessageButtonClick={() => addMessageBox(user.id)}
                 />
               </div>
             )}

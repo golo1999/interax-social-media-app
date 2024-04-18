@@ -6,11 +6,13 @@ import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { MdArrowDropDown, MdClose, MdKeyboardBackspace } from "react-icons/md";
 
 import { Modal, UserPhoto, VisibilityModal } from "components";
+import { Permission } from "enums";
 import { Colors } from "environment";
 import { CreatePostData, CREATE_POST, GET_USER_BY_USERNAME } from "helpers";
 import { useVisibilityModalItems } from "hooks";
-import { Permission, User } from "models";
+import { User } from "models";
 import { useAuthenticationStore } from "store";
+import { ModalType } from "types";
 
 import { Button, Container, TextArea, Title } from "./CreatePostModal.style";
 
@@ -36,8 +38,6 @@ const resolver: Resolver<FormValues> = async (values) => {
     values,
   };
 };
-
-type ModalType = "CREATE_POST" | "POST_VISIBILITY";
 
 interface Props {
   user: User;
@@ -69,11 +69,10 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
     createPost({
       variables: {
         input: {
+          ownerId: authenticatedUser?.id,
           parentId: null,
           receiverId: user.id,
-          receiverUsername: user.username,
           text,
-          userId: authenticatedUser?.id,
           visibility,
         },
       },

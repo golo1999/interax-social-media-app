@@ -1,6 +1,6 @@
 import { CSSProperties } from "react";
 
-import { ReactionType } from "models";
+import { ReactionType } from "enums";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { REACTIONS } from "./ReactionEmojis.consts";

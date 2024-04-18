@@ -1,6 +1,6 @@
 import { Divider } from "@mui/material";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MdAddCircleOutline } from "react-icons/md";
 
 import {
@@ -14,8 +14,9 @@ import {
   PlacesHistory,
   WorkHistory,
 } from "components";
+import { EducationLevel, FriendshipStatus, Permission } from "enums";
 import { Colors } from "environment";
-import { EducationLevel, User } from "models";
+import { User } from "models";
 import { useAuthenticationStore } from "store";
 
 import { List, ListItem } from "./About.style";
@@ -42,7 +43,91 @@ export function About({ user }: Props) {
   const [isAddWorkplaceVisible, setIsAddWorkplaceVisible] = useState(false);
   const [selectedNavbarItem, setSelectedNavbarItem] = useState(NAVBAR_ITEMS[0]);
 
-  const { educationHistory, id: userId, placesHistory, workHistory } = user;
+  const {
+    educationHistory,
+    id: userId,
+    placesHistory,
+    username,
+    workHistory,
+  } = user;
+
+  const friendshipStatus =
+    username === authenticatedUser?.username
+      ? FriendshipStatus.ME
+      : authenticatedUser?.friends?.some(
+          (friend) => friend.username === username
+        )
+      ? FriendshipStatus.FRIEND
+      : user.friendshipRequests?.some(
+          (request) =>
+            request.receiver === authenticatedUser?.id &&
+            request.sender === user.id
+        )
+      ? FriendshipStatus.FRIEND_REQUEST_RECEIVED
+      : user.friendshipRequests?.some(
+          (request) =>
+            request.receiver === user.id &&
+            request.sender === authenticatedUser?.id
+        )
+      ? FriendshipStatus.FRIEND_REQUEST_SENT
+      : FriendshipStatus.NOT_FRIEND;
+
+  const filteredEducationHistory = useMemo(() => {
+    switch (friendshipStatus) {
+      case FriendshipStatus.FRIEND:
+        return educationHistory.filter(
+          ({ visibility }) =>
+            visibility === Permission.FRIENDS ||
+            visibility === Permission.PUBLIC
+        );
+      case FriendshipStatus.ME:
+        return educationHistory;
+      case FriendshipStatus.FRIEND_REQUEST_RECEIVED:
+      case FriendshipStatus.FRIEND_REQUEST_SENT:
+      case FriendshipStatus.NOT_FRIEND:
+        return educationHistory.filter(
+          ({ visibility }) => visibility === Permission.PUBLIC
+        );
+    }
+  }, [educationHistory, friendshipStatus]);
+
+  const filteredPlacesHistory = useMemo(() => {
+    switch (friendshipStatus) {
+      case FriendshipStatus.FRIEND:
+        return placesHistory.filter(
+          ({ visibility }) =>
+            visibility === Permission.FRIENDS ||
+            visibility === Permission.PUBLIC
+        );
+      case FriendshipStatus.ME:
+        return placesHistory;
+      case FriendshipStatus.FRIEND_REQUEST_RECEIVED:
+      case FriendshipStatus.FRIEND_REQUEST_SENT:
+      case FriendshipStatus.NOT_FRIEND:
+        return placesHistory.filter(
+          ({ visibility }) => visibility === Permission.PUBLIC
+        );
+    }
+  }, [friendshipStatus, placesHistory]);
+
+  const filteredWorkHistory = useMemo(() => {
+    switch (friendshipStatus) {
+      case FriendshipStatus.FRIEND:
+        return workHistory.filter(
+          ({ visibility }) =>
+            visibility === Permission.FRIENDS ||
+            visibility === Permission.PUBLIC
+        );
+      case FriendshipStatus.ME:
+        return workHistory;
+      case FriendshipStatus.FRIEND_REQUEST_RECEIVED:
+      case FriendshipStatus.FRIEND_REQUEST_SENT:
+      case FriendshipStatus.NOT_FRIEND:
+        return workHistory.filter(
+          ({ visibility }) => visibility === Permission.PUBLIC
+        );
+    }
+  }, [friendshipStatus, workHistory]);
 
   const userIsAuthenticatedUser = authenticatedUser?.id === userId || false;
 
@@ -152,7 +237,10 @@ export function About({ user }: Props) {
                   )}
                 </>
               )}
-              <WorkHistory data={workHistory} user={user} />
+              <WorkHistory
+                data={filteredWorkHistory}
+                friendshipStatus={friendshipStatus}
+              />
             </div>
             <div
               style={{
@@ -187,9 +275,9 @@ export function About({ user }: Props) {
                 </>
               )}
               <EducationHistory
-                data={educationHistory}
+                data={filteredEducationHistory}
+                friendshipStatus={friendshipStatus}
                 level={EducationLevel.COLLEGE}
-                user={user}
               />
             </div>
             <div
@@ -225,9 +313,9 @@ export function About({ user }: Props) {
                 </>
               )}
               <EducationHistory
-                data={educationHistory}
+                data={filteredEducationHistory}
+                friendshipStatus={friendshipStatus}
                 level={EducationLevel.HIGH_SCHOOL}
-                user={user}
               />
             </div>
           </>
@@ -265,7 +353,10 @@ export function About({ user }: Props) {
                   )}
                 </>
               )}
-              <PlacesHistory data={placesHistory} user={user} />
+              <PlacesHistory
+                data={filteredPlacesHistory}
+                friendshipStatus={friendshipStatus}
+              />
             </div>
           </div>
         ) : (

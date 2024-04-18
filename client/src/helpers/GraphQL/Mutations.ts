@@ -3,15 +3,17 @@ import { gql } from "@apollo/client";
 import {
   Comment,
   Conversation,
-  Education,
+  CollegeEducation,
   Friendship,
   FriendshipRequest,
+  HighSchoolEducation,
   Message,
   Place,
   Post,
-  Reaction,
   RelationshipStatus,
   Work,
+  CommentReaction,
+  PostReaction,
 } from "models";
 
 import {
@@ -21,8 +23,35 @@ import {
   POST_DATA,
 } from "./Fragments";
 
+export interface AddCommentData {
+  addComment: Comment | null;
+}
+
+export const ADD_COMMENT = gql`
+  mutation AddComment($input: AddCommentInput!) {
+    addComment(input: $input) {
+      dateTime
+      id
+      owner {
+        email
+        firstName
+        id
+        lastName
+        username
+      }
+      reactions {
+        reactionType
+      }
+      replies {
+        text
+      }
+      text
+    }
+  }
+`;
+
 export interface AddCommentReactionData {
-  addCommentReaction: Reaction | null;
+  addCommentReaction: CommentReaction | null;
 }
 
 export const ADD_COMMENT_REACTION = gql`
@@ -38,26 +67,6 @@ export const ADD_COMMENT_REACTION = gql`
         username
       }
       type
-    }
-  }
-`;
-
-export interface AddCommentReplyData {
-  addCommentReply: Comment | null;
-}
-
-export const ADD_COMMENT_REPLY = gql`
-  mutation AddCommentReply($input: AddCommentReplyInput!) {
-    addCommentReply(input: $input) {
-      dateTime
-      id
-      owner {
-        firstName
-        id
-        lastName
-        username
-      }
-      text
     }
   }
 `;
@@ -98,55 +107,24 @@ export const ADD_MESSAGE = gql`
   }
 `;
 
-export interface AddPostCommentData {
-  addPostComment: Comment | null;
-}
-
-export const ADD_POST_COMMENT = gql`
-  mutation AddPostComment($input: AddPostCommentInput!) {
-    addPostComment(input: $input) {
-      dateTime
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      reactions {
-        type
-      }
-      replies {
-        text
-      }
-      text
-    }
-  }
-`;
-
 export interface AddPostReactionData {
-  addPostReaction: Reaction | null;
+  addPostReaction: PostReaction | null;
 }
 
 export const ADD_POST_REACTION = gql`
   mutation AddPostReaction($input: AddPostReactionInput!) {
     addPostReaction(input: $input) {
+      dateTime
       id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
+      postId
+      reactionType
+      userId
     }
   }
 `;
 
 export interface AddCollegeEducationData {
-  addUserCollegeEducation: Education | null;
+  addUserCollegeEducation: CollegeEducation | null;
 }
 
 export const ADD_USER_COLLEGE_EDUCATION = gql`
@@ -159,6 +137,7 @@ export const ADD_USER_COLLEGE_EDUCATION = gql`
       level
       school
       to
+      userId
       visibility
     }
   }
@@ -178,7 +157,7 @@ export const ADD_USER_FRIEND = gql`
 `;
 
 export interface AddHighSchoolEducationData {
-  addUserHighSchoolEducation: Education | null;
+  addUserHighSchoolEducation: HighSchoolEducation | null;
 }
 
 export const ADD_USER_HIGH_SCHOOL_EDUCATION = gql`
@@ -186,13 +165,13 @@ export const ADD_USER_HIGH_SCHOOL_EDUCATION = gql`
     $input: AddUserHighSchoolEducationInput!
   ) {
     addUserHighSchoolEducation(input: $input) {
-      degree
       from
       graduated
       id
       level
       school
       to
+      userId
       visibility
     }
   }
@@ -303,42 +282,17 @@ export const REMOVE_COMMENT = gql`
 `;
 
 export interface RemoveCommentReactionData {
-  removeCommentReaction: Reaction | null;
+  removeCommentReaction: CommentReaction | null;
 }
 
 export const REMOVE_COMMENT_REACTION = gql`
   mutation RemoveCommentReaction($input: RemoveCommentReactionInput!) {
     removeCommentReaction(input: $input) {
-      id
-      dateTime
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-  }
-`;
-
-export interface RemoveCommentReplyData {
-  removeCommentReply: Comment | null;
-}
-
-export const REMOVE_COMMENT_REPLY = gql`
-  mutation RemoveCommentReply($input: RemoveCommentReplyInput!) {
-    removeCommentReply(input: $input) {
+      commentId
       dateTime
       id
-      owner {
-        firstName
-        id
-        lastName
-        username
-      }
-      text
+      reactionType
+      userId
     }
   }
 `;
@@ -358,17 +312,17 @@ export const REMOVE_POST = gql`
 `;
 
 export interface RemovePostReactionData {
-  removePostReaction: Reaction | null;
+  removePostReaction: PostReaction | null;
 }
 
 export const REMOVE_POST_REACTION = gql`
   mutation RemovePostReaction($input: RemovePostReactionInput!) {
     removePostReaction(input: $input) {
+      dateTime
       id
-      owner {
-        username
-      }
-      type
+      postId
+      reactionType
+      userId
     }
   }
 `;
@@ -495,26 +449,6 @@ export const UPDATE_CONVERSATION_THEME = gql`
   }
 `;
 
-export interface UpdatePostReactionData {
-  updatePostReaction: Reaction | null;
-}
-
-export const UPDATE_POST_REACTION = gql`
-  mutation UpdatePostReaction($input: UpdatePostReactionInput!) {
-    updatePostReaction(input: $input) {
-      id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
-    }
-  }
-`;
-
 export interface UpdateUserPlaceData {
   updateUserPlace: Place | null;
 }
@@ -524,27 +458,6 @@ export const UPDATE_USER_PLACE = gql`
   mutation UpdateUserPlace($input: UpdateUserPlaceInput!) {
     updateUserPlace(input: $input) {
       ...PlaceData
-    }
-  }
-`;
-
-export interface UpdateCommentReactionData {
-  updateCommentReaction: Reaction | null;
-}
-
-export const UPDATE_COMMENT_REACTION = gql`
-  mutation UpdateCommentReaction($input: UpdateCommentReactionInput!) {
-    updateCommentReaction(input: $input) {
-      id
-      dateTime
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
     }
   }
 `;

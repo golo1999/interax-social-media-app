@@ -1,5 +1,19 @@
 import { gql } from "@apollo/client";
 
+export const COLLEGE_EDUCATION_DATA = gql`
+  fragment CollegeEducationData on CollegeEducation {
+    degree
+    from
+    graduated
+    id
+    level
+    school
+    to
+    userId
+    visibility
+  }
+`;
+
 export const COMMENT_DATA = gql`
   fragment CommentData on Comment {
     dateTime
@@ -19,18 +33,17 @@ export const COMMENT_DATA = gql`
       username
     }
     ownerId
+    parentId
+    post {
+      id
+    }
     postId
     reactions {
+      commentId
       dateTime
       id
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
+      reactionType
+      userId
     }
     replies {
       dateTime
@@ -51,6 +64,7 @@ export const COMMENT_DATA = gql`
       }
       text
     }
+    repliesCount
     text
   }
 `;
@@ -60,9 +74,23 @@ export const CONVERSATION_DATA = gql`
     emoji
     first
     firstNickname
+    id
     second
     secondNickname
     theme
+  }
+`;
+
+export const HIGH_SCHOOL_EDUCATION_DATA = gql`
+  fragment HighSchoolEducationData on HighSchoolEducation {
+    from
+    graduated
+    id
+    level
+    school
+    to
+    userId
+    visibility
   }
 `;
 
@@ -85,6 +113,7 @@ export const POST_DATA = gql`
     comments {
       ...CommentData
     }
+    commentsCount
     dateTime
     id
     owner {
@@ -115,17 +144,13 @@ export const POST_DATA = gql`
       url
     }
     reactions {
+      dateTime
       id
-      owner {
-        firstName
-        id
-        lastName
-        username
-      }
-      type
+      postId
+      reactionType
+      userId
     }
     receiverId
-    receiverUsername
     shares {
       owner {
         firstName
@@ -156,17 +181,19 @@ export const USER_DATA = gql`
       visibility
     }
     educationHistory {
-      degree
-      from
-      graduated
-      id
-      level
-      school
-      to
-      visibility
+      ... on CollegeEducation {
+        ...CollegeEducationData
+      }
+      ... on HighSchoolEducation {
+        ...HighSchoolEducationData
+      }
     }
     email
     firstName
+    followingUsers {
+      id
+      username
+    }
     friends {
       firstName
       friends {
@@ -194,6 +221,9 @@ export const USER_DATA = gql`
     friendshipRequests {
       receiver
       sender
+    }
+    hiddenPosts {
+      ...PostData
     }
     id
     lastName
@@ -256,11 +286,15 @@ export const USER_DATA = gql`
       status
       visibility
     }
+    savedPosts {
+      ...PostData
+    }
     username
     workHistory {
       company
       from
       id
+      isCurrent
       position
       to
       visibility

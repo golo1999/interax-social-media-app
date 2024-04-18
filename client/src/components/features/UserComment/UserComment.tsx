@@ -5,25 +5,23 @@ import { MdMoreHoriz } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
 import { ReactionEmojis, UserPhoto, WriteComment } from "components";
+import { ReactionType } from "enums";
 import { Colors } from "environment";
 import {
   ADD_COMMENT_REACTION,
-  ADD_COMMENT_REPLY,
   GET_COMMENT,
   GET_COMMENT_REPLIES,
   GET_FRIENDS_POSTS_BY_USER_ID,
   REMOVE_COMMENT_REACTION,
-  UPDATE_COMMENT_REACTION,
   getTimePassedFromDateTime,
   AddCommentReactionData,
   GetCommentRepliesData,
   RemoveCommentReactionData,
-  UpdateCommentReactionData,
   GetCommentData,
-  AddCommentReplyData,
+  AddCommentData,
+  ADD_COMMENT,
 } from "helpers";
 import { useCommentReplies } from "hooks";
-import { ReactionType } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
 import {
@@ -40,6 +38,7 @@ import {
 
 interface Props {
   id: string;
+  postId: string;
   postOwnerId: string;
   replyLevel?: number;
   onDeleteClick: (id: string) => void;
@@ -47,6 +46,7 @@ interface Props {
 
 export function UserComment({
   id: commentId,
+  postId,
   postOwnerId,
   replyLevel = 0,
   onDeleteClick,
@@ -56,6 +56,15 @@ export function UserComment({
     useLazyQuery<GetCommentData>(GET_COMMENT);
   const [fetchCommentReplies] =
     useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
+  const [addComment] = useMutation<AddCommentData>(ADD_COMMENT, {
+    // refetchQueries: [
+    //   {
+    //     query: GET_FRIENDS_POSTS_BY_USER_ID,
+    //     variables: { ownerId: authenticatedUser?.id },
+    //   },
+    //   { query: GET_COMMENT_REPLIES, variables: { commentId } },
+    // ],
+  });
   const [addCommentReaction] = useMutation<AddCommentReactionData>(
     ADD_COMMENT_REACTION,
     {
@@ -67,31 +76,8 @@ export function UserComment({
       ],
     }
   );
-  const [addCommentReply] = useMutation<AddCommentReplyData>(
-    ADD_COMMENT_REPLY,
-    {
-      refetchQueries: [
-        {
-          query: GET_FRIENDS_POSTS_BY_USER_ID,
-          variables: { ownerId: authenticatedUser?.id },
-        },
-        { query: GET_COMMENT_REPLIES, variables: { commentId } },
-      ],
-    }
-  );
   const [removeCommentReaction] = useMutation<RemoveCommentReactionData>(
     REMOVE_COMMENT_REACTION,
-    {
-      refetchQueries: [
-        {
-          query: GET_FRIENDS_POSTS_BY_USER_ID,
-          variables: { ownerId: authenticatedUser?.id },
-        },
-      ],
-    }
-  );
-  const [updateCommentReaction] = useMutation<UpdateCommentReactionData>(
-    UPDATE_COMMENT_REACTION,
     {
       refetchQueries: [
         {
@@ -119,7 +105,7 @@ export function UserComment({
   useEffect(() => {
     const commentHasUserReaction =
       comment.comment?.reactions?.some(
-        (reaction) => reaction.owner.id === authenticatedUser?.id
+        (reaction) => reaction.userId === authenticatedUser?.id
       ) || false;
 
     setHasReacted(commentHasUserReaction);
@@ -153,7 +139,7 @@ export function UserComment({
     if (hasReacted) {
       removeCommentReaction({
         variables: {
-          input: { commentId, reactionOwnerId: authenticatedUser?.id },
+          input: { commentId, userId: authenticatedUser?.id },
         },
       });
     } else {
@@ -161,8 +147,8 @@ export function UserComment({
         variables: {
           input: {
             commentId,
-            reactionOwnerId: authenticatedUser?.id,
             reactionType: ReactionType.LIKE,
+            userId: authenticatedUser?.id,
           },
         },
       });
@@ -187,31 +173,20 @@ export function UserComment({
       reactions: comment.comment?.reactions || null,
     });
 
-    if (!currentReaction) {
+    if (!currentReaction || currentReaction.reactionType !== newReactionType) {
       addCommentReaction({
         variables: {
           input: {
             commentId,
-            reactionOwnerId: authenticatedUser?.id,
             reactionType: newReactionType,
-          },
-        },
-      });
-    } else if (currentReaction.type !== newReactionType) {
-      updateCommentReaction({
-        variables: {
-          input: {
-            commentId,
-            ownerId: authenticatedUser?.id,
-            postId: comment?.comment?.postId,
-            reactionType: newReactionType,
+            userId: authenticatedUser?.id,
           },
         },
       });
     } else {
       removeCommentReaction({
         variables: {
-          input: { commentId, reactionOwnerId: authenticatedUser?.id },
+          input: { commentId, userId: authenticatedUser?.id },
         },
       });
     }
@@ -332,7 +307,7 @@ export function UserComment({
                 </p>
               )}
               <p>{getTimePassedFromDateTime(dateTime, "COMMENT")}</p>
-              {reactions && <p>{reactions.length}</p>}
+              {reactions.length > 0 && <p>{reactions.length}</p>}
             </Reactions.Container>
           </div>
         </div>
@@ -358,11 +333,12 @@ export function UserComment({
             setIsWriteReplyVisible((prev) => !prev);
           }}
           onSendClick={(commentText) => {
-            addCommentReply({
+            addComment({
               variables: {
                 input: {
-                  commentId,
-                  ownerId: authenticatedUser?.id,
+                  commentOwnerId: authenticatedUser?.id,
+                  parentId: commentId,
+                  postId,
                   text: commentText,
                 },
               },

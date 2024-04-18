@@ -1,5 +1,6 @@
+import { ReactionType } from "enums";
 import { Colors } from "environment";
-import { Comment, Reaction, ReactionType } from "models";
+import { Comment, CommentReaction } from "models";
 
 interface FindMatchedCommentProps {
   commentId: string;
@@ -9,17 +10,17 @@ interface FindMatchedCommentProps {
 interface ReactionTextProps {
   currentUserId?: string;
   hasReacted: boolean;
-  reactions: Reaction[] | null;
+  reactions: CommentReaction[] | null;
 }
 
 interface ReactionTextColorProps {
   currentUserId?: string;
-  reactions: Reaction[] | null;
+  reactions: CommentReaction[] | null;
 }
 
 interface UserCommentReactionProps {
   currentUserId?: string;
-  reactions: Reaction[] | null;
+  reactions: CommentReaction[] | null;
 }
 
 export function findMatchedComment({
@@ -58,17 +59,17 @@ export function getReactionText({
   }
 
   const userReaction = reactions.find(
-    (reaction) => reaction.owner.id === currentUserId
+    (reaction) => reaction.userId === currentUserId
   );
 
   if (!userReaction) {
     return "Like";
   }
 
-  const formattedReactionType = userReaction?.type
+  const formattedReactionType = userReaction.reactionType
     .toString()
     .slice(0, 1)
-    .concat(userReaction.type.toString().slice(1).toLowerCase());
+    .concat(userReaction.reactionType.toString().slice(1).toLowerCase());
 
   return !hasReacted ? "Like" : formattedReactionType;
 }
@@ -78,7 +79,8 @@ export function getReactionTextColor({
   reactions,
 }: ReactionTextColorProps) {
   const userReactionType = reactions
-    ? reactions.find((reaction) => reaction.owner.id === currentUserId)?.type
+    ? reactions.find((reaction) => reaction.userId === currentUserId)
+        ?.reactionType
     : undefined;
 
   switch (userReactionType) {
@@ -103,7 +105,7 @@ export function getUserCommentReaction({
   reactions,
 }: UserCommentReactionProps) {
   const userReaction = reactions?.find(
-    (reaction) => reaction.owner.id === currentUserId
+    (reaction) => reaction.userId === currentUserId
   );
   return userReaction;
 }

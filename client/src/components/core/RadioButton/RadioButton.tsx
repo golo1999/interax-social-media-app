@@ -4,6 +4,7 @@ import { CSSProperties, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { Colors } from "environment";
+import { LabelPosition } from "types";
 
 import { Label, Wrapper } from "./RadioButton.style";
 
@@ -11,8 +12,6 @@ type CommonProps = {
   isChecked: boolean;
   onChange: () => void;
 };
-
-type LabelPosition = "end" | "start";
 
 type LabelProps =
   | { label?: never; labelPosition?: never }

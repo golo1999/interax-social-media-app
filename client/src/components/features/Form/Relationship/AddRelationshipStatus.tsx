@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Dropdown, VisibilityModal } from "components";
+import { Permission, RelationshipStatusType } from "enums";
 import {
   AddRelationshipStatusData,
   ADD_USER_RELATIONSHIP_STATUS,
@@ -14,12 +15,7 @@ import {
   useRelationshipStatusDropdownItems,
   useVisibilityModalItems,
 } from "hooks";
-import {
-  Permission,
-  RelationshipStatus,
-  RelationshipStatusType,
-  User,
-} from "models";
+import { RelationshipStatus, User } from "models";
 
 import { Button, Container, Form } from "../Form.style";
 

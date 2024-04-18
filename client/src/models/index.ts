@@ -1,124 +1,68 @@
 import { IconType } from "react-icons";
 
-export enum ConversationTheme {
-  BLOOD = "BLOOD",
-  CHINESE_YELLOW = "CHINESE_YELLOW",
-  DEFAULT = "DEFAULT",
-  INDIGO = "INDIGO",
-  MAXIMUM_BLUE_PURPLE = "MAXIMUM_BLUE_PURPLE",
-  OCEAN_BLUE = "OCEAN_BLUE",
-  PURPLE_PIZZAZZ = "PURPLE_PIZZAZZ",
-  RED = "RED",
-  SUNSET_ORANGE = "SUNSET_ORANGE",
-  SWEET_BROWN = "SWEET_BROWN",
-  VERY_LIGH_BLUE = "VERY_LIGH_BLUE",
-  VIVID_MALACHITE = "VIVID_MALACHITE",
-}
+import { CollegeEducation, HighSchoolEducation } from "./Education";
+import { Message } from "./Message";
+import { Place } from "./Place";
 
-export enum EducationLevel {
-  COLLEGE = "COLLEGE",
-  HIGH_SCHOOL = "HIGH_SCHOOL",
-}
+import {
+  ConversationTheme,
+  Emoji,
+  MediaType,
+  Permission,
+  ReactionType,
+  RelationshipStatusType,
+} from "enums";
+import { NotificationType } from "types";
 
-export enum Emoji {
-  LIKE = "LIKE",
-  LOVE = "LOVE",
-}
-
-export enum MediaType {
-  PHOTO = "PHOTO",
-  VIDEO = "VIDEO",
-}
-
-export enum Month {
-  JANUARY = "JANUARY",
-  FEBRUARY = "FEBRUARY",
-  MARCH = "MARCH",
-  APRIL = "APRIL",
-  MAY = "MAY",
-  JUNE = "JUNE",
-  JULY = "JULY",
-  AUGUST = "AUGUST",
-  SEPTEMBER = "SEPTEMBER",
-  OCTOBER = "OCTOBER",
-  NOVEMBER = "NOVEMBER",
-  DECEMBER = "DECEMBER",
-}
-
-export type NotificationType =
-  | "BIRTHDAY"
-  | "COMMENT"
-  | "GROUP/POST_ADDED"
-  | "GROUP/WELCOME"
-  | "POST_ADDED"
-  | "POST_REACTED";
-
-export enum Permission {
-  FRIENDS = "FRIENDS",
-  ONLY_ME = "ONLY_ME",
-  PUBLIC = "PUBLIC",
-}
-
-export enum ReactionType {
-  ANGRY = "ANGRY",
-  CARE = "CARE",
-  HAHA = "HAHA",
-  LIKE = "LIKE",
-  LOVE = "LOVE",
-  SAD = "SAD",
-  WOW = "WOW",
-}
-
-export enum RelationshipStatusType {
-  SINGLE = "SINGLE",
-  IN_A_RELATIONSHIP = "IN_A_RELATIONSHIP",
-  ENGAGED = "ENGAGED",
-  MARRIED = "MARRIED",
-  IN_A_CIVIL_UNION = "IN_A_CIVIL_UNION",
-  IN_A_DOMESTIC_PARTNERSHIP = "IN_A_DOMESTIC_PARTNERSHIP",
-  IN_AN_OPEN_RELATIONSHIP = "IN_AN_OPEN_RELATIONSHIP",
-  IT_IS_COMPLICATED = "IT_IS_COMPLICATED",
-  SEPARATED = "SEPARATED",
-  DIVORCED = "DIVORCED",
-  WIDOWED = "WIDOWED",
-}
-
-export interface Comment {
+export type Comment = {
   __typename?: "Comment";
   id: string;
   dateTime: string;
   owner: User;
   ownerId: string;
+  parentId: string | null;
+  post: Post;
   postId: string;
-  reactions: Reaction[] | null;
-  replies: Comment[] | null;
+  reactions: CommentReaction[];
+  replies: Comment[];
+  repliesCount: number;
   text: string;
-}
+};
 
-export interface Conversation {
+export type CommentReaction = {
+  __typename?: "CommentReaction";
+  id: string;
+  commentId: string;
+  dateTime: string;
+  reactionType: ReactionType;
+  userId: string;
+};
+
+export type Conversation = {
   emoji: Emoji;
-  files: File[] | null;
+  files: File[];
   first: string;
   firstNickname: string | null;
-  media: Media[] | null;
+  id: string;
+  media: Media[];
   second: string;
   secondNickname: string | null;
   theme: ConversationTheme;
-}
+};
 
-export interface CoverPhoto {
+export type CoverPhoto = {
   __typename?: "CoverPhoto";
   id: string;
-  comments: Comment[] | null;
+  comments: Comment[];
   dateTime: string;
   description: string | null;
   isCurrent: boolean | null;
   ownerId: string;
-  reactions: Reaction[] | null;
-  shares: Share[] | null;
+  reactions: Reaction[];
+  shares: Share[];
   url: string;
   visibility: Permission;
-}
+};
 
 export type Date = {
   __typename?: "Date";
@@ -127,171 +71,125 @@ export type Date = {
   year: string;
 };
 
-export interface DropdownItem {
+export type DropdownItem = {
   key: string;
   value: string;
-}
-
-type EducationCommonTypes = {
-  __typename?: "Education";
-  id: string;
-  from: string;
-  school: string;
-  visibility: Permission;
 };
 
-// The degree is accepted only when the education level is college
-type EducationConditionalTypes = (
-  | { degree: string; level: EducationLevel.COLLEGE }
-  | { degree?: never; level: EducationLevel.HIGH_SCHOOL }
-) &
-  ({ graduated: boolean; to: string } | { graduated?: never; to?: never });
-
-export type Education = EducationCommonTypes & EducationConditionalTypes;
-
-export interface File {
+export type File = {
   __typename?: "File";
   id: string;
   name: string;
   size: number;
-}
+};
 
-export interface Friendship {
+export type Friendship = {
   first: string;
   second: string;
-}
+};
 
-export interface FriendshipRequest {
+export type FriendshipRequest = {
   receiver: string;
   sender: string;
-}
+};
 
-export interface Media {
+export type Media = {
   __typename?: "Media";
   type: MediaType;
   url: string;
-}
-
-type MessageCommonTypes = {
-  __typename?: "Message";
-  id: string;
-  dateTime: string;
-  parentId: string | null;
-  receiverId: string;
-  reactions: Reaction[] | null;
-  replies: Message[] | null;
-  senderId: string;
 };
 
-type MessageConditionalTypes =
-  | { emoji: Emoji; text?: never }
-  | { emoji?: never; text: string };
-
-export type Message = MessageCommonTypes & MessageConditionalTypes;
-
-export interface NavigationItem {
+export type NavigationItem = {
   endIcon?: IconType;
   name: string;
   startIcon: IconType;
   onClick?: () => void;
-}
+};
 
-export interface Notification {
+export type Notification = {
   dateTime: string;
   eventProducerId: string;
   isRead: boolean;
   type: NotificationType;
-}
-
-export interface PostPhoto {
-  __typename?: "PostPhoto";
-  id: string;
-  comments: Comment[] | null;
-  ownerId: string;
-  postId: string;
-  reactions: Reaction[] | null;
-  shares: Share[] | null;
-  text: string | null;
-  url: string;
-}
-
-export interface ProfilePhoto {
-  __typename?: "ProfilePhoto";
-  id: string;
-  comments: Comment[] | null;
-  dateTime: string;
-  description: string | null;
-  isCurrent: boolean | null;
-  ownerId: string;
-  reactions: Reaction[] | null;
-  shares: Share[] | null;
-  url: string;
-  visibility: Permission;
-}
-
-type PlaceCommonTypes = {
-  __typename?: "Place";
-  id: string;
-  city: string;
-  from: string;
-  visibility: Permission;
 };
 
-type PlaceConditionalTypes =
-  | { isCurrent: boolean; to?: never }
-  | { isCurrent?: never; to: string };
-
-export type Place = PlaceCommonTypes & PlaceConditionalTypes;
-
-export interface Post {
+export type Post = {
   __typename?: "Post";
   id: string;
   canComment: Permission;
   canReact: Permission;
   canShare: Permission;
-  comments: Comment[] | null;
+  comments: Comment[];
+  commentsCount: number;
   dateTime: string;
   owner: User;
   ownerId: string;
   parentId: string | null;
-  photos: PostPhoto[] | null;
-  reactions: Reaction[] | null;
+  photos: PostPhoto[];
+  reactions: PostReaction[];
+  receiver: User;
   receiverId: string;
-  receiverUsername: string;
-  shares: Share[] | null;
+  shares: Share[];
   text: string | null;
   video: string | null;
   visibility: Permission;
-}
+};
 
-export interface Reaction {
+export type PostPhoto = {
+  __typename?: "PostPhoto";
+  id: string;
+  comments: Comment[];
+  ownerId: string;
+  postId: string;
+  reactions: Reaction[];
+  shares: Share[];
+  text: string | null;
+  url: string;
+};
+
+export type PostReaction = {
+  __typename?: "PostReaction";
+  id: string;
+  dateTime: string;
+  postId: string;
+  reactionType: ReactionType;
+  userId: string;
+};
+
+export type ProfilePhoto = {
+  __typename?: "ProfilePhoto";
+  id: string;
+  comments: Comment[];
+  dateTime: string;
+  description: string | null;
+  isCurrent: boolean | null;
+  ownerId: string;
+  reactions: Reaction[];
+  shares: Share[];
+  url: string;
+  visibility: Permission;
+};
+
+export type Reaction = {
   __typename?: "Reaction";
   dateTime: string;
   id: string;
   owner: User;
   type: ReactionType;
-}
+};
 
-export interface RelationshipStatus {
+export type RelationshipStatus = {
   __typename?: "RelationshipStatus";
   status: RelationshipStatusType;
   visibility: Permission;
-}
+};
 
-export interface SavedPosts {
-  __typename?: "SavedPosts";
-  savedPosts: string[];
-  userId: string;
-}
-
-export interface Share {
+export type Share = {
   __typename?: "Share";
   id: string;
   dateTime: string;
   owner: User;
-}
-
-export type Theme = "DARK" | "LIGHT";
+};
 
 export type Time = {
   __typename?: "Time";
@@ -300,42 +198,40 @@ export type Time = {
   second: string;
 };
 
-export interface User {
+export type User = {
   __typename?: "User";
   id: string;
-  biography?: string | null;
-  birthDate?: string | null;
-  coverPhotos?: CoverPhoto[] | null;
-  educationHistory: Education[] | null;
+  biography: string | null;
+  birthDate: string | null;
+  coverPhotos: CoverPhoto[];
+  educationHistory: (CollegeEducation | HighSchoolEducation)[];
   email: string;
   firstName: string;
-  friends?: User[] | null;
-  friendshipRequests?: FriendshipRequest[] | null;
+  followingUsers: User[];
+  friends: User[];
+  friendshipRequests: FriendshipRequest[];
+  hiddenPosts: Post[];
   lastName: string;
-  messages: Message[] | null;
-  placesHistory: Place[] | null;
-  posts: Post[] | null;
-  profilePhotos?: ProfilePhoto[] | null;
+  messages: Message[];
+  placesHistory: Place[];
+  posts: Post[];
+  profilePhotos: ProfilePhoto[];
   relationshipStatus: RelationshipStatus | null;
+  savedPosts: Post[];
   username: string;
-  workHistory: Work[] | null;
-}
+  workHistory: Work[];
+};
 
-export interface Users {
-  __typename?: "Users";
-  users: User[];
-}
-
-export interface UserError {
+export type UserError = {
   __typename?: "UserError";
   message: string;
-}
+};
 
-export interface UserWithMessage {
+export type UserWithMessage = {
   __typename?: "UserWithMessage";
   message: string;
   user: User;
-}
+};
 
 type WorkCommonTypes = {
   __typename?: "Work";
@@ -347,8 +243,8 @@ type WorkCommonTypes = {
 };
 
 type WorkConditionalTypes =
-  | { isCurrent: boolean; to?: never }
-  | { isCurrent?: never; to: string };
+  | { isCurrent: true; to?: never }
+  | { isCurrent: false; to: string };
 
 export type Work = WorkCommonTypes & WorkConditionalTypes;
 
@@ -430,3 +326,7 @@ type Comment {
   }
 
   */
+
+export * from "./Education";
+export * from "./Message";
+export * from "./Place";

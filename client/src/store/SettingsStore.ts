@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { Theme } from "models";
+import { Theme } from "types";
 
 type Store = {
   isNotificationListVisible: boolean;

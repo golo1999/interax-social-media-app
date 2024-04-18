@@ -5,8 +5,8 @@ import { IconType } from "react-icons";
 import { MdBlock, MdClose } from "react-icons/md";
 
 import { Modal } from "components";
+import { ConversationTheme } from "enums";
 import { Colors } from "environment";
-import { ConversationTheme } from "models";
 
 import { Button, Default, List, ListItem, Theme } from "./ThemesModal.style";
 

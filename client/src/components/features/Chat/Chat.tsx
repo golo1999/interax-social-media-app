@@ -12,6 +12,7 @@ import {
 import { MdPhotoLibrary } from "react-icons/md";
 
 import { UserPhoto } from "components";
+import { Emoji } from "enums";
 import {
   ADD_MESSAGE,
   AddMessageData,
@@ -26,8 +27,8 @@ import {
   instanceOfUserError,
   instanceOfUserWithMessage,
 } from "helpers";
-import { Emoji } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
+import { FooterIcon } from "types";
 
 import { getDisplayedEmoji, getMessageTheme } from "./Chat.helpers";
 import {
@@ -40,8 +41,6 @@ import {
   SendIcon,
 } from "./Chat.style";
 import { Message } from "./Message";
-
-type FooterIcon = "SEND" | "THUMB_UP";
 
 interface Props {
   chatHeight?: string;

@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 
+import { Month, RelationshipStatusType } from "enums";
 import { getNumbersBetween } from "helpers";
-import { DropdownItem, Month, RelationshipStatusType } from "models";
+import { DropdownItem } from "models";
 
 type PeriodProps = {
   from: {
