@@ -1,6 +1,6 @@
 import { HiHeart, HiThumbUp } from "react-icons/hi";
 
-import { Emoji } from "models";
+import { Emoji } from "enums";
 
 export function getDisplayedEmoji(emoji: Emoji | undefined) {
   switch (emoji) {

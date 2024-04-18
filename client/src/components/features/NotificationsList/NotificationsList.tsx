@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { Colors } from "environment";
 import { Notification as NotificationModel } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
+import { NotificationsListContent } from "types";
 
 import { Notification } from "./Notification";
 import { Container, Header, Option, SeeAll } from "./NotificationsList.style";
@@ -26,7 +27,7 @@ export function NotificationsList({ isModal }: Props) {
   const navigate = useNavigate();
   const notificationsListRef = useRef() as MutableRefObject<HTMLDivElement>;
   const { theme, closeNotificationsList } = useSettingsStore();
-  const [content, setContent] = useState<"ALL" | "UNREAD">("ALL");
+  const [content, setContent] = useState<NotificationsListContent>("ALL");
   const [isPopupVisible, setIsPopupVisible] = useState(false);
 
   function handleMoreOptionsIconClick() {

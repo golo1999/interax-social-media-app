@@ -2,7 +2,7 @@ import styled from "styled-components";
 
 import { NotificationsList } from "components";
 import { Colors } from "environment";
-import { Theme } from "models";
+import { Theme } from "types";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
 interface ThemeProps {

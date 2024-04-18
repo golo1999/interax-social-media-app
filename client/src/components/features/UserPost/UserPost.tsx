@@ -1,4 +1,4 @@
-import { useLazyQuery, useMutation } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { Divider } from "@mui/material";
 
 import {
@@ -24,22 +24,19 @@ import {
   UserPhoto,
   WriteComment,
 } from "components";
+import { ReactionType } from "enums";
 import { Colors } from "environment";
 import {
-  ADD_POST_COMMENT,
+  ADD_COMMENT,
   ADD_POST_REACTION,
   GET_FRIENDS_POSTS_BY_USER_ID,
-  GET_POST,
   REMOVE_POST_REACTION,
-  UPDATE_POST_REACTION,
   getTimePassedFromDateTime,
-  GetPostData,
-  AddPostCommentData,
+  AddCommentData,
   AddPostReactionData,
   RemovePostReactionData,
-  UpdatePostReactionData,
 } from "helpers";
-import { ReactionType } from "models";
+import { Post } from "models";
 import {
   useAuthenticationStore,
   useMessagesStore,
@@ -75,12 +72,12 @@ interface PostReactionCount {
 }
 
 interface Props {
-  id: string;
+  data: Post;
 }
 
-export function UserPost({ id: postId }: Props) {
+export function UserPost({ data }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const [addPostComment] = useMutation<AddPostCommentData>(ADD_POST_COMMENT, {
+  const [addComment] = useMutation<AddCommentData>(ADD_COMMENT, {
     refetchQueries: [
       {
         query: GET_FRIENDS_POSTS_BY_USER_ID,
@@ -99,8 +96,6 @@ export function UserPost({ id: postId }: Props) {
       ],
     }
   );
-  const [fetchPost, { data: post = { post: null } }] =
-    useLazyQuery<GetPostData>(GET_POST);
   const [removePostReaction] = useMutation<RemovePostReactionData>(
     REMOVE_POST_REACTION,
     {
@@ -112,21 +107,6 @@ export function UserPost({ id: postId }: Props) {
       ],
     }
   );
-  const [updatePostReaction] = useMutation<UpdatePostReactionData>(
-    UPDATE_POST_REACTION,
-    {
-      refetchQueries: [
-        {
-          query: GET_FRIENDS_POSTS_BY_USER_ID,
-          variables: { ownerId: authenticatedUser?.id },
-        },
-      ],
-    }
-  );
-
-  useEffect(() => {
-    fetchPost({ variables: { id: postId } });
-  }, [postId, fetchPost]);
 
   const navigate = useNavigate();
   const emojisAndReactionsContainerRef =
@@ -155,12 +135,12 @@ export function UserPost({ id: postId }: Props) {
 
   useEffect(() => {
     const hasUserReaction =
-      post.post?.reactions?.some(
-        (reaction) => reaction.owner.id === authenticatedUser?.id
+      data.reactions.some(
+        (reaction) => reaction.userId === authenticatedUser?.id
       ) || false;
 
     setHasReacted(hasUserReaction);
-  }, [authenticatedUser, post.post]);
+  }, [authenticatedUser, data]);
 
   useEffect(() => {
     const textContainerHeight = textContainerRef.current?.offsetHeight;
@@ -170,12 +150,12 @@ export function UserPost({ id: postId }: Props) {
     const numberOfLines = textContainerHeight / textContainerLineHeight;
 
     setIsTextCompletelyVisible(numberOfLines <= 5);
-  }, [post.post?.text]);
+  }, [data.text]);
 
   useEffect(() => {
-    const count = getPostReactionsCount(post.post?.reactions || null);
+    const count = getPostReactionsCount(data.reactions || null);
     setPostReactionsCount(count);
-  }, [post.post?.reactions]);
+  }, [data.reactions]);
 
   useEffect(() => {
     const emojisCount = emojisContainerRef.current?.childNodes.length;
@@ -192,7 +172,7 @@ export function UserPost({ id: postId }: Props) {
     return buttonType === ButtonTypes.REACTION && hasReacted
       ? getReactionButtonTextColor({
           currentUserId: authenticatedUser?.id,
-          reactions: post.post?.reactions || null,
+          reactions: data.reactions || null,
         })
       : Colors.PhilippineGray;
   }
@@ -207,12 +187,12 @@ export function UserPost({ id: postId }: Props) {
     }
 
     if (!isPostOptionsListVisible) {
-      openPostOptionsList(postId);
+      openPostOptionsList(data.id);
     }
     // if the PostOptionsList is visible for another post
-    else if (isPostOptionsListVisible.postId !== postId) {
+    else if (isPostOptionsListVisible.postId !== data.id) {
       closePostOptionsList();
-      openPostOptionsList(postId);
+      openPostOptionsList(data.id);
     }
     // if the PostOptionsList is visible for the same post
     else {
@@ -223,15 +203,17 @@ export function UserPost({ id: postId }: Props) {
   function handleReactionClick() {
     if (hasReacted) {
       removePostReaction({
-        variables: { input: { ownerId: authenticatedUser?.id, postId } },
+        variables: {
+          input: { postId: data.id, userId: authenticatedUser?.id },
+        },
       });
     } else {
       addPostReaction({
         variables: {
           input: {
-            postId,
-            reactionOwnerId: authenticatedUser?.id,
+            postId: data.id,
             reactionType: ReactionType.LIKE,
+            userId: authenticatedUser?.id,
           },
         },
       });
@@ -253,33 +235,23 @@ export function UserPost({ id: postId }: Props) {
   function handleReactionEmojisClick(newReactionType: ReactionType) {
     const currentReaction = getUserPostReaction({
       currentUserId: authenticatedUser?.id,
-      reactions: post.post?.reactions || null,
+      reactions: data.reactions || null,
     });
 
-    if (!currentReaction) {
+    if (!currentReaction || currentReaction.reactionType !== newReactionType) {
       addPostReaction({
         variables: {
           input: {
-            postId,
-            reactionOwnerId: authenticatedUser?.id,
+            postId: data.id,
             reactionType: newReactionType,
-          },
-        },
-      });
-    } else if (currentReaction.type !== newReactionType) {
-      updatePostReaction({
-        variables: {
-          input: {
-            ownerId: authenticatedUser?.id,
-            postId,
-            reactionType: newReactionType,
+            userId: authenticatedUser?.id,
           },
         },
       });
     } else {
       removePostReaction({
         variables: {
-          input: { ownerId: authenticatedUser?.id, postId },
+          input: { postId: data.id, userId: authenticatedUser?.id },
         },
       });
     }
@@ -307,21 +279,17 @@ export function UserPost({ id: postId }: Props) {
     });
   }, [postReactionsCount]);
 
-  if (!post.post) {
-    return <></>;
-  }
-
   const {
     comments,
+    commentsCount,
     dateTime,
     owner,
     photos,
     reactions,
-    receiverId,
-    receiverUsername,
+    receiver,
     shares,
     text,
-  } = post.post;
+  } = data;
   const {
     firstName: ownerFirstName,
     id: ownerId,
@@ -369,11 +337,11 @@ export function UserPost({ id: postId }: Props) {
       </Header>
       <StyledContainer.PostText ref={textContainerRef}>
         {isPostOptionsListVisible &&
-          postId === isPostOptionsListVisible.postId && (
+          data.id === isPostOptionsListVisible.postId && (
             <PostOptionsList
-              postId={postId}
+              postId={data.id}
               postOwner={owner}
-              receiverUsername={receiverUsername}
+              postReceiver={receiver}
             />
           )}
         <Text.PostText
@@ -396,43 +364,28 @@ export function UserPost({ id: postId }: Props) {
         )}
       </StyledContainer.PostText>
       <PostPhotos photos={photos} />
-      {((comments && comments?.length > 0) ||
-        (reactions && reactions?.length > 0) ||
-        (shares && shares?.length > 0)) && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <div
-            ref={emojisAndReactionsContainerRef}
-            style={{
-              display: "flex",
-            }}
-          >
-            <div
-              ref={emojisContainerRef}
-              style={{ display: "flex", gap: "0.25em" }}
-            >
+      {(comments.length > 0 || reactions.length > 0 || shares.length > 0) && (
+        <StyledContainer.CommentsReactionsShares>
+          <StyledContainer.EmojisReactions ref={emojisAndReactionsContainerRef}>
+            <StyledContainer.Emojis ref={emojisContainerRef}>
               {postReactionsEmojis}
-            </div>
-            {reactions && <p>{reactions.length}</p>}
-          </div>
+            </StyledContainer.Emojis>
+            {reactions.length > 0 && <p>{reactions.length}</p>}
+          </StyledContainer.EmojisReactions>
           <StyledContainer.CommentsShares>
-            {comments && comments.length > 0 && (
+            {commentsCount > 0 && (
               <StyledContainer.Comments>
                 {
                   <Text.CommentsCount>
                     {!!authenticatedUser
-                      ? getCommentsText(comments.length)
-                      : comments.length}
+                      ? getCommentsText(commentsCount)
+                      : commentsCount}
                   </Text.CommentsCount>
                 }
                 {!authenticatedUser && <BiComment size={18} />}
               </StyledContainer.Comments>
             )}
-            {shares && shares.length > 0 && (
+            {shares.length > 0 && (
               <StyledContainer.Shares>
                 <Text.SharesCount>
                   {!!authenticatedUser
@@ -443,7 +396,7 @@ export function UserPost({ id: postId }: Props) {
               </StyledContainer.Shares>
             )}
           </StyledContainer.CommentsShares>
-        </div>
+        </StyledContainer.CommentsReactionsShares>
       )}
       <Divider color={dividerColor} />
       <StyledContainer.Buttons>
@@ -480,7 +433,7 @@ export function UserPost({ id: postId }: Props) {
                 reactionType: getUserPostReaction({
                   currentUserId: authenticatedUser?.id,
                   reactions,
-                })?.type,
+                })?.reactionType,
               })}
               height={24}
               width={24}
@@ -538,7 +491,7 @@ export function UserPost({ id: postId }: Props) {
           Share
         </Button>
       </StyledContainer.Buttons>
-      {((comments && comments?.length > 0) || isWriteCommentVisible) && (
+      {(comments.length > 0 || isWriteCommentVisible) && (
         <Divider color={dividerColor} />
       )}
       {isWriteCommentVisible && (
@@ -550,11 +503,12 @@ export function UserPost({ id: postId }: Props) {
             setIsWriteCommentVisible((prev) => !prev);
           }}
           onSendClick={(commentText) => {
-            addPostComment({
+            addComment({
               variables: {
                 input: {
                   commentOwnerId: authenticatedUser?.id,
-                  postId,
+                  parentId: null,
+                  postId: data.id,
                   text: commentText,
                 },
               },
@@ -566,7 +520,11 @@ export function UserPost({ id: postId }: Props) {
           }}
         />
       )}
-      <PostComments comments={comments} postId={postId} postOwnerId={ownerId} />
+      <PostComments
+        comments={comments}
+        postId={data.id}
+        postOwnerId={ownerId}
+      />
     </Container>
   );
 }

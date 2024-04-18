@@ -28,6 +28,10 @@ export function Contacts({ style }: Props) {
 
   const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
 
+  if (displayedFriends.length === 0) {
+    return <></>;
+  }
+
   return (
     <Container.Main style={style}>
       <Title {...themeProps}>Contacts</Title>

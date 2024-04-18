@@ -20,6 +20,7 @@ import {
   passwordValidation,
 } from "helpers";
 import { useAuthenticationStore } from "store";
+import { Gender } from "types";
 
 import {
   Button,
@@ -40,8 +41,6 @@ type FormValues = {
   lastName: string;
   password: string;
 };
-
-type Gender = "Female" | "Male";
 
 interface Data {
   email: string;

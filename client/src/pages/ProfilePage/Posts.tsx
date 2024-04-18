@@ -8,15 +8,14 @@ import {
   UserPhoto,
   UserPost,
 } from "components";
+import { FriendshipStatus } from "enums";
 import { Colors } from "environment";
 import { User } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Overview } from "./About";
 import { EditDetailsModal } from "./EditDetailsModal";
-import { FriendsListContainer, SeeButton } from "./Posts.style";
-import { Container as StyledContainer } from "./Posts.style";
-import { FriendshipStatus } from "./ProfilePage.types";
+import { Container as StyledContainer, SeeButton, Text } from "./Posts.style";
 
 interface Props {
   status: FriendshipStatus;
@@ -24,7 +23,7 @@ interface Props {
 }
 
 export function Posts({ status, user }: Props) {
-  const { firstName, friends } = user;
+  const { firstName, friends, id: userId, posts } = user;
 
   const { authenticatedUser } = useAuthenticationStore();
   const { theme } = useSettingsStore();
@@ -47,27 +46,9 @@ export function Posts({ status, user }: Props) {
 
   return (
     <StyledContainer.Main>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1em",
-          maxWidth: "50%",
-        }}
-      >
+      <StyledContainer.Column.First>
         <Container vertical>
-          <span
-            style={{
-              color: !!authenticatedUser
-                ? Colors.LightGray
-                : Colors.VampireBlack,
-              fontSize: "20px",
-              fontWeight: "bold",
-              paddingBottom: "8px",
-            }}
-          >
-            Intro
-          </span>
+          <Text.Intro>Intro</Text.Intro>
           <Overview
             isReadonly
             user={user}
@@ -77,31 +58,11 @@ export function Posts({ status, user }: Props) {
           />
         </Container>
         <Container vertical>
-          <div
-            style={{
-              alignItems: "center",
-              display: "flex",
-              gap: "1em",
-              justifyContent: "space-between",
-            }}
-          >
-            <span
-              style={{
-                color: !!authenticatedUser
-                  ? Colors.LightGray
-                  : Colors.VampireBlack,
-                fontSize: "20px",
-                fontWeight: "bold",
-              }}
-            >
-              Photos
-            </span>
-            {
-              <span style={{ color: Colors.BrightNavyBlue, fontSize: "17px" }}>
-                See all photos
-              </span>
-            }
-          </div>
+          <StyledContainer.Photos>
+            <Text.Photos>Photos</Text.Photos>
+            {/* TODO: conditional render "See all photos" */}
+            {<Text.SeeAllPhotos>See all photos</Text.SeeAllPhotos>}
+          </StyledContainer.Photos>
         </Container>
         {!!authenticatedUser && (
           <Container vertical>
@@ -114,17 +75,7 @@ export function Posts({ status, user }: Props) {
                   justifyContent: "space-between",
                 }}
               >
-                <span
-                  style={{
-                    color: !!authenticatedUser
-                      ? Colors.LightGray
-                      : Colors.VampireBlack,
-                    fontSize: "20px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  Friends
-                </span>
+                <Text.Friends>Friends</Text.Friends>
                 {friends && friends.length > 9 && (
                   <SeeButton
                     isAuthenticated={!!authenticatedUser}
@@ -135,15 +86,15 @@ export function Posts({ status, user }: Props) {
                 )}
               </div>
               <span>
-                {!friends?.length || friends.length === 0
+                {friends.length === 0
                   ? "0 friends"
                   : friends.length === 1
                   ? "1 friend"
                   : `${friends.length} friends`}
               </span>
             </div>
-            <FriendsListContainer friends={friends?.length || null}>
-              {friends?.map((friend, index) => {
+            <StyledContainer.FriendsList friendsCount={friends.length}>
+              {friends.map((friend, index) => {
                 if (index > 8) {
                   return <Fragment key={index} />;
                 }
@@ -178,18 +129,11 @@ export function Posts({ status, user }: Props) {
                   </div>
                 );
               })}
-            </FriendsListContainer>
+            </StyledContainer.FriendsList>
           </Container>
         )}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          flex: 1,
-          flexDirection: "column",
-          gap: "1em",
-        }}
-      >
+      </StyledContainer.Column.First>
+      <StyledContainer.Column.Second>
         {(status === FriendshipStatus.ME ||
           status === FriendshipStatus.FRIEND) && (
           <Container vertical>
@@ -207,18 +151,19 @@ export function Posts({ status, user }: Props) {
         )}
         {!!authenticatedUser && (
           <StyledContainer.Posts>
-            {user?.posts?.map((post, index) => {
+            {posts.map((post, index) => {
+              console.log({ post });
               // Rendering only user's personal posts and other users' posts into user's timeline
               // Skipping user's posts from other users' timeline
-              if (post.ownerId === user.id && post.receiverId !== user.id) {
+              if (post.ownerId === userId && post.receiverId !== userId) {
                 return <Fragment key={index} />;
               }
 
-              return <UserPost id={post.id} key={index} />;
+              return <UserPost data={post} key={index} />;
             })}
           </StyledContainer.Posts>
         )}
-      </div>
+      </StyledContainer.Column.Second>
       {isEditDetailsModalOpen && (
         <EditDetailsModal
           onCloseClick={() => {

@@ -1,7 +1,7 @@
 import { HiHeart, HiThumbUp } from "react-icons/hi";
 
+import { ConversationTheme, Emoji } from "enums";
 import { Colors } from "environment";
-import { ConversationTheme, Emoji } from "models";
 
 export function getDisplayedEmoji(emoji: Emoji | undefined) {
   switch (emoji) {

@@ -1,7 +1,6 @@
-import { useLazyQuery, useMutation } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { Divider } from "@mui/material";
 
-import { useEffect } from "react";
 import { AiOutlineCloseSquare } from "react-icons/ai";
 import { IoBookmark, IoBookmarkOutline } from "react-icons/io5";
 import { ImBin } from "react-icons/im";
@@ -13,10 +12,6 @@ import {
   BLOCK_USER,
   BlockUserData,
   GET_USER_BY_USERNAME,
-  GET_USER_FOLLOWING_LIST,
-  GET_USER_SAVED_POSTS,
-  GetUserFollowingListData,
-  GetUserSavedPostsData,
   HIDE_POST,
   HidePostData,
   REMOVE_POST,
@@ -38,21 +33,15 @@ import { Container } from "./PostOptionsList.style";
 interface Props {
   postId: string;
   postOwner: User;
-  receiverUsername: string;
+  postReceiver: User;
 }
 
 export function PostOptionsList({
   postId,
   postOwner: { firstName, id: postOwnerId, username },
-  receiverUsername,
+  postReceiver,
 }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const [
-    fetchFollowingList,
-    { data: followingList, loading: isFetchingFollowingList },
-  ] = useLazyQuery<GetUserFollowingListData>(GET_USER_FOLLOWING_LIST);
-  const [fetchSavedPosts, { data: savedPosts, loading: isFetchingSavedPosts }] =
-    useLazyQuery<GetUserSavedPostsData>(GET_USER_SAVED_POSTS);
   const [blockUser] = useMutation<BlockUserData>(BLOCK_USER);
   const [hidePost] = useMutation<HidePostData>(HIDE_POST);
   const [removeUserFriend] =
@@ -62,13 +51,6 @@ export function PostOptionsList({
   const [unfollowUser] = useMutation<UnfollowUserData>(UNFOLLOW_USER);
   const [unsavePost] = useMutation<UnsavePostData>(UNSAVE_POST);
   const { closePostOptionsList } = useSettingsStore();
-
-  useEffect(() => {
-    fetchFollowingList({ variables: { id: authenticatedUser?.id } });
-    fetchSavedPosts({
-      variables: { id: authenticatedUser?.id },
-    });
-  }, [authenticatedUser?.id, fetchFollowingList, fetchSavedPosts]);
 
   function handleBlockProfileClick() {
     blockUser({
@@ -81,7 +63,7 @@ export function PostOptionsList({
       refetchQueries: [
         {
           query: GET_USER_BY_USERNAME,
-          variables: { username: receiverUsername },
+          variables: { username: postReceiver.username },
         },
       ],
       onCompleted: () => {
@@ -122,14 +104,14 @@ export function PostOptionsList({
       refetchQueries: [
         // If the sender of the post is the same as the receiver of the post
         // (e.g: the authenticated user posted on his/her own timeline)
-        username === receiverUsername
+        username === postReceiver.username
           ? {
               query: GET_USER_BY_USERNAME,
               variables: { username },
             }
           : {
               query: GET_USER_BY_USERNAME,
-              variables: { username: receiverUsername },
+              variables: { username: postReceiver.username },
             },
       ],
       onCompleted: (data) => {
@@ -143,7 +125,7 @@ export function PostOptionsList({
     // TODO
     hidePost({
       variables: {
-        input: { hiddenPostId: postId, userId: authenticatedUser?.id },
+        input: { postId, userId: authenticatedUser?.id },
       },
       refetchQueries: [
         // TODO
@@ -161,12 +143,12 @@ export function PostOptionsList({
       variables: {
         input: { postId, userId: authenticatedUser?.id },
       },
-      refetchQueries: [
-        {
-          query: GET_USER_SAVED_POSTS,
-          variables: { id: authenticatedUser?.id },
-        },
-      ],
+      // refetchQueries: [
+      //   {
+      //     query: GET_USER_SAVED_POSTS,
+      //     variables: { id: authenticatedUser?.id },
+      //   },
+      // ],
       onCompleted: (data) => {
         console.log(data);
         closePostOptionsList();
@@ -182,12 +164,12 @@ export function PostOptionsList({
           userId: authenticatedUser?.id,
         },
       },
-      refetchQueries: [
-        {
-          query: GET_USER_FOLLOWING_LIST,
-          variables: { id: authenticatedUser?.id },
-        },
-      ],
+      // refetchQueries: [
+      //   {
+      //     query: GET_USER_FOLLOWING_LIST,
+      //     variables: { id: authenticatedUser?.id },
+      //   },
+      // ],
       onCompleted: (data) => {
         console.log(data);
         closePostOptionsList();
@@ -198,12 +180,12 @@ export function PostOptionsList({
   function handleUnsavePostClick() {
     unsavePost({
       variables: { input: { postId, userId: authenticatedUser?.id } },
-      refetchQueries: [
-        {
-          query: GET_USER_SAVED_POSTS,
-          variables: { id: authenticatedUser?.id },
-        },
-      ],
+      // refetchQueries: [
+      //   {
+      //     query: GET_USER_SAVED_POSTS,
+      //     variables: { id: authenticatedUser?.id },
+      //   },
+      // ],
       onCompleted: (data) => {
         console.log(data);
         closePostOptionsList();
@@ -213,15 +195,13 @@ export function PostOptionsList({
 
   const isAuthenticatedUserPost = postOwnerId === authenticatedUser?.id;
   const isFollowingPostOwner =
-    followingList?.userFollowingList?.__typename === "Users"
-      ? !!followingList.userFollowingList.users.find(
-          (user) => user.id === postOwnerId
-        )
-      : false;
+    authenticatedUser?.followingUsers.some(({ id }) => id === postOwnerId) ||
+    false;
+
   const isFriendsWithPostOwner = !!authenticatedUser?.friends?.find(
     (friend) => friend.id === postOwnerId
   );
-  const isSaved = !!savedPosts?.userSavedPosts?.find(
+  const isSaved = authenticatedUser?.savedPosts.find(
     (post) => post.id === postId
   );
 
@@ -232,15 +212,6 @@ export function PostOptionsList({
     ? "Stop seeing posts but stay friends."
     : "Stop seeing posts from this person.";
   const unfollowText = `Unfollow ${firstName}`;
-
-  if (
-    (isFetchingFollowingList && !followingList?.userFollowingList) ||
-    (isFetchingSavedPosts && !savedPosts?.userSavedPosts)
-  ) {
-    return <Container.Main>Loading...</Container.Main>;
-  } else if (savedPosts?.userSavedPosts) {
-    console.log("finished loading");
-  }
 
   return (
     <Container.Main>

@@ -1,4 +1,4 @@
-import { SetStateAction } from "react";
+import { useMemo } from "react";
 import { MdAddCircleOutline } from "react-icons/md";
 
 import {
@@ -13,46 +13,12 @@ import {
   RelationshipStatus,
   WorkHistory,
 } from "components";
-import { User } from "models";
+import { FriendshipStatus, Permission } from "enums";
 import { useAuthenticationStore } from "store";
 
 import { Button } from "../ProfilePage.style";
 
-type ConditionalProps =
-  | {
-      isAddCollegeVisible?: never;
-      isAddHighSchoolVisible?: never;
-      isAddPlaceVisible?: never;
-      isAddRelationshipStatusVisible?: never;
-      isAddWorkplaceVisible?: never;
-      isReadonly: true;
-      onEditDetailsClick: () => void;
-      setIsAddCollegeVisible?: never;
-      setIsAddHighSchoolVisible?: never;
-      setIsAddPlaceVisible?: never;
-      setIsAddRelationshipStatusVisible?: never;
-      setIsAddWorkplaceVisible?: never;
-    }
-  | {
-      isAddCollegeVisible: boolean;
-      isAddHighSchoolVisible: boolean;
-      isAddPlaceVisible: boolean;
-      isAddRelationshipStatusVisible: boolean;
-      isAddWorkplaceVisible: boolean;
-      isReadonly?: false | never;
-      onEditDetailsClick?: never;
-      setIsAddCollegeVisible: (value: SetStateAction<boolean>) => void;
-      setIsAddHighSchoolVisible: (value: SetStateAction<boolean>) => void;
-      setIsAddPlaceVisible: (value: SetStateAction<boolean>) => void;
-      setIsAddRelationshipStatusVisible: (
-        value: SetStateAction<boolean>
-      ) => void;
-      setIsAddWorkplaceVisible: (value: SetStateAction<boolean>) => void;
-    };
-
-type UserProps = { user: User };
-
-type Props = ConditionalProps & UserProps;
+import { OverviewProps } from "./Overview.types";
 
 export function Overview({
   isAddCollegeVisible,
@@ -68,22 +34,99 @@ export function Overview({
   setIsAddPlaceVisible,
   setIsAddRelationshipStatusVisible,
   setIsAddWorkplaceVisible,
-}: Props) {
+}: OverviewProps) {
   const { authenticatedUser } = useAuthenticationStore();
 
-  const { educationHistory, placesHistory, relationshipStatus, workHistory } =
-    user;
+  const {
+    educationHistory,
+    placesHistory,
+    relationshipStatus,
+    username,
+    workHistory,
+  } = user;
 
-  const userIsAuthenticatedUser = authenticatedUser?.id === user.id || false;
+  const friendshipStatus =
+    username === authenticatedUser?.username
+      ? FriendshipStatus.ME
+      : authenticatedUser?.friends?.some(
+          (friend) => friend.username === username
+        )
+      ? FriendshipStatus.FRIEND
+      : user.friendshipRequests?.some(
+          (request) =>
+            request.receiver === authenticatedUser?.id &&
+            request.sender === user.id
+        )
+      ? FriendshipStatus.FRIEND_REQUEST_RECEIVED
+      : user.friendshipRequests?.some(
+          (request) =>
+            request.receiver === user.id &&
+            request.sender === authenticatedUser?.id
+        )
+      ? FriendshipStatus.FRIEND_REQUEST_SENT
+      : FriendshipStatus.NOT_FRIEND;
+
+  const filteredPlacesHistory = useMemo(() => {
+    switch (friendshipStatus) {
+      case FriendshipStatus.FRIEND:
+        return placesHistory.filter(
+          ({ visibility }) =>
+            visibility === Permission.FRIENDS ||
+            visibility === Permission.PUBLIC
+        );
+      case FriendshipStatus.ME:
+        return placesHistory;
+      case FriendshipStatus.FRIEND_REQUEST_RECEIVED:
+      case FriendshipStatus.FRIEND_REQUEST_SENT:
+      case FriendshipStatus.NOT_FRIEND:
+        return placesHistory.filter(
+          ({ visibility }) => visibility === Permission.PUBLIC
+        );
+    }
+  }, [friendshipStatus, placesHistory]);
+
+  const filteredWorkHistory = useMemo(() => {
+    switch (friendshipStatus) {
+      case FriendshipStatus.FRIEND:
+        return workHistory.filter(
+          ({ visibility }) =>
+            visibility === Permission.FRIENDS ||
+            visibility === Permission.PUBLIC
+        );
+      case FriendshipStatus.ME:
+        return workHistory;
+      case FriendshipStatus.FRIEND_REQUEST_RECEIVED:
+      case FriendshipStatus.FRIEND_REQUEST_SENT:
+      case FriendshipStatus.NOT_FRIEND:
+        return workHistory.filter(
+          ({ visibility }) => visibility === Permission.PUBLIC
+        );
+    }
+  }, [friendshipStatus, workHistory]);
 
   if (isReadonly) {
     return (
       <>
-        <WorkHistory data={workHistory} readonly user={user} />
-        <EducationHistory data={educationHistory} readonly user={user} />
-        <PlacesHistory data={placesHistory} readonly user={user} />
-        <RelationshipStatus data={relationshipStatus} readonly user={user} />
-        {userIsAuthenticatedUser && (
+        <WorkHistory
+          data={filteredWorkHistory}
+          friendshipStatus={friendshipStatus}
+          readonly
+        />
+        <EducationHistory
+          data={educationHistory}
+          friendshipStatus={friendshipStatus}
+          readonly
+        />
+        <PlacesHistory
+          data={filteredPlacesHistory}
+          friendshipStatus={friendshipStatus}
+          readonly
+        />
+        <RelationshipStatus
+          data={relationshipStatus}
+          friendshipStatus={friendshipStatus}
+        />
+        {friendshipStatus === FriendshipStatus.ME && (
           <Button
             backgroundColor="BlackOlive"
             color="White"
@@ -99,7 +142,7 @@ export function Overview({
 
   return (
     <>
-      {userIsAuthenticatedUser && !workHistory ? (
+      {friendshipStatus === FriendshipStatus.ME && workHistory.length === 0 ? (
         <>
           {!isAddWorkplaceVisible ? (
             <AddData
@@ -123,9 +166,12 @@ export function Overview({
           )}
         </>
       ) : (
-        <WorkHistory data={workHistory} user={user} />
+        <WorkHistory
+          data={filteredWorkHistory}
+          friendshipStatus={friendshipStatus}
+        />
       )}
-      {userIsAuthenticatedUser && !educationHistory ? (
+      {friendshipStatus === FriendshipStatus.ME && !educationHistory ? (
         <>
           {!isAddCollegeVisible ? (
             <AddData
@@ -165,9 +211,12 @@ export function Overview({
           )}
         </>
       ) : (
-        <EducationHistory data={educationHistory} user={user} />
+        <EducationHistory
+          data={educationHistory}
+          friendshipStatus={friendshipStatus}
+        />
       )}
-      {userIsAuthenticatedUser && !placesHistory ? (
+      {friendshipStatus === FriendshipStatus.ME && !placesHistory ? (
         <>
           {!isAddPlaceVisible ? (
             <AddData
@@ -191,9 +240,12 @@ export function Overview({
           )}
         </>
       ) : (
-        <PlacesHistory data={placesHistory} user={user} />
+        <PlacesHistory
+          data={filteredPlacesHistory}
+          friendshipStatus={friendshipStatus}
+        />
       )}
-      {userIsAuthenticatedUser && !relationshipStatus ? (
+      {friendshipStatus === FriendshipStatus.ME && !relationshipStatus ? (
         <>
           {!isAddRelationshipStatusVisible ? (
             <AddData
@@ -217,7 +269,10 @@ export function Overview({
           )}
         </>
       ) : (
-        <RelationshipStatus data={relationshipStatus} user={user} />
+        <RelationshipStatus
+          data={relationshipStatus}
+          friendshipStatus={friendshipStatus}
+        />
       )}
     </>
   );

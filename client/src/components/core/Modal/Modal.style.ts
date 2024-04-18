@@ -1,6 +1,7 @@
 import styled, { css } from "styled-components";
 
 import { Colors } from "environment";
+import { FlexAlignItems, FlexDirection, FlexJustifyContent } from "types";
 
 export const Background = styled.div`
   align-items: center;
@@ -58,26 +59,11 @@ export const Title = styled.p<TitleProps>`
 `;
 
 interface StyleProps {
-  alignItems?: "baseline" | "center" | "flex-end" | "flex-start" | "stretch";
+  alignItems?: FlexAlignItems;
   color?: keyof typeof Colors;
-  direction?: "column" | "column-reverse" | "row" | "row-reverse";
+  direction?: FlexDirection;
   gap?: string;
-  justifyContent?:
-    | "baseline"
-    | "center"
-    | "end"
-    | "first baseline"
-    | "flex-end"
-    | "flex-start"
-    | "last baseline"
-    | "left"
-    | "right"
-    | "safe"
-    | "space-around"
-    | "space-between"
-    | "space-evenly"
-    | "start"
-    | "stretch";
+  justifyContent?: FlexJustifyContent;
   padding?: string;
 }
 

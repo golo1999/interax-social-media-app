@@ -48,9 +48,11 @@ export function getDisplayedTime(dateTime: Date) {
   }
 }
 
+type TimePassedComponent = "CHAT" | "COMMENT" | "NOTIFICATION" | "POST";
+
 export function getTimePassedFromDateTime(
   dateTime: string | null,
-  component: "CHAT" | "COMMENT" | "NOTIFICATION" | "POST"
+  component: TimePassedComponent
 ) {
   if (!dateTime || isNaN(Number(dateTime))) {
     return null;

@@ -100,6 +100,7 @@ export function Complementary({
     files,
     first,
     firstNickname,
+    id: conversationId,
     media,
     second,
     secondNickname,
@@ -359,7 +360,12 @@ export function Complementary({
 
               updateConversationNickname({
                 variables: {
-                  input: { nickname: newNickname, userId: matchedUserId },
+                  input: {
+                    first,
+                    nickname: newNickname,
+                    second,
+                    userId: matchedUserId,
+                  },
                 },
                 refetchQueries: [
                   {

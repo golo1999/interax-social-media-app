@@ -1,8 +1,7 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
-
-import { FontWeight } from "./BaseButton.types";
+import { FontWeight } from "types";
 
 interface Props {
   backgroundColor?: keyof typeof Colors;

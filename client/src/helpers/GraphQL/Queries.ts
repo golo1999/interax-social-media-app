@@ -6,12 +6,18 @@ import {
   Message,
   Post,
   User,
-  Users,
   UserError,
   UserWithMessage,
 } from "models";
 
-import { COMMENT_DATA, PLACE_DATA, POST_DATA, USER_DATA } from "./Fragments";
+import {
+  COLLEGE_EDUCATION_DATA,
+  COMMENT_DATA,
+  HIGH_SCHOOL_EDUCATION_DATA,
+  PLACE_DATA,
+  POST_DATA,
+  USER_DATA,
+} from "./Fragments";
 
 export interface GetAuthenticatedUserData {
   authenticatedUser: User;
@@ -241,36 +247,14 @@ export const GET_USER_BLOCKED_LIST = gql`
   }
 `;
 
-export interface GetUserFollowingListData {
-  userFollowingList: Users | UserError | null;
-}
-
-export const GET_USER_FOLLOWING_LIST = gql`
-  ${COMMENT_DATA}
-  ${PLACE_DATA}
-  ${POST_DATA}
-  ${USER_DATA}
-  query GetUserFollowingList($id: ID!) {
-    userFollowingList(id: $id) {
-      ... on UsersError {
-        message
-        __typename
-      }
-      ... on Users {
-        users {
-          ...UserData
-        }
-      }
-    }
-  }
-`;
-
 export interface GetUserByIdData {
   userById: User | UserError | UserWithMessage | null;
 }
 
 export const GET_USER_BY_ID = gql`
+  ${COLLEGE_EDUCATION_DATA}
   ${COMMENT_DATA}
+  ${HIGH_SCHOOL_EDUCATION_DATA}
   ${PLACE_DATA}
   ${POST_DATA}
   ${USER_DATA}
@@ -297,7 +281,9 @@ export interface GetUserByUsernameData {
 }
 
 export const GET_USER_BY_USERNAME = gql`
+  ${COLLEGE_EDUCATION_DATA}
   ${COMMENT_DATA}
+  ${HIGH_SCHOOL_EDUCATION_DATA}
   ${PLACE_DATA}
   ${POST_DATA}
   ${USER_DATA}
@@ -331,20 +317,6 @@ export const GET_USER_FRIENDS_BY_USERNAME = gql`
       id
       lastName
       username
-    }
-  }
-`;
-
-export interface GetUserSavedPostsData {
-  userSavedPosts: Post[] | null;
-}
-
-export const GET_USER_SAVED_POSTS = gql`
-  ${COMMENT_DATA}
-  ${POST_DATA}
-  query GetUserSavedPosts($id: ID!) {
-    userSavedPosts(id: $id) {
-      ...PostData
     }
   }
 `;

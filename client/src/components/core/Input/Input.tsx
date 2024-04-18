@@ -1,11 +1,9 @@
 import { CSSProperties, InputHTMLAttributes } from "react";
 
 import { Colors } from "environment";
-
-import { FontWeight } from "../Button/BaseButton.types";
+import { BorderStyle, FontWeight } from "types";
 
 import { Input as StyledInput } from "./Input.style";
-import { BorderStyle } from "./Input.types";
 
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   backgroundColor?: keyof typeof Colors;

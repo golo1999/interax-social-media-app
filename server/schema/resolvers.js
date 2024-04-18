@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { Filter, FieldValue } = require("firebase-admin/firestore");
 const _ = require("lodash");
 
 const { firestore } = require("../db");
@@ -49,114 +50,442 @@ function getUserFriends(userId) {
 const {
   AUTHENTICATED_USER_ID,
   BLOCKED_USERS_LIST,
-  COMMENTS_LIST,
-  CONVERSATIONS_LIST,
   ConversationTheme,
   Emoji,
-  FOLLOWING_USERS_LIST,
   FRIEND_REQUESTS_LIST,
   FRIENDS_LIST,
   HIDDEN_POSTS_LIST,
-  MESSAGES_LIST,
   POST_PHOTOS_LIST,
   POSTS_LIST,
-  SAVED_POSTS_LIST,
   USERS_LIST,
 } = require("../MockedData");
 
 const resolvers = {
   Comment: {
-    owner: ({ ownerId }) => {
-      return _.find(USERS_LIST, (user) => user.id === ownerId);
+    owner: async ({ ownerId }) => {
+      const ownerSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", ownerId)
+        .get();
+
+      if (ownerSnapshot.empty) {
+        return null;
+      }
+
+      return ownerSnapshot.docs[0].data();
+    },
+    post: async ({ postId }) => {
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", postId)
+        .get();
+
+      if (postSnapshot.empty) {
+        return null;
+      }
+
+      return postSnapshot.docs[0].data();
+    },
+    reactions: async ({ id }) => {
+      const reactionsSnapshot = await firestore
+        .collection("commentReactions")
+        .where("commentId", "==", id)
+        .get();
+      const reactions = [];
+
+      reactionsSnapshot.docs.forEach((doc) => reactions.push(doc.data()));
+
+      return reactions;
+    },
+    replies: async ({ id }) => {
+      const repliesSnapshot = await firestore
+        .collection("postComments")
+        .where("parentId", "==", id)
+        .get();
+      const replies = [];
+
+      repliesSnapshot.docs.forEach((doc) => replies.push(doc.data()));
+
+      return replies;
+    },
+    repliesCount: async ({ id }) => {
+      async function getRepliesCount(comment, currentCount) {
+        const repliesSnapshot = await firestore
+          .collection("postComments")
+          .where("parentId", "==", comment.id)
+          .get();
+
+        if (repliesSnapshot.empty) {
+          return currentCount;
+        }
+
+        for (const doc of repliesSnapshot.docs) {
+          const newCount = await getRepliesCount(doc.data(), currentCount);
+          return currentCount + newCount;
+        }
+      }
+
+      const repliesSnapshot = await firestore
+        .collection("postComments")
+        .where("parentId", "==", id)
+        .get();
+      let repliesCount = repliesSnapshot.docs.length;
+
+      if (repliesCount > 0) {
+        for (const doc of repliesSnapshot.docs) {
+          const reply = doc.data();
+          const { id: replyId } = reply;
+          const replySnapshot = await firestore
+            .collection("postComments")
+            .where("parentId", "==", replyId)
+            .get();
+
+          if (!replySnapshot.empty) {
+            const count = await getRepliesCount(reply, repliesCount);
+            repliesCount = count;
+          }
+        }
+      }
+
+      return repliesCount;
+    },
+  },
+  EducationResult: {
+    __resolveType(obj) {
+      if (obj.degree && obj.level === EducationLevel.COLLEGE) {
+        return "CollegeEducation";
+      }
+
+      return "HighSchoolEducation";
+    },
+  },
+  Message: {
+    reactions: async () => {
+      return [];
+    },
+    replies: async () => {
+      return [];
     },
   },
   Post: {
-    comments: ({ id }) => {
-      return _.filter(COMMENTS_LIST, (comment) => comment.postId === id);
+    comments: async ({ id }) => {
+      const postCommentsSnapshot = await firestore
+        .collection("postComments")
+        .where(
+          Filter.and(
+            Filter.where("parentId", "==", null),
+            Filter.where("postId", "==", id)
+          )
+        )
+        .get();
+      const comments = [];
+
+      postCommentsSnapshot.docs.forEach((doc) => comments.push(doc.data()));
+
+      return comments.sort(
+        (post1, post2) =>
+          +new Date(Number(post2.dateTime) - +new Date(Number(post1.dateTime)))
+      );
     },
-    owner: (parent) => {
-      return _.find(USERS_LIST, (user) => user.id === parent.ownerId);
+    commentsCount: async ({ id }) => {
+      const postCommentsSnapshot = await firestore
+        .collection("postComments")
+        .where("postId", "==", id)
+        .get();
+      return postCommentsSnapshot.docs.length;
+    },
+    owner: async ({ ownerId }) => {
+      const postOwnerSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", ownerId)
+        .get();
+
+      if (postOwnerSnapshot.empty) {
+        return null;
+      }
+
+      return postOwnerSnapshot.docs[0].data();
     },
     photos: ({ id }) => {
       return _.filter(POST_PHOTOS_LIST, (photo) => photo.postId === id);
     },
-  },
-  User: {
-    // friends: (parent) => {
-    //   const friends = [];
+    reactions: async ({ id }) => {
+      const reactionsSnapshot = await firestore
+        .collection("postReactions")
+        .where("postId", "==", id)
+        .get();
+      const reactions = [];
 
-    //   _.forEach(parent.friends, (friend) => {
-    //     _.forEach(USERS_LIST, (user) => {
-    //       if (user.id === friend.id) {
-    //         friends.push(user);
-    //       }
-    //     });
-    //   });
+      reactionsSnapshot.docs.forEach((doc) => reactions.push(doc.data()));
 
-    //   return friends;
-    // },
-    friends: ({ id: userId }) => {
-      const friends = [];
-
-      _.forEach(FRIENDS_LIST, (friendship) => {
-        const friendshipValues = Object.values(friendship);
-
-        if (friendshipValues.includes(userId)) {
-          const friendId = _.find(
-            friendshipValues,
-            (value) => value !== userId
-          );
-          const friend = _.find(USERS_LIST, (user) => user.id === friendId);
-
-          if (friend) {
-            friends.push(friend);
-          }
-        }
-      });
-
-      return friends.length > 0 ? friends : null;
+      return reactions;
     },
-    friendshipRequests: ({ id: userId }) => {
-      return _.filter(
-        FRIEND_REQUESTS_LIST,
-        (request) => request.receiver === userId || request.sender === userId
-      );
-    },
-    messages: ({ id }) => {
-      const messages = _.filter(
-        MESSAGES_LIST,
-        (message) => message.receiverId === id || message.senderId === id
-      );
+    receiver: async ({ receiverId }) => {
+      const postReceiverSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", receiverId)
+        .get();
 
-      return messages.length > 0 ? messages : null;
-    },
-    posts: ({ id }) => {
-      const authenticatedUserHiddenPosts = _.find(
-        HIDDEN_POSTS_LIST,
-        (hiddenPost) => hiddenPost.userId === AUTHENTICATED_USER_ID
-      );
-
-      if (authenticatedUserHiddenPosts) {
-        return _.filter(
-          POSTS_LIST,
-          (post) =>
-            (post.ownerId === id || post.receiverId === id) &&
-            !authenticatedUserHiddenPosts.hiddenPosts.some(
-              (hiddenPostId) => hiddenPostId === post.id
-            )
-        ).sort(
-          (p1, p2) =>
-            +new Date(Number(p2.dateTime) - +new Date(Number(p1.dateTime)))
-        );
+      if (postReceiverSnapshot.empty) {
+        return null;
       }
 
-      return _.filter(
-        POSTS_LIST,
-        (post) => post.ownerId === id || post.receiverId === id
-      ).sort(
-        (p1, p2) =>
-          +new Date(Number(p2.dateTime) - +new Date(Number(p1.dateTime)))
+      return postReceiverSnapshot.docs[0].data();
+    },
+    // TODO: To be tested
+    shares: async ({ id }) => {
+      const sharesSnapshot = await firestore
+        .collection("posts")
+        .where("parentId", "==", id)
+        .get();
+      const shares = [];
+
+      sharesSnapshot.docs.forEach((doc) => shares.push(doc.data()));
+
+      return shares;
+    },
+  },
+  User: {
+    // TODO: To be tested
+    coverPhotos: async ({ id: userId }) => {
+      const coverPhotosSnapshot = await firestore
+        .collection("coverPhotos")
+        .where("userId", "==", userId)
+        .get();
+      const coverPhotos = [];
+
+      coverPhotosSnapshot.docs.forEach((doc) => coverPhotos.push(doc.data()));
+
+      return coverPhotos;
+    },
+    educationHistory: async ({ id: userId }) => {
+      const educationHistorySnapshot = await firestore
+        .collection("educationHistory")
+        .where("userId", "==", userId)
+        .get();
+      const educationHistory = [];
+
+      educationHistorySnapshot.docs.forEach((doc) =>
+        educationHistory.push(doc.data())
       );
+
+      return educationHistory;
+    },
+    followingUsers: async ({ id: userId }) => {
+      const followingUsersSnapshot = await firestore
+        .collection("follows")
+        .where("userId", "==", userId)
+        .get();
+      const followingUsers = [];
+
+      for (const doc of followingUsersSnapshot.docs) {
+        const { followingUserId } = doc.data();
+        const followingUserSnapshot = await firestore
+          .collection("users")
+          .where("id", "==", followingUserId)
+          .get();
+
+        if (!followingUserSnapshot.empty) {
+          const followingUserData = followingUserSnapshot.docs[0].data();
+          followingUsers.push(followingUserData);
+        }
+      }
+
+      return followingUsers;
+    },
+    friends: async ({ id: userId }) => {
+      const matchedFriendshipsSnapshot = await firestore
+        .collection("friendships")
+        .where(
+          Filter.or(
+            Filter.where("first", "==", userId),
+            Filter.where("second", "==", userId)
+          )
+        )
+        .get();
+
+      const friends = [];
+      // forEach doesn't await callbacks => using a "for ... of" loop instead
+      // https://stackoverflow.com/questions/66429234/async-function-not-waiting-long-enough-to-push-firestore-docs-into-an-array
+      for (const doc of matchedFriendshipsSnapshot.docs) {
+        const { first, second } = doc.data();
+        const friendId = first !== userId ? first : second;
+        const friendDataSnapshot = await firestore
+          .collection("users")
+          .where("id", "==", friendId)
+          .get();
+
+        if (!friendDataSnapshot.empty) {
+          const friendData = friendDataSnapshot.docs[0].data();
+          friends.push(friendData);
+        }
+      }
+
+      return friends;
+    },
+    friendshipRequests: async ({ id: userId }) => {
+      const matchedFriendshipRequestsSnapshot = await firestore
+        .collection("friendshipRequests")
+        .where(
+          Filter.or(
+            Filter.where("receiver", "==", userId),
+            Filter.where("sender", "==", userId)
+          )
+        )
+        .get();
+
+      const friendshipRequests = [];
+
+      matchedFriendshipRequestsSnapshot.docs.forEach((doc) =>
+        friendshipRequests.push(doc.data())
+      );
+
+      return friendshipRequests;
+    },
+    hiddenPosts: async ({ id: userId }) => {
+      const hiddenPostsSnapshot = await firestore
+        .collection("hiddenPosts")
+        .where("userId", "==", userId)
+        .get();
+      const hiddenPosts = [];
+
+      for (const doc of hiddenPostsSnapshot.docs) {
+        const { postId } = doc.data();
+        const postSnapshot = await firestore
+          .collection("posts")
+          .where("id", "==", postId)
+          .get();
+
+        if (!postSnapshot.empty) {
+          const postData = postSnapshot.docs[0].data();
+          hiddenPosts.push(postData);
+        }
+      }
+
+      return hiddenPosts;
+    },
+    messages: async ({ id: userId }) => {
+      const messagesSnapshot = await firestore
+        .collection("messages")
+        .where(
+          Filter.or(
+            Filter.where("receiverId", "==", userId),
+            Filter.where("senderId", "==", userId)
+          )
+        )
+        .get();
+      const messages = [];
+
+      messagesSnapshot.docs.forEach((doc) => messages.push(doc.data()));
+
+      return messages;
+    },
+    placesHistory: async ({ id: userId }) => {
+      const placesHistorySnapshot = await firestore
+        .collection("placesHistory")
+        .where("userId", "==", userId)
+        .get();
+      const placesHistory = [];
+
+      placesHistorySnapshot.docs.forEach((doc) =>
+        placesHistory.push(doc.data())
+      );
+
+      return placesHistory;
+    },
+    posts: async ({ id: userId }) => {
+      const postsSnapshot = await firestore
+        .collection("posts")
+        .where(
+          Filter.or(
+            Filter.where("ownerId", "==", userId),
+            Filter.where("receiverId", "==", userId)
+          )
+        )
+        .get();
+      const posts = [];
+
+      // Checking if the post is hidden by the user
+      for (const doc of postsSnapshot.docs) {
+        const { id: postId } = doc.data();
+        const hiddenPostsSnapshot = await firestore
+          .collection("hiddenPosts")
+          .where(
+            Filter.and(
+              Filter.where("postId", "==", postId),
+              Filter.where("userId", "==", userId)
+            )
+          )
+          .get();
+
+        if (hiddenPostsSnapshot.empty) {
+          posts.push(doc.data());
+        }
+      }
+
+      return posts.sort(
+        (post1, post2) =>
+          +new Date(Number(post2.dateTime) - +new Date(Number(post1.dateTime)))
+      );
+    },
+    // TODO: To be tested
+    profilePhotos: async ({ id: userId }) => {
+      const profilePhotosSnapshot = await firestore
+        .collection("profilePhotos")
+        .where("userId", "==", userId)
+        .get();
+      const profilePhotos = [];
+
+      profilePhotosSnapshot.docs.forEach((doc) =>
+        profilePhotos.push(doc.data())
+      );
+
+      return profilePhotos;
+    },
+    relationshipStatus: async ({ id: userId }) => {
+      const relationshipStatusSnapshot = await firestore
+        .collection("relationshipStatus")
+        .where("userId", "==", userId)
+        .get();
+
+      if (relationshipStatusSnapshot.empty) {
+        return null;
+      }
+
+      return relationshipStatusSnapshot.docs[0].data();
+    },
+    savedPosts: async ({ id: userId }) => {
+      const savedPostsSnapshot = await firestore
+        .collection("savedPosts")
+        .where("userId", "==", userId)
+        .get();
+      const savedPosts = [];
+
+      for (const doc of savedPostsSnapshot.docs) {
+        const { postId } = doc.data();
+        const postSnapshot = await firestore
+          .collection("posts")
+          .where("id", "==", postId)
+          .get();
+
+        if (!postSnapshot.empty) {
+          const postData = postSnapshot.docs[0].data();
+          savedPosts.push(postData);
+        }
+      }
+
+      return savedPosts;
+    },
+    workHistory: async ({ id: userId }) => {
+      const workHistorySnapshot = await firestore
+        .collection("workHistory")
+        .where("userId", "==", userId)
+        .get();
+      const workHistory = [];
+
+      workHistorySnapshot.docs.forEach((doc) => workHistory.push(doc.data()));
+
+      return workHistory;
     },
   },
   UserByIdResult: {
@@ -183,53 +512,83 @@ const resolvers = {
       return null;
     },
   },
-  UsersResult: {
-    __resolveType(obj) {
-      if (obj.users) {
-        return "Users";
-      }
-      if (obj.message) {
-        return "UsersError";
-      }
-
-      return null;
-    },
-  },
   Query: {
     authenticatedUser: () => {
       return _.find(USERS_LIST, {
         id: AUTHENTICATED_USER_ID,
       });
     },
-    comment: (_parent, { id }) => {
-      return findMatchedComment(COMMENTS_LIST, id) || null;
-    },
-    comments: () => {
-      return COMMENTS_LIST;
-    },
-    commentReactions: (_parent, { commentId }) => {
-      return findMatchedComment(COMMENTS_LIST, commentId).reactions || null;
-    },
-    commentReplies: (_parent, { commentId }) => {
-      return findMatchedComment(COMMENTS_LIST, commentId).replies || null;
-    },
-    conversationBetween: (_parent, { input: { first, second } }) => {
-      const conversation = _.find(
-        CONVERSATIONS_LIST,
-        (conversation) =>
-          (conversation.first === first && conversation.second === second) ||
-          (conversation.first === second && conversation.second === first)
-      );
-      const defaultConversation = {
-        emoji: Emoji.LIKE,
-        first,
-        firstNickname: null,
-        second,
-        secondNickname: null,
-        theme: ConversationTheme.DEFAULT,
-      };
+    comment: async (_parent, { id }) => {
+      const commentSnapshot = await firestore
+        .collection("postComments")
+        .where("id", "==", id)
+        .get();
 
-      return conversation || defaultConversation;
+      if (commentSnapshot.empty) {
+        return null;
+      }
+
+      return commentSnapshot.docs[0].data();
+    },
+    comments: async () => {
+      const commentsSnapshot = await firestore.collection("postComments").get();
+      const comments = [];
+
+      commentsSnapshot.forEach((doc) => comments.push(doc.data()));
+
+      return comments;
+    },
+    commentReactions: async (_parent, { commentId }) => {
+      const reactionsSnapshot = await firestore
+        .collection("commentReactions")
+        .where("commentId", "==", commentId)
+        .get();
+      const reactions = [];
+
+      reactionsSnapshot.docs.forEach((doc) => reactions.push(doc.data()));
+
+      return reactions;
+    },
+    commentReplies: async (_parent, { commentId }) => {
+      const repliesSnapshot = await firestore
+        .collection("postComments")
+        .where("parentId", "==", commentId)
+        .get();
+      const replies = [];
+
+      repliesSnapshot.docs.forEach((doc) => replies.push(doc.data()));
+
+      return replies;
+    },
+    conversationBetween: async (_parent, { input: { first, second } }) => {
+      const conversationSnapshot = await firestore
+        .collection("conversations")
+        .where(
+          Filter.or(
+            Filter.and(
+              Filter.where("first", "==", first),
+              Filter.where("second", "==", second)
+            ),
+            Filter.and(
+              Filter.where("first", "==", second),
+              Filter.where("second", "==", first)
+            )
+          )
+        )
+        .get();
+
+      if (conversationSnapshot.empty) {
+        return {
+          emoji: Emoji.LIKE,
+          first,
+          firstNickname: null,
+          second,
+          secondNickname,
+          theme: ConversationTheme.DEFAULT,
+        };
+      }
+
+      return conversationSnapshot.docs[0].data();
     },
     friendsPostsByOwnerId: (_parent, { ownerId }) => {
       // const ownerFriendsList = _.filter(USERS_LIST, (user) =>
@@ -322,24 +681,58 @@ const resolvers = {
         );
       });
     },
-    messagesBetween: (_parent, { input: { first, second } }) => {
-      return _.filter(
-        MESSAGES_LIST,
-        (message) =>
-          (message.receiverId === first && message.senderId === second) ||
-          (message.senderId === first && message.receiverId === second)
-      );
-    },
-    post: (_parent, { id }) => {
-      return _.find(POSTS_LIST, (post) => post.id === id) || null;
-    },
-    posts: () => {
-      return POSTS_LIST;
-    },
-    postsByOwnerId: (_parent, { ownerId }) => {
-      const posts = _.filter(POSTS_LIST, (post) => post.owner.id === ownerId);
+    messagesBetween: async (_parent, { input: { first, second } }) => {
+      const messagesSnapshot = await firestore
+        .collection("messages")
+        .where(
+          Filter.or(
+            Filter.and(
+              Filter.where("receiverId", "==", first),
+              Filter.where("senderId", "==", second)
+            ),
+            Filter.and(
+              Filter.where("receiverId", "==", second),
+              Filter.where("senderId", "==", first)
+            )
+          )
+        )
+        .get();
+      const messages = [];
 
-      return posts.length > 0 ? posts : null;
+      messagesSnapshot.docs.forEach((doc) => messages.push(doc.data()));
+
+      return messages;
+    },
+    post: async (_parent, { id }) => {
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", id)
+        .get();
+
+      if (postSnapshot.empty) {
+        return null;
+      }
+
+      return postSnapshot.docs[0].data();
+    },
+    posts: async () => {
+      const postsSnapshot = await firestore.collection("posts").get();
+      const posts = [];
+
+      postsSnapshot.forEach(({ data }) => posts.push(data()));
+
+      return posts;
+    },
+    postsByOwnerId: async (_parent, { ownerId }) => {
+      const postsSnapshot = await firestore
+        .collection("posts")
+        .where("ownerId", "==", ownerId)
+        .get();
+      const posts = [];
+
+      postsSnapshot.docs.forEach((doc) => posts.push(doc.data()));
+
+      return posts;
     },
     userById: async (
       _parent,
@@ -414,869 +807,1457 @@ const resolvers = {
     userFriendsByUsername: (_parent, { username }) => {
       return _.find(USERS_LIST, (user) => user.username === username).friends;
     },
-    userPostReaction: (_parent, { input: { postId, userId } }) => {
-      const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
-      const matchedReaction = _.find(
-        matchedPost.reactions,
-        (reaction) => reaction.owner.id === userId
-      );
+    userPostReaction: async (_parent, { input: { postId, userId } }) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
 
-      return matchedReaction;
-    },
-    userBlockedList: (_parent, { id }) => {
-      const userBlockedList = _.find(
-        BLOCKED_USERS_LIST,
-        (blockedUser) => blockedUser.userId === id
-      );
-
-      if (!userBlockedList) {
-        return [];
+      if (userSnapshot.empty) {
+        return null;
       }
 
-      const list = [];
+      // Checking if the post exists
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", postId)
+        .get();
 
-      userBlockedList.blockedUsers.forEach((blockedUserId) => {
-        const matchedUser = _.find(
-          USERS_LIST,
-          (user) => user.id === blockedUserId
-        );
-
-        if (matchedUser) {
-          list.push(matchedUser);
-        }
-      });
-
-      return list;
-    },
-    userFollowingList: (_parent, { id }) => {
-      const userFollowingList = _.find(
-        FOLLOWING_USERS_LIST,
-        (followingUser) => followingUser.userId === id
-      );
-
-      if (!userFollowingList) {
-        return { message: "NULL" };
+      if (postSnapshot.empty) {
+        return null;
       }
 
-      const list = [];
+      // Searching user's reaction
+      const postReactionSnapshot = await firestore
+        .collection("postReactions")
+        .where(
+          Filter.and(
+            Filter.where("postId", "==", postId),
+            Filter.where("userId", "==", userId)
+          )
+        )
+        .get();
 
-      userFollowingList.followingUsers.forEach((followingUserId) => {
-        const matchedUser = _.find(
-          USERS_LIST,
-          (user) => user.id === followingUserId
-        );
-
-        if (matchedUser) {
-          list.push(matchedUser);
-        }
-      });
-
-      return { users: list };
-    },
-    userSavedPosts: (_parent, { id }) => {
-      const userSavedPosts = _.find(
-        SAVED_POSTS_LIST,
-        (savedPost) => savedPost.userId === id
-      );
-
-      if (!userSavedPosts) {
-        return [];
+      if (postReactionSnapshot.empty) {
+        return null;
       }
 
-      const list = [];
+      return postReactionSnapshot.docs[0].data();
 
-      userSavedPosts.savedPosts.forEach((postId) => {
-        const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
-
-        if (matchedPost) {
-          list.push(matchedPost);
-        }
-      });
-
-      return list;
+      // const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
+      // const matchedReaction = _.find(
+      //   matchedPost.reactions,
+      //   (reaction) => reaction.owner.id === userId
+      // );
+      // return matchedReaction;
     },
-    users: () => USERS_LIST,
+    userBlockedList: async (_parent, { id: userId }) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
+      }
+
+      const blockedUsersSnapshot = await firestore
+        .collection("blockedUsers")
+        .where("userId", "==", userId)
+        .get();
+      const blockedUsers = [];
+
+      blockedUsersSnapshot.docs.forEach((doc) => blockedUsers.push(doc.data()));
+
+      return blockedUsers;
+    },
+    users: async () => {
+      const usersSnapshot = await firestore.collection("users").get();
+      const users = [];
+
+      usersSnapshot.forEach((doc) => users.push(doc.data()));
+
+      return users;
+    },
   },
   Mutation: {
-    addCommentReaction: (
+    addComment: async (
       _parent,
-      { input: { commentId, reactionOwnerId, reactionType } }
+      { input: { commentOwnerId, parentId, postId, text } }
     ) => {
-      const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
+      // Checking if the user exists
+      const commentOwnerSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", commentOwnerId)
+        .get();
 
-      if (!matchedComment) {
+      if (commentOwnerSnapshot.empty) {
         return null;
       }
 
-      const matchedOwner = _.find(
-        USERS_LIST,
-        (user) => user.id === reactionOwnerId
-      );
-      const newReactionOwner = {
-        email: matchedOwner.email,
-        firstName: matchedOwner.firstName,
-        id: matchedOwner.id,
-        lastName: matchedOwner.lastName,
-        username: matchedOwner.username,
-      };
-      const newReaction = {
-        id: `${commentId}-reaction-${crypto.randomUUID()}`,
-        dateTime: new Date().getTime().toString(),
-        owner: newReactionOwner,
-        type: reactionType,
-      };
+      // Checking if the post exists
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", postId)
+        .get();
 
-      if (!matchedComment.reactions) {
-        matchedComment.reactions = [];
-      }
-
-      matchedComment.reactions.push(newReaction);
-
-      return newReaction;
-    },
-    addCommentReply: (_parent, { input: { commentId, ownerId, text } }) => {
-      const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
-
-      if (!matchedComment) {
+      if (postSnapshot.empty) {
         return null;
       }
 
-      const postId = matchedComment.postId;
       const newComment = {
-        id: `${postId}-comment-${crypto.randomUUID()}`,
         dateTime: new Date().getTime().toString(),
-        ownerId,
+        ownerId: commentOwnerId,
+        parentId,
         postId,
-        reactions: null,
-        replies: null,
         text,
       };
 
-      if (!matchedComment.replies) {
-        matchedComment.replies = [];
+      const { id } = await firestore.collection("postComments").add(newComment);
+      await firestore.collection("postComments").doc(id).update({ id });
+
+      return { ...newComment, id };
+    },
+    addCommentReaction: async (
+      _parent,
+      { input: { commentId, reactionType, userId } }
+    ) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
       }
 
-      matchedComment.replies.push(newComment);
+      // Checking if the comment exists
+      const commentSnapshot = await firestore
+        .collection("postComments")
+        .where("id", "==", commentId)
+        .get();
 
-      return newComment;
+      if (commentSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the user already reacted to the comment
+      const commentReactionSnapshot = await firestore
+        .collection("commentReactions")
+        .where(
+          Filter.and(
+            Filter.where("commentId", "==", commentId),
+            Filter.where("userId", "==", userId)
+          )
+        )
+        .get();
+
+      if (!commentReactionSnapshot.empty) {
+        const commentReaction = commentReactionSnapshot.docs[0].data();
+        const { id } = commentReaction;
+        const updatedDateTime = new Date().getTime().toString();
+
+        await firestore
+          .collection("commentReactions")
+          .doc(id)
+          .update({ dateTime: updatedDateTime, reactionType });
+
+        return { ...commentReaction, dateTime: updatedDateTime, reactionType };
+      }
+
+      const newCommentReaction = {
+        commentId,
+        dateTime: new Date().getTime().toString(),
+        reactionType,
+        userId,
+      };
+
+      const { id } = await firestore
+        .collection("commentReactions")
+        .add(newCommentReaction);
+      await firestore.collection("commentReactions").doc(id).update({ id });
+
+      return { ...newCommentReaction, id };
     },
-    addMessage: (
+    addMessage: async (
       _parent,
       { input: { emoji, parentId, receiverId, senderId, text } }
     ) => {
-      const newMessage = {
-        id: `message-${crypto.randomUUID()}`,
-        dateTime: new Date().getTime().toString(),
-        emoji: emoji || undefined,
-        parentId,
-        reactions: null,
-        receiverId,
-        replies: null,
-        senderId,
-        text: text || undefined,
-      };
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", receiverId),
+            Filter.where("id", "==", senderId)
+          )
+        )
+        .get();
 
-      if (!MESSAGES_LIST) {
-        MESSAGES_LIST = [];
-      }
-
-      MESSAGES_LIST.push(newMessage);
-
-      return newMessage;
-    },
-    addPostComment: (_parent, { input: { commentOwnerId, postId, text } }) => {
-      const newComment = {
-        id: `${postId}-comment-${crypto.randomUUID()}`,
-        dateTime: new Date().getTime().toString(),
-        ownerId: commentOwnerId,
-        postId,
-        reactions: null,
-        replies: null,
-        text,
-      };
-
-      if (!COMMENTS_LIST) {
-        COMMENTS_LIST = [];
-      }
-
-      COMMENTS_LIST.push(newComment);
-
-      return newComment;
-    },
-    addPostReaction: (
-      _parent,
-      { input: { postId, reactionOwnerId, reactionType } }
-    ) => {
-      const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
-      const matchedOwner = _.find(
-        USERS_LIST,
-        (user) => user.id === reactionOwnerId
-      );
-      const newReactionOwner = {
-        email: matchedOwner.email,
-        firstName: matchedOwner.firstName,
-        id: matchedOwner.id,
-        lastName: matchedOwner.lastName,
-        username: matchedOwner.username,
-      };
-      const newReaction = {
-        id: `${postId}-reaction-${crypto.randomUUID()}`,
-        owner: newReactionOwner,
-        type: reactionType,
-      };
-
-      if (!matchedPost.reactions) {
-        matchedPost.reactions = [];
-      }
-
-      matchedPost.reactions.push(newReaction);
-
-      return newReaction;
-    },
-    addUserCollegeEducation: (
-      _parent,
-      { input: { degree, from, graduated, school, to, userId, visibility } }
-    ) => {
-      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
-      const newEducation = {
-        id: `education-${crypto.randomUUID()}`,
-        degree,
-        from: new Date(Number(from)).getTime().toString(),
-        graduated: graduated || undefined,
-        level: EducationLevel.COLLEGE,
-        school,
-        to: to ? new Date(Number(to)).getTime().toString() : undefined,
-        visibility,
-      };
-
-      if (!matchedUser.educationHistory) {
-        matchedUser.educationHistory = [];
-      }
-
-      matchedUser.educationHistory.push(newEducation);
-
-      return newEducation;
-    },
-    addUserFriend: (_parent, { input: { first, second } }) => {
-      const matchedFriendship = _.find(
-        FRIENDS_LIST,
-        (friendship) =>
-          (friendship.first === first && friendship.second === second) ||
-          (friendship.first === second && friendship.second === first)
-      );
-      const newFriendship = { first, second };
-
-      if (matchedFriendship) {
+      if (usersSnapshot.docs.length < 2) {
         return null;
       }
 
-      FRIENDS_LIST.push(newFriendship);
+      const newMessage = {
+        dateTime: new Date().getTime().toString(),
+        emoji: emoji || null,
+        parentId,
+        receiverId,
+        senderId,
+        text: text || null,
+      };
+      const { id } = await firestore.collection("messages").add(newMessage);
+      await firestore.collection("messages").doc(id).update({ id });
 
-      return newFriendship;
+      return { ...newMessage, id };
     },
-    addUserHighSchoolEducation: (
+    addPostReaction: async (
+      _parent,
+      { input: { postId, reactionType, userId } }
+    ) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the post exists
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", postId)
+        .get();
+
+      if (postSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the user already reacted to the post
+      const postReactionSnapshot = await firestore
+        .collection("postReactions")
+        .where(
+          Filter.and(
+            Filter.where("postId", "==", postId),
+            Filter.where("userId", "==", userId)
+          )
+        )
+        .get();
+
+      if (!postReactionSnapshot.empty) {
+        const postReaction = postReactionSnapshot.docs[0].data();
+        const { id } = postReaction;
+        const updatedDateTime = new Date().getTime().toString();
+
+        await firestore
+          .collection("postReactions")
+          .doc(id)
+          .update({ dateTime: updatedDateTime, reactionType });
+
+        return { ...postReaction, dateTime: updatedDateTime, reactionType };
+      }
+
+      const newPostReaction = {
+        dateTime: new Date().getTime().toString(),
+        postId,
+        reactionType,
+        userId,
+      };
+
+      const { id } = await firestore
+        .collection("postReactions")
+        .add(newPostReaction);
+      await firestore.collection("postReactions").doc(id).update({ id });
+
+      return { ...newPostReaction, id };
+    },
+    addUserCollegeEducation: async (
+      _parent,
+      { input: { degree, from, graduated, school, to, userId, visibility } }
+    ) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
+      }
+
+      const newEducation = {
+        degree,
+        from: new Date(Number(from)).getTime().toString(),
+        graduated,
+        level: EducationLevel.COLLEGE,
+        school,
+        to: to ? new Date(Number(to)).getTime().toString() : null,
+        userId,
+        visibility,
+      };
+      const { id } = await firestore
+        .collection("educationHistory")
+        .add(newEducation);
+      await firestore.collection("educationHistory").doc(id).update({ id });
+
+      return { ...newEducation, id };
+    },
+    addUserFriend: async (_parent, { input: { first, second } }) => {
+      // Checking if the users exist
+      const userSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", first),
+            Filter.where("id", "==", second)
+          )
+        )
+        .get();
+
+      if (userSnapshot.docs.length < 2) {
+        return null;
+      }
+
+      const matchedFriendshipSnapshot = await firestore
+        .collection("friendships")
+        .where(
+          Filter.or(
+            Filter.and(
+              Filter.where("first", "==", first),
+              Filter.where("second", "==", second)
+            ),
+            Filter.and(
+              Filter.where("first", "==", second),
+              Filter.where("second", "==", first)
+            )
+          )
+        )
+        .get();
+
+      if (!matchedFriendshipSnapshot.empty) {
+        return null;
+      }
+
+      const newFriendship = { first, second };
+
+      const { id } = await firestore
+        .collection("friendships")
+        .add(newFriendship);
+      firestore.collection("friendships").doc(id).update({ id });
+
+      return { ...newFriendship, id };
+    },
+    addUserHighSchoolEducation: async (
       _parent,
       { input: { from, graduated, school, to, userId, visibility } }
     ) => {
-      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
-      const newEducation = {
-        id: `education-${crypto.randomUUID()}`,
-        from: new Date(Number(from)).getTime().toString(),
-        graduated: graduated || undefined,
-        level: EducationLevel.HIGH_SCHOOL,
-        school,
-        to: to ? new Date(Number(to)).getTime().toString() : undefined,
-        visibility,
-      };
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
 
-      if (!matchedUser.educationHistory) {
-        matchedUser.educationHistory = [];
+      if (userSnapshot.empty) {
+        return null;
       }
 
-      matchedUser.educationHistory.push(newEducation);
+      const newEducation = {
+        from: new Date(Number(from)).getTime().toString(),
+        graduated,
+        level: EducationLevel.HIGH_SCHOOL,
+        school,
+        to: to ? new Date(Number(to)).getTime().toString() : null,
+        userId,
+        visibility,
+      };
+      const { id } = await firestore
+        .collection("educationHistory")
+        .add(newEducation);
+      await firestore.collection("educationHistory").doc(id).update({ id });
 
-      return newEducation;
+      return { ...newEducation, id };
     },
-    addUserPlace: (
+    addUserPlace: async (
       _parent,
       { input: { city, from, isCurrent, to, userId, visibility } }
     ) => {
-      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
-      const newPlace = {
-        id: `place-${crypto.randomUUID()}`,
-        city,
-        from: new Date(Number(from)).getTime().toString(),
-        isCurrent: isCurrent || undefined,
-        to: to ? new Date(Number(to)).getTime().toString() : undefined,
-        visibility,
-      };
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
 
-      if (!matchedUser.placesHistory) {
-        matchedUser.placesHistory = [];
+      if (userSnapshot.empty) {
+        return null;
       }
 
-      matchedUser.placesHistory.push(newPlace);
+      const newPlace = {
+        city,
+        from: new Date(Number(from)).getTime().toString(),
+        isCurrent,
+        to: to ? new Date(Number(to)).getTime().toString() : null,
+        userId,
+        visibility,
+      };
+      const { id } = await firestore.collection("placesHistory").add(newPlace);
+      await firestore.collection("placesHistory").doc(id).update({ id });
 
-      return newPlace;
+      return { ...newPlace, id };
     },
-    addUserRelationshipStatus: (
+    addUserRelationshipStatus: async (
       _parent,
       { input: { status, userId, visibility } }
     ) => {
-      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
 
-      if (!matchedUser.relationshipStatus) {
-        const newRelationshipStatus = { status, visibility };
-        matchedUser.relationshipStatus = newRelationshipStatus;
-        return newRelationshipStatus;
+      if (userSnapshot.empty) {
+        return null;
       }
 
-      return null;
+      const relationshipStatusSnapshot = await firestore
+        .collection("relationshipStatus")
+        .where("userId", "==", userId)
+        .get();
+
+      // Updating the document reference if a relationship status was found
+      if (!relationshipStatusSnapshot.empty) {
+        const firstDocument = relationshipStatusSnapshot.docs[0];
+
+        firstDocument.ref.update({ status, visibility });
+        return {
+          ...firstDocument.data(),
+          status,
+          visibility,
+        };
+      }
+
+      const newRelationshipStatus = { status, userId, visibility };
+      const { id } = await firestore
+        .collection("relationshipStatus")
+        .add(newRelationshipStatus);
+      await firestore.collection("relationshipStatus").doc(id).update({ id });
+
+      return { ...newRelationshipStatus, id };
     },
-    addUserWorkplace: (
+    addUserWorkplace: async (
       _parent,
       { input: { company, from, isCurrent, position, to, userId, visibility } }
     ) => {
-      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
-      const newWorkplace = {
-        id: `work-${crypto.randomUUID()}`,
-        company,
-        from: new Date(Number(from)).getTime().toString(),
-        isCurrent: isCurrent || undefined,
-        position,
-        to: to ? new Date(Number(to)).getTime().toString() : undefined,
-        visibility,
-      };
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
 
-      if (!matchedUser.workHistory) {
-        matchedUser.workHistory = [];
+      if (userSnapshot.empty) {
+        return null;
       }
 
-      matchedUser.workHistory.push(newWorkplace);
+      const newWorkplace = {
+        company,
+        from: new Date(Number(from)).getTime().toString(),
+        isCurrent,
+        position,
+        to: to ? new Date(Number(to)).getTime().toString() : null,
+        userId,
+        visibility,
+      };
+      const { id } = await firestore
+        .collection("workHistory")
+        .add(newWorkplace);
+      await firestore.collection("workHistory").doc(id).update({ id });
 
-      return newWorkplace;
+      return { ...newWorkplace, id };
     },
-    blockUser: (_parent, { input: { blockedUserId, userId } }) => {
+    blockUser: async (_parent, { input: { blockedUserId, userId } }) => {
+      // Checking if the user wants to block himself/herself
       if (blockedUserId === userId) {
         return null;
       }
 
-      const blockedUsers = _.find(
-        BLOCKED_USERS_LIST,
-        (blockedUser) => blockedUser.userId === userId
-      );
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", blockedUserId),
+            Filter.where("id", "==", userId)
+          )
+        )
+        .get();
 
-      if (!blockedUsers) {
-        BLOCKED_USERS_LIST.push({ blockedUsers: [blockedUserId], userId });
-        return blockedUserId;
-      }
-
-      if (_.includes(blockedUsers.blockedUsers, blockedUserId)) {
+      if (usersSnapshot.docs.length < 2) {
         return null;
       }
 
-      blockedUsers.blockedUsers.push(blockedUserId);
+      // Checking if the user to be blocked is already blocked
+      const blockedUsersSnapshot = await firestore
+        .collection("blockedUsers")
+        .where(
+          Filter.and(
+            Filter.where("blockedUserId", "==", blockedUserId),
+            Filter.where("userId", "==", userId)
+          )
+        )
+        .get();
 
-      return blockedUserId;
-    },
-    createPost: (
-      _parent,
-      {
-        input: {
-          parentId,
-          receiverId,
-          receiverUsername,
-          text,
-          userId,
-          visibility,
-        },
+      if (!blockedUsersSnapshot.empty) {
+        return null;
       }
+
+      const newBlockRelationship = { blockedUserId, userId };
+
+      const { id } = await firestore
+        .collection("blockedUsers")
+        .add(newBlockRelationship);
+      await firestore.collection("blockedUsers").doc(id).update({ id });
+
+      return { ...newBlockRelationship, id };
+    },
+    createPost: async (
+      _parent,
+      { input: { ownerId, parentId, receiverId, text, visibility } }
     ) => {
-      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
+      // Checking if the users exist
+      const userSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", ownerId),
+            Filter.where("id", "==", receiverId)
+          )
+        )
+        .get();
+
+      if (userSnapshot.docs.length < 2) {
+        return null;
+      }
+
       const newPost = {
-        id: `post-${crypto.randomUUID()}`,
         canComment: visibility,
         canReact: visibility,
         canShare: visibility,
-        comments: null,
         dateTime: new Date().getTime().toString(),
-        owner: matchedUser,
-        ownerId: userId,
+        ownerId,
         parentId,
-        photos: null,
-        reactions: null,
         receiverId,
-        receiverUsername,
-        shares: null,
         text,
         video: null,
         visibility,
       };
 
-      if (!POSTS_LIST) {
-        POSTS_LIST = [];
-      }
+      const { id } = await firestore.collection("posts").add(newPost);
+      await firestore.collection("posts").doc(id).update({ id });
 
-      POSTS_LIST.push(newPost);
-
-      return newPost;
+      return { ...newPost, id };
     },
-    followUser: (_parent, { input: { followingUserId, userId } }) => {
-      if (followingUserId === userId) {
+    followUser: async (_parent, { input: { followingUserId, userId } }) => {
+      // Checking if the user wants to follow himself/herself
+      if (userId === followingUserId) {
         return null;
       }
 
-      const followingUsers = _.find(
-        FOLLOWING_USERS_LIST,
-        (followingUser) => followingUser.userId === userId
-      );
-
-      if (!followingUsers) {
-        FOLLOWING_USERS_LIST.push({
-          followingUsers: [followingUserId],
-          userId,
-        });
-        return followingUserId;
-      }
-
-      if (_.includes(followingUsers.followingUsers, followingUserId)) {
-        return null;
-      }
-
-      followingUsers.followingUsers.push(followingUserId);
-
-      return followingUserId;
-    },
-    hidePost: (_parent, { input: { hiddenPostId, userId } }) => {
-      const matchedPost = _.find(
-        POSTS_LIST,
-        (post) => post.id === hiddenPostId
-      );
-
-      if (!matchedPost) {
-        return null;
-      }
-
-      const isUserPost = matchedPost.ownerId === userId;
-
-      if (isUserPost) {
-        return null;
-      }
-
-      const hiddenPosts = _.find(
-        HIDDEN_POSTS_LIST,
-        (hiddenPost) => hiddenPost.userId === userId
-      );
-
-      if (!hiddenPosts) {
-        HIDDEN_POSTS_LIST.push({ hiddenPosts: [hiddenPostId], userId });
-        return hiddenPostId;
-      }
-
-      if (_.includes(hiddenPosts.hiddenPosts, hiddenPostId)) {
-        return null;
-      }
-
-      hiddenPosts.hiddenPosts.push(hiddenPostId);
-
-      return hiddenPostId;
-    },
-    removeComment: (_parent, { id }) => {
-      let removedComment;
-      const matchedComment = _.find(
-        COMMENTS_LIST,
-        (comment) => comment.id === id
-      );
-
-      if (!matchedComment) {
-        return null;
-      }
-
-      _.remove(COMMENTS_LIST, (comment) => {
-        if (comment.id === id) {
-          removedComment = comment;
-        }
-        return comment.id === id;
-      });
-
-      if (COMMENTS_LIST.length === 0) {
-        COMMENTS_LIST = null;
-      }
-
-      return removedComment;
-    },
-    removeCommentReaction: (
-      _parent,
-      { input: { commentId, reactionOwnerId } }
-    ) => {
-      let removedReaction;
-      const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
-
-      if (!matchedComment) {
-        return null;
-      }
-
-      _.remove(matchedComment.reactions, (reaction) => {
-        if (reaction.owner.id === reactionOwnerId) {
-          removedReaction = reaction;
-        }
-        return reaction.owner.id === reactionOwnerId;
-      });
-
-      if (matchedComment.reactions.length === 0) {
-        matchedComment.reactions = null;
-      }
-
-      return removedReaction;
-    },
-    removeCommentReply: (_parent, { input: { commentId, replyId } }) => {
-      let removedReply;
-      const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
-
-      if (!matchedComment) {
-        return null;
-      }
-
-      _.remove(matchedComment.replies, (reply) => {
-        if (reply.id === replyId) {
-          removedReply = reply;
-        }
-
-        return reply.id === replyId;
-      });
-
-      if (matchedComment.replies.length === 0) {
-        matchedComment.replies = null;
-      }
-
-      return removedReply;
-    },
-    removePost: (_parent, { id }) => {
-      const matchedPost = _.find(POSTS_LIST, (post) => post.id === id);
-
-      if (!matchedPost || matchedPost.ownerId !== AUTHENTICATED_USER_ID) {
-        return null;
-      }
-
-      _.remove(POSTS_LIST, (post) => post.id === matchedPost.id);
-
-      return matchedPost;
-    },
-    removePostComment: (_parent, { input: { commentId } }) => {
-      let removedComment;
-      const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
-
-      if (!matchedComment) {
-        return null;
-      }
-
-      _.remove(COMMENTS_LIST, (comment) => {
-        if (comment.id === matchedComment.id) {
-          removedComment = comment;
-        }
-
-        if (COMMENTS_LIST.length === 0) {
-          COMMENTS_LIST = null;
-        }
-
-        return comment.id === matchedComment.id;
-      });
-
-      return removedComment;
-    },
-    removePostReaction: (_parent, { input: { ownerId, postId } }) => {
-      let removedReaction;
-      const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
-      const matchedReaction = _.find(
-        matchedPost.reactions,
-        (reaction) => reaction.owner.id === ownerId
-      );
-
-      _.remove(matchedPost.reactions, (reaction) => {
-        if (reaction.id === matchedReaction.id) {
-          removedReaction = reaction;
-        }
-        return reaction.id === matchedReaction.id;
-      });
-
-      if (matchedPost.reactions.length === 0) {
-        matchedPost.reactions = null;
-      }
-
-      return removedReaction;
-    },
-    removeUserFriend: (_parent, { input: { first, second } }) => {
-      const matchedFriendship = _.find(
-        FRIENDS_LIST,
-        (friendship) =>
-          (friendship.first === first && friendship.second === second) ||
-          (friendship.first === second && friendship.second === first)
-      );
-
-      if (!matchedFriendship) {
-        return null;
-      }
-
-      _.remove(
-        FRIENDS_LIST,
-        (friendship) =>
-          (friendship.first === first && friendship.second === second) ||
-          (friendship.first === second && friendship.second === first)
-      );
-
-      return matchedFriendship;
-    },
-    removeUserFriendshipRequest: (_parent, { input: { receiver, sender } }) => {
-      const matchedFriendshipRequest = _.find(
-        FRIEND_REQUESTS_LIST,
-        (request) =>
-          (request.receiver === receiver && request.sender === sender) ||
-          (request.receiver === sender && request.sender === receiver)
-      );
-
-      if (!matchedFriendshipRequest) {
-        return null;
-      }
-
-      _.remove(FRIEND_REQUESTS_LIST, (request) => {
-        return request === matchedFriendshipRequest;
-      });
-
-      return matchedFriendshipRequest;
-    },
-    savePost: (_parent, { input: { postId, userId } }) => {
-      const userSavedPosts = _.find(
-        SAVED_POSTS_LIST,
-        (savedPost) => savedPost.userId === userId
-      );
-
-      if (!userSavedPosts) {
-        SAVED_POSTS_LIST.push({ savedPosts: [postId], userId });
-        return postId;
-      }
-
-      if (_.includes(userSavedPosts.savedPosts, postId)) {
-        return null;
-      }
-
-      userSavedPosts.savedPosts.push(postId);
-
-      return postId;
-    },
-    sendUserFriendshipRequest: (_parent, { input: { receiver, sender } }) => {
-      const newFriendshipRequest = { receiver, sender };
-      const matchedReceiver = _.find(
-        USERS_LIST,
-        (user) => user.id === receiver
-      );
-
-      if (
-        !matchedReceiver ||
-        _.find(matchedReceiver.friends, (friend) => friend.id === sender) ||
-        _.find(
-          FRIEND_REQUESTS_LIST,
-          (request) =>
-            request.receiver === receiver && request.sender === sender
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", followingUserId),
+            Filter.where("id", "==", userId)
+          )
         )
-      ) {
+        .get();
+
+      if (usersSnapshot.docs.length < 2) {
         return null;
       }
 
-      FRIEND_REQUESTS_LIST.push(newFriendshipRequest);
+      // Checking if the user is already following the second user
+      const followRelationshipSnapshot = await firestore
+        .collection("follows")
+        .where(
+          Filter.and(
+            Filter.where("userId", "==", userId),
+            Filter.where("followingUserId", "==", followingUserId)
+          )
+        )
+        .get();
 
-      return newFriendshipRequest;
-    },
-    unblockUser: (_parent, { input: { blockedUserId, userId } }) => {
-      const blockedUsers = _.find(
-        BLOCKED_USERS_LIST,
-        (blockedUser) => blockedUser.userId === userId
-      );
-
-      if (!blockedUsers || !blockedUsers.blockedUsers.includes(blockedUserId)) {
+      if (!followRelationshipSnapshot.empty) {
         return null;
       }
 
-      _.remove(
-        blockedUsers.blockedUsers,
-        (blockedUser) => blockedUser === blockedUserId
-      );
+      const newFollowRelationship = { userId, followingUserId };
 
-      return blockedUserId;
+      const { id } = await firestore
+        .collection("follows")
+        .add(newFollowRelationship);
+      await firestore.collection("follows").doc(id).update({ id });
+
+      return { ...newFollowRelationship, id };
     },
-    unfollowUser: (_parent, { input: { followingUserId, userId } }) => {
-      const followingUsers = _.find(
-        FOLLOWING_USERS_LIST,
-        (followingUser) => followingUser.userId === userId
-      );
+    hidePost: async (_parent, { input: { postId, userId } }) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
 
-      if (
-        !followingUsers ||
-        !followingUsers.followingUsers.includes(followingUserId)
-      ) {
+      if (userSnapshot.empty) {
         return null;
       }
 
-      _.remove(
-        followingUsers.followingUsers,
-        (followingUser) => followingUser === followingUserId
-      );
+      // Checking if the post exists
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", postId)
+        .get();
 
-      return followingUserId;
-    },
-    unsavePost: (_parent, { input: { postId, userId } }) => {
-      const userSavedPosts = _.find(
-        SAVED_POSTS_LIST,
-        (savedPost) => savedPost.userId === userId
-      );
-
-      if (!userSavedPosts || !userSavedPosts.savedPosts.includes(postId)) {
+      if (postSnapshot.empty) {
         return null;
       }
 
-      _.remove(userSavedPosts.savedPosts, (savedPost) => savedPost === postId);
+      // Checking if the user already hid the post
+      const hiddenPostsSnapshot = await firestore
+        .collection("hiddenPosts")
+        .where(
+          Filter.and(
+            Filter.where("userId", "==", userId),
+            Filter.where("postId", "==", postId)
+          )
+        )
+        .get();
 
-      return postId;
+      if (!hiddenPostsSnapshot.empty) {
+        return null;
+      }
+
+      const newHiddenPost = { postId, userId };
+
+      const { id } = await firestore
+        .collection("hiddenPosts")
+        .add(newHiddenPost);
+      await firestore.collection("hiddenPosts").doc(id).update({ id });
+
+      return { ...newHiddenPost, id };
     },
-    updateCommentReaction: (
+    removeComment: async (_parent, { id }) => {
+      // Checking if the comment exists
+      const commentSnapshot = await firestore
+        .collection("postComments")
+        .where("id", "==", id)
+        .get();
+
+      if (commentSnapshot.empty) {
+        return null;
+      }
+
+      const removedComment = commentSnapshot.docs[0].data();
+      await firestore.collection("postComments").doc(id).delete();
+
+      return removedComment;
+    },
+    removeCommentReaction: async (
       _parent,
-      { input: { commentId, ownerId, postId, reactionType } }
+      { input: { commentId, userId } }
     ) => {
-      const matchedComment = findMatchedComment(COMMENTS_LIST, commentId);
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
 
-      if (!matchedComment) {
+      if (userSnapshot.empty) {
         return null;
       }
 
-      const matchedReaction = _.find(
-        matchedComment.reactions,
-        (reaction) => reaction.owner.id === ownerId
-      );
+      // Checking if the comment exists
+      const commentSnapshot = await firestore
+        .collection("postComments")
+        .where("id", "==", commentId)
+        .get();
 
-      if (!matchedReaction) {
+      if (commentSnapshot.empty) {
         return null;
       }
 
-      matchedReaction.type = reactionType;
+      // Checking if the user reacted to the comment
+      const commentReactionSnapshot = await firestore
+        .collection("commentReactions")
+        .where(
+          Filter.and(
+            Filter.where("commentId", "==", commentId),
+            Filter.where("userId", "==", userId)
+          )
+        )
+        .get();
 
-      return matchedReaction;
-    },
-    updateConversationEmoji: (_parent, { input: { emoji, first, second } }) => {
-      const matchedConversation = _.find(
-        CONVERSATIONS_LIST,
-        (conversation) =>
-          (conversation.first === first && conversation.second === second) ||
-          (conversation.first === second && conversation.second === first)
-      );
-
-      if (!matchedConversation) {
-        const defaultConversation = {
-          emoji,
-          first,
-          firstNickname: null,
-          second,
-          secondNickname: null,
-          theme: ConversationTheme.DEFAULT,
-        };
-        CONVERSATIONS_LIST.push(defaultConversation);
-
-        return defaultConversation;
+      if (commentReactionSnapshot.empty) {
+        return null;
       }
 
-      matchedConversation.emoji = emoji;
+      const removedCommentReaction = commentReactionSnapshot.docs[0].data();
+      const { id } = removedCommentReaction;
+      await firestore.collection("commentReactions").doc(id).delete();
 
-      return matchedConversation;
+      return removedCommentReaction;
     },
-    updateConversationNickname: (_parent, { input: { nickname, userId } }) => {
-      const matchedConversation = _.find(
-        CONVERSATIONS_LIST,
-        (conversation) =>
-          conversation.first === userId || conversation.second === userId
-      );
+    removePost: async (_parent, { id }) => {
+      // Checking if the post exists
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", id)
+        .get();
 
-      if (!matchedConversation) {
-        const defaultConversation = {
-          emoji: Emoji.LIKE,
-          first,
-          firstNickname: null,
-          second,
-          secondNickname: null,
-          theme: ConversationTheme.DEFAULT,
-        };
-        CONVERSATIONS_LIST.push(defaultConversation);
-
-        return defaultConversation;
+      if (postSnapshot.empty) {
+        return null;
       }
 
-      if (matchedConversation.first === userId) {
-        matchedConversation.firstNickname = nickname;
+      const removedPost = postSnapshot.docs[0].data();
+      await firestore.collection("posts").doc(id).delete();
+
+      return removedPost;
+    },
+    removePostReaction: async (_parent, { input: { postId, userId } }) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the post exists
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", postId)
+        .get();
+
+      if (postSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the user reacted to the post
+      const postReactionSnapshot = await firestore
+        .collection("postReactions")
+        .where(
+          Filter.and(
+            Filter.where("postId", "==", postId),
+            Filter.where("userId", "==", userId)
+          )
+        )
+        .get();
+
+      if (postReactionSnapshot.empty) {
+        return null;
+      }
+
+      const removedPostReaction = postReactionSnapshot.docs[0].data();
+      const { id } = removedPostReaction;
+      await firestore.collection("postReactions").doc(id).delete();
+
+      return removedPostReaction;
+    },
+    removeUserFriend: async (_parent, { input: { first, second } }) => {
+      if (first === second) {
+        return null;
+      }
+
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", first),
+            Filter.where("id", "==", second)
+          )
+        )
+        .get();
+
+      if (usersSnapshot.docs.length < 2) {
+        return null;
+      }
+
+      // Checking if the users are friends
+      const friendshipSnapshot = await firestore
+        .collection("friendships")
+        .where(
+          Filter.or(
+            Filter.and(
+              Filter.where("first", "==", first),
+              Filter.where("second", "==", second)
+            ),
+            Filter.and(
+              Filter.where("first", "==", second),
+              Filter.where("second", "==", first)
+            )
+          )
+        )
+        .get();
+
+      if (friendshipSnapshot.empty) {
+        return null;
+      }
+
+      const friendship = friendshipSnapshot.docs[0].data();
+      const friendshipId = friendshipSnapshot.docs[0].id;
+
+      await firestore.collection("friendships").doc(friendshipId).delete();
+
+      return friendship;
+    },
+    removeUserFriendshipRequest: async (
+      _parent,
+      { input: { receiver, sender } }
+    ) => {
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", receiver),
+            Filter.where("id", "==", sender)
+          )
+        )
+        .get();
+
+      if (usersSnapshot.docs.length < 2) {
+        return null;
+      }
+
+      // Checking if a friendship request exists
+      const matchedFriendshipRequestsSnapshot = await firestore
+        .collection("friendshipRequests")
+        .where(
+          Filter.or(
+            Filter.and(
+              Filter.where("receiver", "==", receiver),
+              Filter.where("sender", "==", sender)
+            ),
+            Filter.and(
+              Filter.where("receiver", "==", sender),
+              Filter.where("sender", "==", receiver)
+            )
+          )
+        )
+        .get();
+
+      if (matchedFriendshipRequestsSnapshot.empty) {
+        return null;
+      }
+
+      const request = matchedFriendshipRequestsSnapshot.docs[0].data();
+      const requestId = matchedFriendshipRequestsSnapshot.docs[0].id;
+
+      await firestore.collection("friendshipRequests").doc(requestId).delete();
+
+      return request;
+    },
+    savePost: async (_parent, { input: { postId, userId } }) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the post exists
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", postId)
+        .get();
+
+      if (postSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the user already saved the post
+      const savedPostsSnapshot = await firestore
+        .collection("savedPosts")
+        .where(
+          Filter.and(
+            Filter.where("userId", "==", userId),
+            Filter.where("postId", "==", postId)
+          )
+        )
+        .get();
+
+      if (!savedPostsSnapshot.empty) {
+        return null;
+      }
+
+      const newSavedPost = { postId, userId };
+
+      const { id } = await firestore.collection("savedPosts").add(newSavedPost);
+      await firestore.collection("savedPosts").doc(id).update({ id });
+
+      return { ...newSavedPost, id };
+    },
+    sendUserFriendshipRequest: async (
+      _parent,
+      { input: { receiver, sender } }
+    ) => {
+      // Checking if the user wants to send himself/herself a friendship request
+      if (receiver === sender) {
+        return null;
+      }
+
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", receiver),
+            Filter.where("id", "==", sender)
+          )
+        )
+        .get();
+
+      if (usersSnapshot.docs.length < 2) {
+        return null;
+      }
+
+      // Checking if a friendship between users already exists
+      const friendshipsSnapshot = await firestore
+        .collection("friendships")
+        .where(
+          Filter.or(
+            Filter.and(
+              Filter.where("first", "==", receiver),
+              Filter.where("second", "==", sender)
+            ),
+            Filter.and(
+              Filter.where("first", "==", sender),
+              Filter.where("second", "==", receiver)
+            )
+          )
+        )
+        .get();
+
+      if (!friendshipsSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if a friendship request is already sent
+      const matchedFriendshipRequestsSnapshot = await firestore
+        .collection("friendshipRequests")
+        .where(
+          Filter.or(
+            Filter.where("receiver", "==", receiver),
+            Filter.where("sender", "==", sender)
+          )
+        )
+        .get();
+
+      if (!matchedFriendshipRequestsSnapshot.empty) {
+        return null;
+      }
+
+      const newFriendshipRequest = { receiver, sender };
+
+      const { id } = await firestore
+        .collection("friendshipRequests")
+        .add(newFriendshipRequest);
+      await firestore.collection("friendshipRequests").doc(id).update({ id });
+
+      return { ...newFriendshipRequest, id };
+    },
+    unblockUser: async (_parent, { input: { blockedUserId, userId } }) => {
+      // Checking if the user wants to unblock himself/herself
+      if (blockedUserId === userId) {
+        return null;
+      }
+
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", blockedUserId),
+            Filter.where("id", "==", userId)
+          )
+        )
+        .get();
+
+      if (usersSnapshot.docs.length < 2) {
+        return null;
+      }
+
+      // Checking if the blockedUser is blocked by the user
+      const blockedUsersSnapshot = await firestore
+        .collection("blockedUsers")
+        .where(
+          Filter.and(
+            Filter.where("blockedUserId", "==", blockedUserId),
+            Filter.where("userId", "==", userId)
+          )
+        )
+        .get();
+
+      if (blockedUsersSnapshot.empty) {
+        return null;
+      }
+
+      const blockRelationship = blockedUsersSnapshot.docs[0].data();
+      const blockRelationshipId = blockedUsersSnapshot.docs[0].id;
+
+      await firestore
+        .collection("blockedUsers")
+        .doc(blockRelationshipId)
+        .delete();
+
+      return blockRelationship;
+    },
+    unfollowUser: async (_parent, { input: { followingUserId, userId } }) => {
+      // Checking if the user wants to unfollow himself/herself
+      if (userId === followingUserId) {
+        return null;
+      }
+
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", followingUserId),
+            Filter.where("id", "==", userId)
+          )
+        )
+        .get();
+
+      if (usersSnapshot.docs.length < 2) {
+        return null;
+      }
+
+      // Checking if the user is following the second user
+      const followRelationshipSnapshot = await firestore
+        .collection("follows")
+        .where(
+          Filter.and(
+            Filter.where("userId", "==", userId),
+            Filter.where("followingUserId", "==", followingUserId)
+          )
+        )
+        .get();
+
+      if (followRelationshipSnapshot.empty) {
+        return null;
+      }
+
+      const followRelationship = followRelationshipSnapshot.docs[0].data();
+      const followRelationshipId = followRelationshipSnapshot.docs[0].id;
+
+      await firestore.collection("follows").doc(followRelationshipId).delete();
+
+      return followRelationship;
+    },
+    unsavePost: async (_parent, { input: { postId, userId } }) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the post exists
+      const postSnapshot = await firestore
+        .collection("posts")
+        .where("id", "==", postId)
+        .get();
+
+      if (postSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the user saved the post
+      const savedPostsSnapshot = await firestore
+        .collection("savedPosts")
+        .where(
+          Filter.and(
+            Filter.where("userId", "==", userId),
+            Filter.where("postId", "==", postId)
+          )
+        )
+        .get();
+
+      if (savedPostsSnapshot.empty) {
+        return null;
+      }
+
+      const savePostRelationship = savedPostsSnapshot.docs[0].data();
+      const savePostRelationshipId = savedPostsSnapshot.docs[0].id;
+
+      await firestore
+        .collection("savedPosts")
+        .doc(savePostRelationshipId)
+        .delete();
+
+      return savePostRelationship;
+    },
+    updateConversationEmoji: async (
+      _parent,
+      { input: { emoji, first, second } }
+    ) => {
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", first),
+            Filter.where("id", "==", second)
+          )
+        )
+        .get();
+
+      if (usersSnapshot.docs.length < 2) {
+        return null;
+      }
+
+      // Checking if their conversation emoji is default (it doesn't exist)
+      const conversationDetailsSnapshot = await firestore
+        .collection("conversationDetails")
+        .where(
+          Filter.or(
+            Filter.and(
+              Filter.where("first", "==", first),
+              Filter.where("second", "==", second)
+            ),
+            Filter.and(
+              Filter.where("first", "==", second),
+              Filter.where("second", "==", first)
+            )
+          )
+        )
+        .get();
+
+      if (conversationDetailsSnapshot.empty) {
+        // Adding conversation's emoji
+        const newConversationDetails = { emoji, first, second };
+
+        const { id } = await firestore
+          .collection("conversationDetails")
+          .add(newConversationDetails);
+        await firestore
+          .collection("conversationDetails")
+          .doc(id)
+          .update({ id });
+
+        return { ...newConversationDetails, id };
+      }
+
+      // Updating conversation's emoji
+      const conversationDetails = conversationDetailsSnapshot.docs[0].data();
+      const { id } = conversationDetails;
+
+      await firestore
+        .collection("conversationDetails")
+        .doc(id)
+        .update({ emoji });
+
+      return {
+        ...conversationDetails,
+        emoji,
+      };
+    },
+    updateConversationNickname: async (
+      _parent,
+      { input: { first, nickname, second, userId } }
+    ) => {
+      // Checking the "userId" is either the first or the second user
+      if (userId !== first && userId !== second) {
+        return null;
+      }
+
+      // Checking if the users exist
+      const userSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", first),
+            Filter.where("id", "==", second)
+          )
+        )
+        .get();
+
+      if (userSnapshot.docs.length < 2) {
+        return null;
+      }
+
+      // Checking if their conversation details exist
+      const conversationDetailsSnapshot = await firestore
+        .collection("conversationDetails")
+        .where(
+          Filter.or(
+            Filter.and(
+              Filter.where("first", "==", first),
+              Filter.where("second", "==", second)
+            ),
+            Filter.and(
+              Filter.where("first", "==", second),
+              Filter.where("second", "==", first)
+            )
+          )
+        )
+        .get();
+
+      if (conversationDetailsSnapshot.empty) {
+        if (!nickname) {
+          return null;
+        }
+
+        // Adding
+        const isFirstUserNicknameUpdated = userId === first;
+        let newConversationDetails = { first, second };
+
+        if (isFirstUserNicknameUpdated) {
+          newConversationDetails = {
+            ...newConversationDetails,
+            firstNickname: nickname,
+          };
+        } else {
+          newConversationDetails = {
+            ...newConversationDetails,
+            secondNickname: nickname,
+          };
+        }
+
+        const { id } = await firestore
+          .collection("conversationDetails")
+          .add(newConversationDetails);
+        await firestore
+          .collection("conversationDetails")
+          .doc(id)
+          .update({ id });
+
+        return { ...newConversationDetails, id };
+      }
+
+      // Updating
+      let conversationDetails = conversationDetailsSnapshot.docs[0].data();
+      const {
+        first: databaseFirst,
+        id,
+        second: databaseSecond,
+      } = conversationDetails;
+      const isFirstUserNicknameUpdated = userId === databaseFirst;
+
+      if (isFirstUserNicknameUpdated) {
+        if (!nickname) {
+          await firestore
+            .collection("conversationDetails")
+            .doc(id)
+            .update({ firstNickname: FieldValue.delete() });
+          delete conversationDetails["firstNickname"];
+
+          return conversationDetails;
+        }
+
+        const firstNickname = nickname;
+
+        conversationDetails = {
+          ...conversationDetails,
+          firstNickname,
+        };
+        await firestore
+          .collection("conversationDetails")
+          .doc(id)
+          .update({ firstNickname });
+
+        return {
+          ...conversationDetails,
+          firstNickname,
+        };
       } else {
-        matchedConversation.secondNickname = nickname;
-      }
+        if (!nickname) {
+          await firestore
+            .collection("conversationDetails")
+            .doc(id)
+            .update({ secondNickname: FieldValue.delete() });
+          delete conversationDetails["secondNickname"];
 
-      return matchedConversation;
-    },
-    updateConversationTheme: (_parent, { input: { first, second, theme } }) => {
-      const matchedConversation = _.find(
-        CONVERSATIONS_LIST,
-        (conversation) =>
-          (conversation.first === first && conversation.second === second) ||
-          (conversation.first === second && conversation.second === first)
-      );
+          return conversationDetails;
+        }
 
-      if (!matchedConversation) {
-        const defaultConversation = {
-          emoji: Emoji.LIKE,
-          first,
-          firstNickname: null,
-          second,
-          secondNickname: null,
-          theme,
+        const secondNickname = nickname;
+
+        conversationDetails = {
+          ...conversationDetails,
+          secondNickname,
         };
-        CONVERSATIONS_LIST.push(defaultConversation);
+        await firestore
+          .collection("conversationDetails")
+          .doc(id)
+          .update({ secondNickname });
 
-        return defaultConversation;
+        return {
+          ...conversationDetails,
+          secondNickname,
+        };
+      }
+    },
+    updateConversationTheme: async (
+      _parent,
+      { input: { first, second, theme } }
+    ) => {
+      // Checking if the users exist
+      const usersSnapshot = await firestore
+        .collection("users")
+        .where(
+          Filter.or(
+            Filter.where("id", "==", first),
+            Filter.where("id", "==", second)
+          )
+        )
+        .get();
+
+      if (usersSnapshot.docs.length < 2) {
+        return null;
       }
 
-      matchedConversation.theme = theme;
+      // Checking if their conversation theme is default (it doesn't exist)
+      const conversationDetailsSnapshot = await firestore
+        .collection("conversationDetails")
+        .where(
+          Filter.or(
+            Filter.and(
+              Filter.where("first", "==", first),
+              Filter.where("second", "==", second)
+            ),
+            Filter.and(
+              Filter.where("first", "==", second),
+              Filter.where("second", "==", first)
+            )
+          )
+        )
+        .get();
 
-      return matchedConversation;
-    },
-    updatePostReaction: (
-      _parent,
-      { input: { ownerId, postId, reactionType } }
-    ) => {
-      const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
-      const matchedReaction = _.find(
-        matchedPost.reactions,
-        (reaction) => reaction.owner.id === ownerId
-      );
-      matchedReaction.type = reactionType;
+      if (conversationDetailsSnapshot.empty) {
+        // Adding conversation's theme
+        const newConversationDetails = { first, second, theme };
 
-      return matchedReaction;
+        const { id } = await firestore
+          .collection("conversationDetails")
+          .add(newConversationDetails);
+        await firestore
+          .collection("conversationDetails")
+          .doc(id)
+          .update({ id });
+
+        return { ...newConversationDetails, id };
+      }
+
+      // Updating conversation's theme
+      const conversationDetails = conversationDetailsSnapshot.docs[0].data();
+      const { id } = conversationDetails;
+
+      await firestore
+        .collection("conversationDetails")
+        .doc(id)
+        .update({ theme });
+
+      return {
+        ...conversationDetails,
+        theme,
+      };
     },
-    updateUserPlace: (
+    updateUserPlace: async (
       _parent,
       { input: { city, from, isCurrent, placeId, to, userId, visibility } }
     ) => {
-      const matchedUser = _.find(USERS_LIST, (user) => user.id === userId);
-      const matchedPlace = _.find(
-        matchedUser.placesHistory,
-        (place) => place.id === placeId
-      );
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
 
-      if (!matchedPlace) {
+      if (userSnapshot.empty) {
         return null;
       }
 
-      matchedPlace.city = city;
-      matchedPlace.from = new Date(Number(from)).getTime().toString();
-      matchedPlace.isCurrent = isCurrent || undefined;
-      matchedPlace.to = to
-        ? new Date(Number(to)).getTime().toString()
-        : undefined;
-      matchedPlace.visibility = visibility;
+      // Checking if the living place exists
+      const livingPlaceSnapshot = await firestore
+        .collection("placesHistory")
+        .where("id", "==", placeId)
+        .get();
 
-      return matchedPlace;
+      if (livingPlaceSnapshot.empty) {
+        return null;
+      }
+
+      let updatedPlace = livingPlaceSnapshot.docs[0].data();
+
+      // Checking if the place belongs to the user
+      if (updatedPlace.userId !== userId) {
+        return null;
+      }
+
+      if (
+        typeof city !== "undefined" &&
+        !!city &&
+        city.trim().length > 0 &&
+        city !== updatedPlace.city
+      ) {
+        updatedPlace = { ...updatedPlace, city };
+      }
+
+      if (
+        typeof from !== "undefined" &&
+        !!from &&
+        from.trim().length > 0 &&
+        from !== updatedPlace.from
+      ) {
+        updatedPlace = { ...updatedPlace, from };
+      }
+
+      // Updating "isCurrent" and "to" if both are valid -> if one of them is not, skip update
+      // If "isCurrent" parameter is null -> skip update
+      // If "isCurrent" parameter is true and "to" from database is not null -> update fields
+      // If "isCurrent" parameter is false and "to" parameter is valid -> update fields
+      if (
+        typeof isCurrent !== "undefined" &&
+        isCurrent !== null &&
+        isCurrent !== updatedPlace.isCurrent
+      ) {
+        if (isCurrent) {
+          if (!!updatedPlace.to) {
+            updatedPlace = { ...updatedPlace, isCurrent, to: null };
+          }
+        } else if (typeof to !== "undefined" && !!to && to.trim().length > 0) {
+          updatedPlace = { ...updatedPlace, isCurrent, to };
+        }
+      }
+
+      if (
+        typeof visibility !== "undefined" &&
+        visibility.trim().length > 0 &&
+        visibility !== updatedPlace.visibility
+      ) {
+        updatedPlace = { ...updatedPlace, visibility };
+      }
+
+      await firestore
+        .collection("placesHistory")
+        .doc(updatedPlace.id)
+        .update({ ...updatedPlace });
+
+      return updatedPlace;
     },
   },
 };

@@ -1,9 +1,9 @@
 import { ButtonHTMLAttributes, ElementType } from "react";
 
 import { Colors } from "environment";
+import { FontWeight } from "types";
 
 import { Button } from "./BaseButton.style";
-import { FontWeight } from "./BaseButton.types";
 
 export interface BaseButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement> {

@@ -74,7 +74,7 @@ export function Posts({ style }: Props) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "1em" }}>
         {friendsPosts.map((post, index) => (
-          <UserPost key={index} id={post.id} />
+          <UserPost data={post} key={index} />
         ))}
       </div>
     );

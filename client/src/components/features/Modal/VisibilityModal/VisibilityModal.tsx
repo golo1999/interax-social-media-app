@@ -5,9 +5,9 @@ import { IconType } from "react-icons";
 import { MdClose } from "react-icons/md";
 
 import { Modal, RadioButton } from "components";
+import { Permission } from "enums";
 import { Colors } from "environment";
 import { useOutsideClick } from "hooks";
-import { Permission } from "models";
 
 import { Button, List, ListItem } from "./VisibilityModal.style";
 

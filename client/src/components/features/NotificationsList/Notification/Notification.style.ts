@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
-import { NotificationType, Theme } from "models";
+import { NotificationType, Theme } from "types";
 
 interface NotificationProps {
   isRead: boolean;

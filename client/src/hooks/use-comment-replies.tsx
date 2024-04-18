@@ -8,11 +8,11 @@ import { Colors } from "environment";
 import {
   GetCommentRepliesData,
   GET_COMMENT_REPLIES,
-  RemoveCommentReplyData,
-  REMOVE_COMMENT_REPLY,
+  RemoveCommentData,
+  REMOVE_COMMENT,
 } from "helpers";
-import { Theme } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
+import { Theme } from "types";
 
 const Paragraph = styled.p<ThemeProps>`
   color: ${({ isAuthenticated, theme }) =>
@@ -47,14 +47,9 @@ export function useCommentReplies({ commentId, level, postOwnerId }: Props) {
     useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
   const [fetchRepliesReplies, { data: repliesReplies }] =
     useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
-  const [removeCommentReply] = useMutation<RemoveCommentReplyData>(
-    REMOVE_COMMENT_REPLY,
-    {
-      refetchQueries: [
-        { query: GET_COMMENT_REPLIES, variables: { commentId } },
-      ],
-    }
-  );
+  const [removeComment] = useMutation<RemoveCommentData>(REMOVE_COMMENT, {
+    refetchQueries: [{ query: GET_COMMENT_REPLIES, variables: { commentId } }],
+  });
   const { theme } = useSettingsStore();
   const [isMoreRepliesClicked, setIsMoreRepliesClicked] = useState(false);
 
@@ -75,8 +70,8 @@ export function useCommentReplies({ commentId, level, postOwnerId }: Props) {
     }
 
     function handleDeleteClick(replyId: string) {
-      removeCommentReply({
-        variables: { input: { commentId, replyId } },
+      removeComment({
+        variables: { id: replyId },
         refetchQueries: [
           { query: GET_COMMENT_REPLIES, variables: { commentId } },
         ],
@@ -110,12 +105,13 @@ export function useCommentReplies({ commentId, level, postOwnerId }: Props) {
         {repliesReplies?.commentReplies &&
           isMoreRepliesClicked &&
           repliesReplies.commentReplies.map((reply, index) => {
-            const { id: replyId } = reply;
+            const { id: replyId, postId: replyPostId } = reply;
 
             return (
               <UserComment
                 key={index}
                 id={replyId}
+                postId={replyPostId}
                 postOwnerId={postOwnerId}
                 replyLevel={level + 1}
                 onDeleteClick={(replyId) => handleDeleteClick(replyId)}
@@ -134,6 +130,6 @@ export function useCommentReplies({ commentId, level, postOwnerId }: Props) {
     repliesReplies?.commentReplies,
     theme,
     fetchRepliesReplies,
-    removeCommentReply,
+    removeComment,
   ]);
 }

@@ -12,7 +12,7 @@ import {
 import { Comment } from "models";
 
 interface Props {
-  comments: Comment[] | null;
+  comments: Comment[];
   postId: string;
   postOwnerId: string;
 }
@@ -21,7 +21,7 @@ export function PostComments({ comments, postId, postOwnerId }: Props) {
   const [removeComment] = useMutation<RemoveCommentData>(REMOVE_COMMENT);
 
   return useMemo(() => {
-    if (!comments || comments.length === 0) {
+    if (comments.length === 0) {
       return <></>;
     }
 
@@ -44,6 +44,7 @@ export function PostComments({ comments, postId, postOwnerId }: Props) {
           <UserComment
             key={index}
             id={comment.id}
+            postId={comment.postId}
             postOwnerId={postOwnerId}
             onDeleteClick={(replyId) => handleDeleteClick(replyId)}
           />

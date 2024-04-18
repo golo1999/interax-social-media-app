@@ -5,13 +5,14 @@ import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Dropdown, VisibilityModal } from "components";
+import { Permission } from "enums";
 import {
   AddHighSchoolEducationData,
   ADD_USER_HIGH_SCHOOL_EDUCATION,
   GET_USER_BY_USERNAME,
 } from "helpers";
 import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
-import { Date as CustomDate, Permission, User } from "models";
+import { Date as CustomDate, User } from "models";
 
 import { Button, Container, Form, Input, Label } from "../Form.style";
 

@@ -3,13 +3,9 @@ import styled from "styled-components";
 
 import { UserPhoto } from "components";
 import { Colors } from "environment";
-import { Message as MessageModel, Theme, User } from "models";
+import { Message as MessageModel, User } from "models";
 import { useSettingsStore } from "store";
-
-interface ThemeProps {
-  isAuthenticated: boolean;
-  theme: Theme;
-}
+import { Theme } from "types";
 
 interface ContainerProps {
   isAuthenticatedUser: boolean;

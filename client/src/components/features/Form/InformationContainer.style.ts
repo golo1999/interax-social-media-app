@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
-import { Theme } from "models";
+import { Theme } from "types";
 
 interface ThemeProps {
   isAuthenticated: boolean;

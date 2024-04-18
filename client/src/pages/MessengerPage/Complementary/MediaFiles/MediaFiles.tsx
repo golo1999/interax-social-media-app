@@ -5,6 +5,7 @@ import { HiOutlineArrowLeft } from "react-icons/hi2";
 import { Navbar } from "components";
 import { Colors } from "environment";
 import { File as FileModel, Media, User } from "models";
+import { MediaFileType } from "types";
 
 import { File } from "./File";
 import {
@@ -19,7 +20,7 @@ interface Props {
   files: FileModel[] | null | undefined;
   isAvailable: boolean;
   media: Media[] | null | undefined;
-  selectedOption: "FILES" | "MEDIA";
+  selectedOption: MediaFileType;
   user: User | null;
   onIconClick: () => void;
 }

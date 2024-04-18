@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
-import { Theme } from "models";
+import { Theme } from "types";
 
 interface ThemeProps {
   isAuthenticated: boolean;
@@ -39,10 +39,21 @@ export const Container = {
     display: flex;
     gap: 4px;
   `,
+  CommentsReactionsShares: styled.div`
+    display: flex;
+    justify-content: space-between;
+  `,
   CommentsShares: styled.div`
     align-items: center;
     display: flex;
     gap: 12px;
+  `,
+  Emojis: styled.div`
+    display: flex;
+    gap: 0.25em;
+  `,
+  EmojisReactions: styled.div`
+    display: flex;
   `,
   MoreOptionsIcon: styled.div<ThemeProps>`
     align-items: center;

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { firebaseAuth } from "helpers";
 import { useAuthenticationStore, useSettingsStore } from "store";
+import { SettingsListContent } from "types";
 
 import { Default } from "./Default";
 import { Display } from "./Display";
@@ -11,14 +12,12 @@ import { Language } from "./Language";
 import { Settings } from "./Settings";
 import { Container } from "./SettingsList.style";
 
-type Content = "DEFAULT" | "DISPLAY" | "SETTINGS" | "SETTINGS/LANGUAGE";
-
 export function SettingsList() {
   const { authenticatedUser, setAuthenticatedUser } = useAuthenticationStore();
   const navigate = useNavigate();
   const mainContainerRef = useRef() as MutableRefObject<HTMLDivElement>;
   const { theme, changeTheme, closeSettingsList } = useSettingsStore();
-  const [content, setContent] = useState<Content>("DEFAULT");
+  const [content, setContent] = useState<SettingsListContent>("DEFAULT");
   const [mainContainerHeight, setMainContainerHeight] = useState(0);
 
   useEffect(() => {
@@ -27,7 +26,7 @@ export function SettingsList() {
 
   const { username } = { ...authenticatedUser };
 
-  function handleBackIconClick(content: Content) {
+  function handleBackIconClick(content: SettingsListContent) {
     if (content === "SETTINGS/LANGUAGE") {
       setContent("SETTINGS");
     } else {

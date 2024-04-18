@@ -5,7 +5,7 @@ import { PostPhoto } from "models";
 import { Blurred, Normal, PhotosContainer } from "./PostPhotos.style";
 
 interface Props {
-  photos: PostPhoto[] | null;
+  photos: PostPhoto[];
 }
 
 export function PostPhotos({ photos }: Props) {
@@ -27,7 +27,7 @@ export function PostPhotos({ photos }: Props) {
   }
 
   return useMemo(() => {
-    if (!photos || photos.length === 0) {
+    if (photos.length === 0) {
       return <></>;
     }
 

@@ -93,7 +93,7 @@ export function MessageBox({ userId, onCloseClick, onMinimizeClick }: Props) {
   }
 
   const dividerColor =
-    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "AmericanSilver";
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
   const iconColor = isFocused ? Colors.Azure : Colors.SilverSand;
 
   return (

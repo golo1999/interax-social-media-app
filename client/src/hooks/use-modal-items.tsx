@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { MdLock, MdPeople, MdPublic } from "react-icons/md";
 
 import { VisibilityItem } from "components";
-import { Permission } from "models";
+import { Permission } from "enums";
 
 export function useVisibilityModalItems() {
   const items: VisibilityItem[] = useMemo(
