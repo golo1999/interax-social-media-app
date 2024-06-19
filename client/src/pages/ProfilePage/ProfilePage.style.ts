@@ -16,6 +16,7 @@ export const B = {
     border-radius: 5px;
     bottom: 0;
     color: ${Colors.EerieBlack};
+    cursor: pointer;
     display: flex;
     font-weight: bold;
     gap: 0.5em;
@@ -23,6 +24,10 @@ export const B = {
     padding: 0.75em 0.5em;
     position: absolute;
     right: 0;
+
+    &:hover {
+      background-color: ${Colors.Platinum};
+    }
   `,
   ShowMore: styled.button<ThemeProps>`
     align-items: center;
@@ -91,7 +96,7 @@ export const Container = {
       hasCoverPhoto ? "inherit" : Colors.EerieBlack};
     border-radius: 5px;
     height: 50vh;
-    margin: 0 13vw;
+    margin: 0 12vw;
     position: relative;
 
     @media screen and (max-width: 1270px) {
@@ -101,13 +106,26 @@ export const Container = {
   FriendsIcons: styled.div`
     display: flex;
   `,
+  FriendsIconsButtons: styled.div`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  `,
   Main: styled.div<ThemeProps>`
     background-color: ${({ isAuthenticated, theme }) =>
       isAuthenticated && theme === "DARK"
         ? Colors.EerieBlack
         : Colors.AntiFlashWhite};
     display: flex;
+    flex: 1;
     flex-direction: column;
+  `,
+  NameFriendsCount: styled.div`
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.5em;
+    justify-content: flex-end;
   `,
   Navigation: styled.div<ThemeProps>`
     align-items: center;
@@ -127,7 +145,7 @@ export const Container = {
   UserDetails: styled.div`
     display: flex;
     gap: 1em;
-    margin: 0 15vw 1em 15vw;
+    margin: 1em 15vw;
   `,
 };
 

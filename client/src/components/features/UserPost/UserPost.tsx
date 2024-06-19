@@ -1,4 +1,4 @@
-import { useMutation } from "@apollo/client";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { Divider } from "@mui/material";
 
 import {
@@ -9,13 +9,16 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { AiOutlineLike } from "react-icons/ai";
 import { BiComment } from "react-icons/bi";
-import { RiShareForwardLine } from "react-icons/ri";
+import { FaComment } from "react-icons/fa6";
+import { RiShareForwardFill, RiShareForwardLine } from "react-icons/ri";
 import { MdMoreHoriz } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
+import { useMatch, useNavigate } from "react-router-dom";
 
 import {
+  ConfirmationModal,
   Container,
   PostComments,
   PostOptionsList,
@@ -24,32 +27,35 @@ import {
   UserPhoto,
   WriteComment,
 } from "components";
-import { ReactionType } from "enums";
+import { Permission, ReactionType } from "enums";
 import { Colors } from "environment";
 import {
   ADD_COMMENT,
   ADD_POST_REACTION,
-  GET_FRIENDS_POSTS_BY_USER_ID,
   REMOVE_POST_REACTION,
   getTimePassedFromDateTime,
   AddCommentData,
   AddPostReactionData,
   RemovePostReactionData,
+  GET_POST,
+  GetPostData,
+  SHARE_POST,
+  SharePostData,
+  GET_USER_POSTS_BY_ID,
 } from "helpers";
-import { Post } from "models";
+import { useScrollLock } from "hooks";
 import {
   useAuthenticationStore,
   useMessagesStore,
+  useModalStore,
   useSettingsStore,
 } from "store";
 
 import {
-  getCommentsText,
   getPostReactionsCount,
   getReactionButtonText,
   getReactionButtonTextColor,
   getReactionIcon,
-  getSharesText,
   getUserPostReaction,
 } from "./UserPost.helpers";
 import {
@@ -72,49 +78,50 @@ interface PostReactionCount {
 }
 
 interface Props {
-  data: Post;
+  postId: string;
+  onPostShared: () => void;
 }
 
-export function UserPost({ data }: Props) {
+export function UserPost({ postId, onPostShared }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const [addComment] = useMutation<AddCommentData>(ADD_COMMENT, {
-    refetchQueries: [
-      {
-        query: GET_FRIENDS_POSTS_BY_USER_ID,
-        variables: { ownerId: authenticatedUser?.id },
-      },
-    ],
-  });
+  const isProfileRoute = useMatch("/:username");
+  const {
+    confirmationModalConfirmButtonText,
+    confirmationModalMessage,
+    confirmationModalTitle,
+    isConfirmationModalOpen,
+    sharedPostId,
+    closeConfirmationModal,
+    openConfirmationModal,
+    setConfirmationModalConfirmButtonText,
+    setConfirmationModalMessage,
+    setSharedPostId,
+  } = useModalStore();
+  const [addComment] = useMutation<AddCommentData>(ADD_COMMENT);
   const [addPostReaction] = useMutation<AddPostReactionData>(
     ADD_POST_REACTION,
     {
-      refetchQueries: [
-        {
-          query: GET_FRIENDS_POSTS_BY_USER_ID,
-          variables: { ownerId: authenticatedUser?.id },
-        },
-      ],
+      refetchQueries: [{ query: GET_POST, variables: { id: postId } }],
     }
   );
+  const { data: postData = { post: null }, loading: isFetchingPostData } =
+    useQuery<GetPostData>(GET_POST, {
+      variables: { id: postId },
+    });
+  const [fetchParentPost, { data: parentPostData = { post: null } }] =
+    useLazyQuery<GetPostData>(GET_POST);
   const [removePostReaction] = useMutation<RemovePostReactionData>(
     REMOVE_POST_REACTION,
     {
-      refetchQueries: [
-        {
-          query: GET_FRIENDS_POSTS_BY_USER_ID,
-          variables: { ownerId: authenticatedUser?.id },
-        },
-      ],
+      refetchQueries: [{ query: GET_POST, variables: { id: postId } }],
     }
   );
-
+  const [sharePost] = useMutation<SharePostData>(SHARE_POST);
   const navigate = useNavigate();
   const emojisAndReactionsContainerRef =
     useRef() as MutableRefObject<HTMLInputElement>;
   const emojisContainerRef = useRef() as MutableRefObject<HTMLInputElement>;
   const textContainerRef = useRef() as MutableRefObject<HTMLDivElement>;
-
-  const [hasReacted, setHasReacted] = useState(false);
   const [isHoveringOverEmojis, setIsHoveringOverEmojis] = useState(false);
   const [isHoveringOverReactionButton, setIsHoveringOverReactionButton] =
     useState(false);
@@ -124,6 +131,7 @@ export function UserPost({ data }: Props) {
     PostReactionCount[]
   >([]);
   const { isChatModalVisible, closeChatModal } = useMessagesStore();
+  const { lockScroll, unlockScroll } = useScrollLock();
   const {
     isPostOptionsListVisible,
     isSettingsListVisible,
@@ -134,13 +142,10 @@ export function UserPost({ data }: Props) {
   } = useSettingsStore();
 
   useEffect(() => {
-    const hasUserReaction =
-      data.reactions.some(
-        (reaction) => reaction.userId === authenticatedUser?.id
-      ) || false;
-
-    setHasReacted(hasUserReaction);
-  }, [authenticatedUser, data]);
+    if (postData.post?.parentId) {
+      fetchParentPost({ variables: { id: postData.post.parentId } });
+    }
+  }, [postData.post?.parentId, fetchParentPost]);
 
   useEffect(() => {
     const textContainerHeight = textContainerRef.current?.offsetHeight;
@@ -150,12 +155,12 @@ export function UserPost({ data }: Props) {
     const numberOfLines = textContainerHeight / textContainerLineHeight;
 
     setIsTextCompletelyVisible(numberOfLines <= 5);
-  }, [data.text]);
+  }, [postData.post?.text]);
 
   useEffect(() => {
-    const count = getPostReactionsCount(data.reactions || null);
+    const count = getPostReactionsCount(postData.post?.reactions);
     setPostReactionsCount(count);
-  }, [data.reactions]);
+  }, [postData.post?.reactions]);
 
   useEffect(() => {
     const emojisCount = emojisContainerRef.current?.childNodes.length;
@@ -168,13 +173,24 @@ export function UserPost({ data }: Props) {
 
   let postReactionTimer: ReturnType<typeof setTimeout>;
 
+  const hasAuthenticatedUserReacted =
+    postData.post?.reactions?.some(
+      ({ userId }) => userId === authenticatedUser?.id
+    ) || false;
+
   function getButtonColor(buttonType: ButtonTypes): string {
-    return buttonType === ButtonTypes.REACTION && hasReacted
+    return buttonType === ButtonTypes.REACTION && hasAuthenticatedUserReacted
       ? getReactionButtonTextColor({
           currentUserId: authenticatedUser?.id,
-          reactions: data.reactions || null,
+          reactions,
         })
       : Colors.PhilippineGray;
+  }
+
+  function handleConfirmationModalCloseClick() {
+    unlockScroll();
+    setSharedPostId(undefined);
+    closeConfirmationModal();
   }
 
   function handleMoreOptionsClick() {
@@ -187,12 +203,12 @@ export function UserPost({ data }: Props) {
     }
 
     if (!isPostOptionsListVisible) {
-      openPostOptionsList(data.id);
+      openPostOptionsList(postId);
     }
     // if the PostOptionsList is visible for another post
-    else if (isPostOptionsListVisible.postId !== data.id) {
+    else if (isPostOptionsListVisible.postId !== postId) {
       closePostOptionsList();
-      openPostOptionsList(data.id);
+      openPostOptionsList(postId);
     }
     // if the PostOptionsList is visible for the same post
     else {
@@ -201,17 +217,17 @@ export function UserPost({ data }: Props) {
   }
 
   function handleReactionClick() {
-    if (hasReacted) {
+    if (hasAuthenticatedUserReacted) {
       removePostReaction({
         variables: {
-          input: { postId: data.id, userId: authenticatedUser?.id },
+          input: { postId, userId: authenticatedUser?.id },
         },
       });
     } else {
       addPostReaction({
         variables: {
           input: {
-            postId: data.id,
+            postId,
             reactionType: ReactionType.LIKE,
             userId: authenticatedUser?.id,
           },
@@ -225,24 +241,24 @@ export function UserPost({ data }: Props) {
     }
 
     if (isHoveringOverEmojis) {
-      setIsHoveringOverEmojis((prev) => !prev);
+      setIsHoveringOverEmojis(false);
     }
     if (isHoveringOverReactionButton) {
-      setIsHoveringOverReactionButton((prev) => !prev);
+      setIsHoveringOverReactionButton(false);
     }
   }
 
   function handleReactionEmojisClick(newReactionType: ReactionType) {
     const currentReaction = getUserPostReaction({
       currentUserId: authenticatedUser?.id,
-      reactions: data.reactions || null,
+      reactions,
     });
 
     if (!currentReaction || currentReaction.reactionType !== newReactionType) {
       addPostReaction({
         variables: {
           input: {
-            postId: data.id,
+            postId,
             reactionType: newReactionType,
             userId: authenticatedUser?.id,
           },
@@ -251,7 +267,7 @@ export function UserPost({ data }: Props) {
     } else {
       removePostReaction({
         variables: {
-          input: { postId: data.id, userId: authenticatedUser?.id },
+          input: { postId, userId: authenticatedUser?.id },
         },
       });
     }
@@ -272,27 +288,30 @@ export function UserPost({ data }: Props) {
       }
 
       const { icon, type } = postReaction;
-
       const alt = type.slice(0, 1).concat(type.slice(1).toLowerCase());
 
       return <img key={index} alt={alt} height={24} src={icon} width={24} />;
     });
   }, [postReactionsCount]);
 
+  if (!postData.post) {
+    return <></>;
+  }
+
   const {
     comments,
     commentsCount,
     dateTime,
     owner,
+    parentId,
     photos,
     reactions,
     receiver,
     shares,
     text,
-  } = data;
+  } = postData.post;
   const {
     firstName: ownerFirstName,
-    id: ownerId,
     lastName: ownerLastName,
     username: ownerUsername,
   } = owner;
@@ -302,6 +321,18 @@ export function UserPost({ data }: Props) {
   const moreOptionsIconColor =
     !!authenticatedUser && theme === "DARK" ? "PhilippineGray" : "GraniteGray";
   const postOwnerNameText = `${ownerFirstName} ${ownerLastName}`;
+
+  const hasComments = comments && comments.length > 0;
+  const hasReactions = reactions && reactions.length > 0;
+  const hasShares = shares && shares.length > 0;
+
+  if (isFetchingPostData) {
+    return (
+      <div>
+        <p>Fetching post...</p>
+      </div>
+    );
+  }
 
   return (
     <Container vertical>
@@ -335,15 +366,7 @@ export function UserPost({ data }: Props) {
           />
         </StyledContainer.MoreOptionsIcon>
       </Header>
-      <StyledContainer.PostText ref={textContainerRef}>
-        {isPostOptionsListVisible &&
-          data.id === isPostOptionsListVisible.postId && (
-            <PostOptionsList
-              postId={data.id}
-              postOwner={owner}
-              postReceiver={receiver}
-            />
-          )}
+      {parentPostData.post && text && (
         <Text.PostText
           isAuthenticated={!!authenticatedUser}
           isCompletelyVisible={isTextCompletelyVisible}
@@ -351,46 +374,130 @@ export function UserPost({ data }: Props) {
         >
           {text}
         </Text.PostText>
-        {!isTextCompletelyVisible && (
-          <Text.SeeMore
-            isAuthenticated={!!authenticatedUser}
-            theme={theme}
-            onClick={() => {
-              setIsTextCompletelyVisible((prev) => !prev);
-            }}
-          >
-            See more
-          </Text.SeeMore>
+      )}
+      <StyledContainer.PostText
+        ref={textContainerRef}
+        // Getting the number of lines doesn't work
+        // if the "line-height" property is set using styled-components
+        style={{ lineHeight: "21px" }}
+      >
+        {isPostOptionsListVisible &&
+          postId === isPostOptionsListVisible.postId && (
+            <PostOptionsList
+              parentId={parentId}
+              postId={postId}
+              postOwner={owner}
+              postReceiver={receiver}
+            />
+          )}
+        {parentPostData.post ? (
+          <Container vertical>
+            <Header>
+              <StyledContainer.PostOwner>
+                <UserPhoto
+                  user={parentPostData.post.owner}
+                  onPhotoClick={() =>
+                    navigate(`/${parentPostData.post?.owner.username}`)
+                  }
+                />
+                <div>
+                  <Text.PostOwnerName
+                    isAuthenticated={!!authenticatedUser}
+                    theme={theme}
+                    onClick={() =>
+                      navigate(`/${parentPostData.post?.owner.username}`)
+                    }
+                  >
+                    {parentPostData.post.owner.firstName}{" "}
+                    {parentPostData.post.owner.lastName}
+                  </Text.PostOwnerName>
+                  <Text.DateTime
+                    isAuthenticated={!!authenticatedUser}
+                    theme={theme}
+                  >
+                    {getTimePassedFromDateTime(
+                      parentPostData.post.dateTime,
+                      "POST"
+                    )}
+                  </Text.DateTime>
+                </div>
+              </StyledContainer.PostOwner>
+            </Header>
+            <StyledContainer.PostText
+              ref={textContainerRef}
+              // Getting the number of lines doesn't work
+              // if the "line-height" property is set using styled-components
+              style={{ lineHeight: "21px" }}
+            >
+              <Text.PostText
+                isAuthenticated={!!authenticatedUser}
+                isCompletelyVisible={isTextCompletelyVisible}
+                theme={theme}
+              >
+                {parentPostData.post.text}
+              </Text.PostText>
+              {!isTextCompletelyVisible && (
+                <Text.SeeMore
+                  isAuthenticated={!!authenticatedUser}
+                  theme={theme}
+                  onClick={() => {
+                    setIsTextCompletelyVisible((prev) => !prev);
+                  }}
+                >
+                  See more
+                </Text.SeeMore>
+              )}
+            </StyledContainer.PostText>
+          </Container>
+        ) : (
+          <>
+            <Text.PostText
+              isAuthenticated={!!authenticatedUser}
+              isCompletelyVisible={isTextCompletelyVisible}
+              theme={theme}
+            >
+              {text}
+            </Text.PostText>
+            {!isTextCompletelyVisible && (
+              <Text.SeeMore
+                isAuthenticated={!!authenticatedUser}
+                theme={theme}
+                onClick={() => {
+                  setIsTextCompletelyVisible((prev) => !prev);
+                }}
+              >
+                See more
+              </Text.SeeMore>
+            )}
+          </>
         )}
       </StyledContainer.PostText>
       <PostPhotos photos={photos} />
-      {(comments.length > 0 || reactions.length > 0 || shares.length > 0) && (
+      {(hasComments || hasReactions || hasShares) && (
         <StyledContainer.CommentsReactionsShares>
           <StyledContainer.EmojisReactions ref={emojisAndReactionsContainerRef}>
             <StyledContainer.Emojis ref={emojisContainerRef}>
               {postReactionsEmojis}
             </StyledContainer.Emojis>
-            {reactions.length > 0 && <p>{reactions.length}</p>}
+            {hasReactions && <p>{reactions.length}</p>}
           </StyledContainer.EmojisReactions>
           <StyledContainer.CommentsShares>
             {commentsCount > 0 && (
               <StyledContainer.Comments>
                 {
                   <Text.CommentsCount>
-                    {!!authenticatedUser
-                      ? getCommentsText(commentsCount)
-                      : commentsCount}
+                    {commentsCount}
+                    <FaComment />
                   </Text.CommentsCount>
                 }
                 {!authenticatedUser && <BiComment size={18} />}
               </StyledContainer.Comments>
             )}
-            {shares.length > 0 && (
+            {hasShares && (
               <StyledContainer.Shares>
                 <Text.SharesCount>
-                  {!!authenticatedUser
-                    ? getSharesText(shares.length)
-                    : shares.length}
+                  {shares.length}
+                  <RiShareForwardFill />
                 </Text.SharesCount>
                 {!authenticatedUser && <RiShareForwardLine size={18} />}
               </StyledContainer.Shares>
@@ -398,7 +505,7 @@ export function UserPost({ data }: Props) {
           </StyledContainer.CommentsShares>
         </StyledContainer.CommentsReactionsShares>
       )}
-      <Divider color={dividerColor} />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <StyledContainer.Buttons>
         <Button
           isAuthenticated={!!authenticatedUser}
@@ -407,7 +514,7 @@ export function UserPost({ data }: Props) {
           onClick={handleReactionClick}
           onMouseEnter={() => {
             postReactionTimer = setTimeout(() => {
-              setIsHoveringOverReactionButton((prev) => !prev);
+              setIsHoveringOverReactionButton(true);
             }, 750);
           }}
           onMouseLeave={() => {
@@ -418,7 +525,7 @@ export function UserPost({ data }: Props) {
 
             if (isHoveringOverReactionButton) {
               setTimeout(() => {
-                setIsHoveringOverReactionButton((prev) => !prev);
+                setIsHoveringOverReactionButton(false);
               }, 750);
             }
           }}
@@ -442,7 +549,7 @@ export function UserPost({ data }: Props) {
             <AiOutlineLike size={24} />
           )}
           {getReactionButtonText({
-            hasReacted,
+            hasReacted: hasAuthenticatedUserReacted,
             reactions,
             currentUserId: authenticatedUser?.id,
           })}
@@ -456,17 +563,17 @@ export function UserPost({ data }: Props) {
                 top: "-52px",
               }}
               onMouseEnter={() => {
-                setIsHoveringOverEmojis((prev) => !prev);
+                setIsHoveringOverEmojis(true);
               }}
               onMouseLeave={() => {
                 setTimeout(() => {
-                  setIsHoveringOverEmojis((prev) => !prev);
+                  setIsHoveringOverEmojis(false);
                 }, 750);
               }}
               onReactionClick={(reactionType) => {
                 handleReactionEmojisClick(reactionType);
                 if (isHoveringOverEmojis) {
-                  setIsHoveringOverEmojis((prev) => !prev);
+                  setIsHoveringOverEmojis(false);
                 }
               }}
             />
@@ -486,13 +593,22 @@ export function UserPost({ data }: Props) {
           isAuthenticated={!!authenticatedUser}
           style={{ color: getButtonColor(ButtonTypes.SHARE) }}
           theme={theme}
+          onClick={() => {
+            lockScroll();
+            setSharedPostId(postId);
+            setConfirmationModalConfirmButtonText("Share");
+            setConfirmationModalMessage(
+              "Are you sure you want to share this post?"
+            );
+            openConfirmationModal();
+          }}
         >
           <RiShareForwardLine size={24} />
           Share
         </Button>
       </StyledContainer.Buttons>
-      {(comments.length > 0 || isWriteCommentVisible) && (
-        <Divider color={dividerColor} />
+      {(hasComments || isWriteCommentVisible) && (
+        <Divider sx={{ borderColor: Colors[dividerColor] }} />
       )}
       {isWriteCommentVisible && (
         <WriteComment
@@ -508,23 +624,63 @@ export function UserPost({ data }: Props) {
                 input: {
                   commentOwnerId: authenticatedUser?.id,
                   parentId: null,
-                  postId: data.id,
+                  postId,
                   text: commentText,
                 },
               },
-              onCompleted: (data) => {
-                console.log(data);
+              refetchQueries: [{ query: GET_POST, variables: { id: postId } }],
+              onCompleted: ({ addComment: newComment }) => {
+                console.log({ newComment });
                 setIsWriteCommentVisible((prev) => !prev);
               },
             });
           }}
         />
       )}
-      <PostComments
-        comments={comments}
-        postId={data.id}
-        postOwnerId={ownerId}
-      />
+      {postData.post && hasComments && <PostComments post={postData.post} />}
+      {postId === sharedPostId &&
+        isConfirmationModalOpen &&
+        createPortal(
+          <ConfirmationModal
+            confirmButtonText={confirmationModalConfirmButtonText}
+            message={confirmationModalMessage}
+            title={confirmationModalTitle}
+            onCloseClick={handleConfirmationModalCloseClick}
+            onConfirmClick={() => {
+              handleConfirmationModalCloseClick();
+              sharePost({
+                variables: {
+                  input: {
+                    ownerId: authenticatedUser?.id,
+                    // If the post is already shared, the parent post will be shared
+                    // Otherwise, the post will be shared
+                    postId: parentPostData.post
+                      ? parentPostData.post?.id
+                      : postId,
+                    receiverId: authenticatedUser?.id,
+                    visibility: Permission.PUBLIC,
+                  },
+                },
+                onCompleted: onPostShared,
+                // TODO: If isProfileRoute => GET_USER_POSTS_BY_ID for displaying the shared post
+                // first: 1, after: first_post_cursor, userId
+                // TODO: Get first post cursor and fetch the first post on the previous page
+                // GET_POST: For updating the number of shares
+                refetchQueries: [
+                  {
+                    query: GET_POST,
+                    variables: {
+                      id: parentPostData.post
+                        ? parentPostData.post?.id
+                        : postId,
+                    },
+                  },
+                ],
+              });
+            }}
+          />,
+          document.body
+        )}
     </Container>
   );
 }

@@ -10,5 +10,6 @@ const firebase = admin.initializeApp({
 });
 
 const firestore = firebase.firestore();
+const storage = firebase.storage();
 
-module.exports = { firebase, firestore };
+module.exports = { firebase, firestore, storage };

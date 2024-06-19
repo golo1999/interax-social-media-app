@@ -62,6 +62,7 @@ export function SettingsList() {
     await signOut(firebaseAuth);
     setAuthenticatedUser(null);
     closeSettingsList();
+    navigate("/login");
   }
 
   function handleSettingsTabClick() {

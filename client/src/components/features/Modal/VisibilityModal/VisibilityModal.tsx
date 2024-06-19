@@ -8,6 +8,7 @@ import { Modal, RadioButton } from "components";
 import { Permission } from "enums";
 import { Colors } from "environment";
 import { useOutsideClick } from "hooks";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Button, List, ListItem } from "./VisibilityModal.style";
 
@@ -34,6 +35,8 @@ export function VisibilityModal({
   onCloseClick,
   onDoneClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
   const [selectedItem, setSelectedItem] = useState(getInitialSelectedItem());
 
   const modalContainerRef = createRef<HTMLDivElement>();
@@ -69,10 +72,15 @@ export function VisibilityModal({
     />
   );
 
+  const dividerColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
+  const iconColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Platinum" : "DarkJungleGreen";
+
   return (
-    <Modal minHeight="50vh" ref={modalContainerRef}>
+    <Modal minHeight="50vh" ref={modalContainerRef} width="35vw">
       <>{ModalHeader}</>
-      <Divider color="Onyx" />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <Modal.Body color="PhilippineGray" direction="column">
         {bodyDescription}
         <List>
@@ -85,16 +93,37 @@ export function VisibilityModal({
 
             return (
               <ListItem.Element
+                $isAuthenticated={!!authenticatedUser}
+                $theme={theme}
                 key={index}
                 isSelected={isSelected}
                 onClick={() => handleItemClick(item)}
               >
-                <ListItem.IconContainer isSelected={isSelected}>
-                  <Icon color={Colors.Platinum} size={24} />
+                <ListItem.IconContainer
+                  $isAuthenticated={!!authenticatedUser}
+                  $theme={theme}
+                >
+                  <Icon color={Colors[iconColor]} size={24} />
                 </ListItem.IconContainer>
                 <ListItem.DetailsContainer>
-                  <ListItem.Title>{formattedTitle}</ListItem.Title>
-                  {description && <p>{description}</p>}
+                  <ListItem.Title
+                    $isAuthenticated={!!authenticatedUser}
+                    $theme={theme}
+                  >
+                    {formattedTitle}
+                  </ListItem.Title>
+                  {description && (
+                    <p
+                      style={{
+                        color:
+                          !!authenticatedUser && theme === "DARK"
+                            ? Colors.Platinum
+                            : Colors.PhilippineGray,
+                      }}
+                    >
+                      {description}
+                    </p>
+                  )}
                 </ListItem.DetailsContainer>
                 <RadioButton
                   color={isSelected ? "BrilliantAzure" : "PhilippineGray"}
@@ -112,7 +141,13 @@ export function VisibilityModal({
         justifyContent="flex-end"
         padding="0.75em"
       >
-        <Button.Cancel onClick={onCloseClick}>Cancel</Button.Cancel>
+        <Button.Cancel
+          $isAuthenticated={!!authenticatedUser}
+          $theme={theme}
+          onClick={onCloseClick}
+        >
+          Cancel
+        </Button.Cancel>
         <Button.Done onClick={handleDoneClick}>Done</Button.Done>
       </Modal.Footer>
     </Modal>

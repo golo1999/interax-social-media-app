@@ -6,7 +6,6 @@ import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { Chat, UserPhoto } from "components";
 import { Colors } from "environment";
 import {
-  GetUserByIdData,
   GET_USER_BY_ID,
   GET_CONVERSATION_BETWEEN,
   GetConversationBetweenData,
@@ -31,7 +30,7 @@ export function MessageBox({ userId, onCloseClick, onMinimizeClick }: Props) {
     { data: conversation = { conversationBetween: null } },
   ] = useLazyQuery<GetConversationBetweenData>(GET_CONVERSATION_BETWEEN);
   const [fetchUserById, { data: user = { userById: null } }] =
-    useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+    useLazyQuery(GET_USER_BY_ID);
   const mainContainerRef = useRef() as MutableRefObject<HTMLDivElement>;
   const { theme } = useSettingsStore();
   const [isFocused, setIsFocused] = useState(false);
@@ -51,7 +50,13 @@ export function MessageBox({ userId, onCloseClick, onMinimizeClick }: Props) {
 
   useEffect(() => {
     fetchUserById({
-      variables: { input: { id: userId, returnUserIfBlocked: true } },
+      variables: {
+        input: {
+          authenticatedUserId: authenticatedUser?.id,
+          returnUserIfBlocked: true,
+          userId,
+        },
+      },
     });
 
     if (authenticatedUser) {
@@ -143,7 +148,7 @@ export function MessageBox({ userId, onCloseClick, onMinimizeClick }: Props) {
           />
         </Container.Icons>
       </Header>
-      <Divider color={dividerColor} />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <Chat userId={userId} />
     </Container.Main>
   );

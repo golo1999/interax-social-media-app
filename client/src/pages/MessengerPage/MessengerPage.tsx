@@ -11,16 +11,17 @@ import {
 } from "react-router-dom";
 
 import { Chat, ChatList, Header, UserPhoto } from "components";
+import { Colors } from "environment";
 import {
   GET_CONVERSATION_BETWEEN,
   GET_USER_BY_ID,
   GetConversationBetweenData,
-  GetUserByIdData,
   instanceOfUserError,
   instanceOfUserWithMessage,
 } from "helpers";
 import { useHeaderItems } from "hooks";
 import { User as UserModel } from "models";
+import { LoadingPage } from "pages";
 import {
   useAuthenticationStore,
   useMessagesStore,
@@ -59,7 +60,7 @@ function AuthenticatedMessengerPage({
   const [
     fetchUserById,
     { data: user = { userById: null }, loading: isFetchingUser },
-  ] = useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+  ] = useLazyQuery(GET_USER_BY_ID);
   const { theme } = useSettingsStore();
   const [isComplementaryVisible, setIsComplementaryVisible] = useState(true);
 
@@ -78,7 +79,13 @@ function AuthenticatedMessengerPage({
 
   useEffect(() => {
     fetchUserById({
-      variables: { input: { id: userId, returnUserIfBlocked: true } },
+      variables: {
+        input: {
+          authenticatedUserId: authenticatedUser.id,
+          returnUserIfBlocked: true,
+          userId,
+        },
+      },
     });
 
     if (authenticatedUser) {
@@ -100,9 +107,9 @@ function AuthenticatedMessengerPage({
   }
 
   if (!isFetchingUser && !user.userById) {
-    return <></>;
+    return <LoadingPage />;
   } else if (isFetchingUser) {
-    return <></>;
+    return <LoadingPage />;
   } else if (instanceOfUserError(user.userById)) {
     console.log(user.userById);
     return <BlockedMessengerPage />;
@@ -153,7 +160,11 @@ function AuthenticatedMessengerPage({
       <Header items={headerItems} selectedItem={null} />
       <Container.Content>
         <ChatList />
-        <Divider color={dividerColor} orientation="vertical" />
+        <Divider
+          flexItem
+          orientation="vertical"
+          sx={{ borderColor: Colors[dividerColor] }}
+        />
         <Container.Chat>
           <Container.ChatHeader>
             <Container.User
@@ -201,7 +212,11 @@ function AuthenticatedMessengerPage({
         </Container.Chat>
         {isComplementaryVisible && (
           <>
-            <Divider color={dividerColor} orientation="vertical" />
+            <Divider
+              flexItem
+              orientation="vertical"
+              sx={{ borderColor: Colors[dividerColor] }}
+            />
             <Complementary
               conversation={conversation.conversationBetween}
               displayedEmoji={DisplayedEmoji}

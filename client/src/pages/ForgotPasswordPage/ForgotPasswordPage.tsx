@@ -1,9 +1,12 @@
 import { Divider } from "@mui/material";
 
+import { FirebaseError } from "firebase/app";
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { Input } from "components";
+import { Colors } from "environment";
 import { useAuthenticationStore } from "store";
 
 import {
@@ -57,14 +60,13 @@ function AuthenticatedForgotPasswordPage() {
 }
 
 function NotAuthenticatedForgotPasswordPage() {
+  const auth = getAuth();
   const {
     control,
     formState: { errors, isValid },
-    getValues,
     handleSubmit,
-    register,
     reset,
-    setValue,
+    setError,
   } = useForm<FormValues>({
     defaultValues: DEFAULT_FORM_VALUES,
     mode: "onChange",
@@ -73,7 +75,7 @@ function NotAuthenticatedForgotPasswordPage() {
   const { key: locationKey } = useLocation();
   const navigate = useNavigate();
 
-  function handleCancelClick() {
+  function handleBackNavigation() {
     // If the history stack is empty (there is no previous route) => redirecting to the Home page
     if (locationKey === "default") {
       navigate("/");
@@ -82,18 +84,23 @@ function NotAuthenticatedForgotPasswordPage() {
     }
   }
 
-  const onSubmit: SubmitHandler<FormValues> = (data) => {
-    // const { email } = data;
-    console.log(data);
-    // TODO
-    reset();
+  const onSubmit: SubmitHandler<FormValues> = async ({ email }) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      reset();
+      handleBackNavigation();
+    } catch (error) {
+      if (error instanceof Error || error instanceof FirebaseError) {
+        setError("email", { message: error.message });
+      }
+    }
   };
 
   return (
     <Container.Main>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <Title>Reset your password</Title>
-        <Divider color="LightGray" />
+        <Divider sx={{ borderColor: Colors.LightGray }} />
         <Container.Input>
           <Description>
             Please enter your email address to search for your account.
@@ -103,14 +110,17 @@ function NotAuthenticatedForgotPasswordPage() {
             name="email"
             render={({ field: { onChange, value } }) => (
               <Input
-                borderColor="LightGray"
+                borderColor={errors.email ? "RedCrayola" : "LightGray"}
                 borderStyle="solid"
                 borderWidth="1px"
                 color="DarkJungleGreen"
+                focusedBorderColor={
+                  errors.email ? "RedCrayola" : "BrightNavyBlue"
+                }
                 focusedPlaceholderColor="LightGray"
-                fontSize="16px"
-                fontWeight="400"
-                padding="16px"
+                fontSize="17px"
+                hoveredBorderColor={errors.email ? "RedCrayola" : "SonicSilver"}
+                padding="14px 16px"
                 placeholder="Email address"
                 placeholderColor="PhilippineSilver"
                 spellCheck="false"
@@ -121,9 +131,9 @@ function NotAuthenticatedForgotPasswordPage() {
             )}
           />
         </Container.Input>
-        <Divider color="LightGray" />
+        <Divider sx={{ borderColor: Colors.LightGray }} />
         <Container.Buttons>
-          <Button.Cancel onClick={handleCancelClick}>Cancel</Button.Cancel>
+          <Button.Cancel onClick={handleBackNavigation}>Cancel</Button.Cancel>
           <Button.Search disabled={!isValid} value="Search" />
         </Container.Buttons>
       </Form>

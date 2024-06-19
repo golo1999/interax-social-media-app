@@ -156,13 +156,14 @@ export function RegistrationPage() {
       await sendEmailVerification(user).then(() => {
         console.log("Please check your mail for more details");
       });
+      const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${new Date().getTime()}`;
       const firestoreUser: Data = {
         email,
         firstName,
         gender,
         id: user.uid,
         lastName,
-        username: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${new Date().getTime()}`,
+        username,
       };
       await setDoc(
         doc(firestoreDb, "users", firestoreUser.id),
@@ -175,10 +176,7 @@ export function RegistrationPage() {
       });
       navigate("/login");
     } catch (error) {
-      if (error instanceof FirebaseError) {
-        console.log(error.message);
-        setError("email", { message: error.message });
-      } else if (error instanceof Error) {
+      if (error instanceof Error || error instanceof FirebaseError) {
         console.log(error.message);
         setError("email", { message: error.message });
       }
@@ -214,7 +212,7 @@ export function RegistrationPage() {
       <Logo>Interax</Logo>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <Title>Create a new account</Title>
-        <Divider color="LightGray" />
+        <Divider sx={{ borderColor: Colors.LightGray }} />
         <Container.TopInputs>
           <Container.NameInputs.Outer>
             <Container.NameInputs.Inner>

@@ -6,6 +6,7 @@ import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Dropdown, VisibilityModal } from "components";
 import { Permission } from "enums";
+import { Colors } from "environment";
 import {
   AddHighSchoolEducationData,
   ADD_USER_HIGH_SCHOOL_EDUCATION,
@@ -13,6 +14,7 @@ import {
 } from "helpers";
 import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
 import { Date as CustomDate, User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Button, Container, Form, Input, Label } from "../Form.style";
 
@@ -106,10 +108,11 @@ interface Props {
 }
 
 export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [addHighSchoolEducation] = useMutation<AddHighSchoolEducationData>(
     ADD_USER_HIGH_SCHOOL_EDUCATION
   );
-
+  const { theme } = useSettingsStore();
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
   const [selectedDropdownItems, setSelectedDropdownItems] = useState({
     from: {
@@ -181,7 +184,12 @@ export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
         onSaveClick();
       },
       refetchQueries: [
-        { query: GET_USER_BY_USERNAME, variables: { username } },
+        {
+          query: GET_USER_BY_USERNAME,
+          variables: {
+            input: { authenticatedUserId: authenticatedUser?.id, username },
+          },
+        },
       ],
     });
   };
@@ -193,6 +201,9 @@ export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
   const visibilityModalItems = useVisibilityModalItems();
 
   const { graduated } = getValues();
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -394,7 +405,7 @@ export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
           <Label>Graduated</Label>
         </b>
       </Container.Checkbox>
-      <Divider color="Onyx" />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <Container.Buttons.Element>
         <Controller
           control={control}

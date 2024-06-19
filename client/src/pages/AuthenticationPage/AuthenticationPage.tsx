@@ -3,6 +3,7 @@ import { Divider } from "@mui/material";
 import {
   browserLocalPersistence,
   getAuth,
+  sendEmailVerification,
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
@@ -11,6 +12,7 @@ import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 
 import { Input, TertiaryButton } from "components";
+import { Colors } from "environment";
 import { useAuthenticationStore } from "store";
 
 import {
@@ -99,15 +101,13 @@ export function AuthenticationPage() {
       const { user } = await signInWithEmailAndPassword(auth, email, password);
       if (!user.emailVerified) {
         await signOut(auth);
+        await sendEmailVerification(user);
         throw new Error("Please verify your email first.");
       }
       console.log({ user });
     } catch (error) {
-      if (error instanceof FirebaseError) {
+      if (error instanceof Error || error instanceof FirebaseError) {
         console.log(error.message);
-        setError("email", { message: error.message });
-      } else if (error instanceof Error) {
-        console.log({ error });
         setError("email", { message: error.message });
       }
     }
@@ -195,7 +195,7 @@ export function AuthenticationPage() {
         <Text.ForgottenPassword onClick={handleForgottenPasswordClick}>
           Forgotten password?
         </Text.ForgottenPassword>
-        <Divider color="LightGray" />
+        <Divider sx={{ borderColor: Colors.LightGray }} />
         <Container.CreateAccountButton>
           <Button.CreateAccount onClick={handleCreateNewAccountClick}>
             Create new account

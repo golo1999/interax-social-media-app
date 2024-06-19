@@ -18,8 +18,13 @@ export const Container = {
     width: 100%;
     z-index: 2;
   `,
-  Top: styled.div`
+  Top: styled.div<ThemeProps>`
     align-items: center;
+    box-shadow: 1px 1px 4px
+      ${({ isAuthenticated, theme }) =>
+        isAuthenticated && theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.LightGray};
     display: flex;
     flex: 1;
     justify-content: space-between;

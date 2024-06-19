@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import {
   ADD_USER_FRIEND,
   AddUserFriendData,
-  GET_AUTHENTICATED_USER,
   REMOVE_USER_FRIENDSHIP_REQUEST,
   RemoveUserFriendRequestData,
 } from "helpers";
@@ -64,7 +63,6 @@ export function FriendRequests({
             variables: {
               input: { first: authenticatedUserId, second: userId },
             },
-            refetchQueries: [{ query: GET_AUTHENTICATED_USER }],
           });
         },
       });
@@ -84,7 +82,6 @@ export function FriendRequests({
             sender: authenticatedUserId,
           },
         },
-        refetchQueries: [{ query: GET_AUTHENTICATED_USER }],
       });
     }
   }

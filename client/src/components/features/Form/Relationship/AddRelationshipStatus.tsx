@@ -6,6 +6,7 @@ import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Dropdown, VisibilityModal } from "components";
 import { Permission, RelationshipStatusType } from "enums";
+import { Colors } from "environment";
 import {
   AddRelationshipStatusData,
   ADD_USER_RELATIONSHIP_STATUS,
@@ -16,6 +17,7 @@ import {
   useVisibilityModalItems,
 } from "hooks";
 import { RelationshipStatus, User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Button, Container, Form } from "../Form.style";
 
@@ -52,10 +54,11 @@ export function AddRelationshipStatus({
   onCancelClick,
   onSaveClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [addRelationshipStatus] = useMutation<AddRelationshipStatusData>(
     ADD_USER_RELATIONSHIP_STATUS
   );
-
+  const { theme } = useSettingsStore();
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
 
   const {
@@ -82,13 +85,21 @@ export function AddRelationshipStatus({
         onSaveClick();
       },
       refetchQueries: [
-        { query: GET_USER_BY_USERNAME, variables: { username } },
+        {
+          query: GET_USER_BY_USERNAME,
+          variables: {
+            input: { authenticatedUserId: authenticatedUser?.id, username },
+          },
+        },
       ],
     });
   };
 
   const dropdownItems = useRelationshipStatusDropdownItems();
   const visibilityModalItems = useVisibilityModalItems();
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -123,7 +134,7 @@ export function AddRelationshipStatus({
           );
         }}
       />
-      <Divider color="Onyx" />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <Container.Buttons.Element>
         <Controller
           control={control}

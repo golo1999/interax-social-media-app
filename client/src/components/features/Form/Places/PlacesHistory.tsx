@@ -10,7 +10,7 @@ import {
   UPDATE_USER_PLACE,
 } from "helpers";
 import { useVisibilityModalItems } from "hooks";
-import { Place } from "models";
+import { Place, User } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { History } from "../Form.style";
@@ -23,12 +23,14 @@ interface Props {
   data: Place[];
   friendshipStatus: FriendshipStatus;
   readonly?: boolean;
+  user: User;
 }
 
 export function PlacesHistory({
   data,
   friendshipStatus,
   readonly = false,
+  user: { username },
 }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
   const [updateUserPlace] = useMutation<UpdateUserPlaceData>(UPDATE_USER_PLACE);
@@ -148,7 +150,12 @@ export function PlacesHistory({
                       refetchQueries: [
                         {
                           query: GET_USER_BY_USERNAME,
-                          variables: { username: "darius.fieraru" },
+                          variables: {
+                            input: {
+                              authenticatedUserId: authenticatedUser?.id,
+                              username,
+                            },
+                          },
                         },
                       ],
                     });

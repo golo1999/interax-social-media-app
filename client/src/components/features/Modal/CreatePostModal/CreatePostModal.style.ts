@@ -1,8 +1,14 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "types";
 
-type IconContainerProps = { isHidden?: boolean };
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
+}
+
+type IconContainerProps = { isHidden?: boolean } & ThemeProps;
 
 export const Button = styled.input.attrs({ type: "submit" })`
   background-color: ${({ disabled }) =>
@@ -24,7 +30,10 @@ export const Button = styled.input.attrs({ type: "submit" })`
 export const Container = {
   Icon: styled.span<IconContainerProps>`
     align-items: center;
-    background-color: ${Colors.BlackOlive};
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.BlackOlive
+        : Colors.AntiFlashWhite};
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -33,14 +42,23 @@ export const Container = {
     width: fit-content;
 
     &:hover {
-      background-color: ${Colors.DarkLiver};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.DarkLiver
+          : Colors.Platinum};
     }
   `,
-  Visibility: styled.div`
+  Visibility: styled.div<ThemeProps>`
     align-items: center;
-    background-color: ${Colors.BlackOlive};
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.BlackOlive
+        : Colors.Platinum};
     border-radius: 5px;
-    color: ${Colors.Platinum};
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.Platinum
+        : Colors.DarkJungleGreen};
     display: flex;
     gap: 0.15em;
     padding: 0.2em 0.25em;
@@ -49,19 +67,32 @@ export const Container = {
   `,
 };
 
-export const TextArea = styled.textarea`
-  caret-color: ${Colors.MetallicSilver};
+export const TextArea = styled.textarea<ThemeProps>`
+  caret-color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.MetallicSilver
+      : Colors.DarkLiver};
   background-color: inherit;
-  color: ${Colors.MetallicSilver};
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.MetallicSilver
+      : Colors.DarkJungleGreen};
   flex: 1;
   font-size: x-large;
   resize: none;
 
   &::placeholder {
-    color: ${Colors.MetallicSilver};
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.MetallicSilver
+        : Colors.DarkLiver};
   }
 `;
 
-export const Title = styled.p`
+export const Title = styled.p<ThemeProps>`
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.Platinum
+      : Colors.VampireBlack};
   font-size: larger;
 `;

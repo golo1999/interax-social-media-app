@@ -1,6 +1,6 @@
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { UserComment } from "components";
 import {
@@ -8,23 +8,39 @@ import {
   GET_POST,
   RemoveCommentData,
   REMOVE_COMMENT,
+  GetPostCommentsData,
+  GET_POST_COMMENTS,
 } from "helpers";
-import { Comment } from "models";
+import { Comment, Post } from "models";
+
+import { Container, Text } from "./PostComments.style";
 
 interface Props {
-  comments: Comment[];
-  postId: string;
-  postOwnerId: string;
+  post: Post;
 }
 
-export function PostComments({ comments, postId, postOwnerId }: Props) {
+export function PostComments({
+  post: {
+    id: postId,
+    owner: { id: postOwnerId },
+    topLevelCommentsCount,
+  },
+}: Props) {
+  const [postCommentsResponse, setPostCommentsResponse] = useState<Comment[]>(
+    []
+  );
+  const { loading, fetchMore } = useQuery<GetPostCommentsData>(
+    GET_POST_COMMENTS,
+    {
+      notifyOnNetworkStatusChange: true,
+      variables: { input: { first: 2, postId } },
+      onCompleted: ({ postComments: { edges, pageInfo } }) =>
+        setPostCommentsResponse(edges.map(({ node }) => node)),
+    }
+  );
   const [removeComment] = useMutation<RemoveCommentData>(REMOVE_COMMENT);
 
   return useMemo(() => {
-    if (comments.length === 0) {
-      return <></>;
-    }
-
     function handleDeleteClick(commentId: string) {
       removeComment({
         variables: { id: commentId },
@@ -38,18 +54,75 @@ export function PostComments({ comments, postId, postOwnerId }: Props) {
       });
     }
 
+    const postCommentsResponseLength = postCommentsResponse.length;
+    const remainingRepliesCount =
+      topLevelCommentsCount - postCommentsResponseLength;
+    const remainingRepliesText =
+      remainingRepliesCount !== 1
+        ? `Show ${remainingRepliesCount} more comments`
+        : `Show ${remainingRepliesCount} more comment`;
+
     return (
-      <div>
-        {comments.map((comment, index) => (
-          <UserComment
-            key={index}
-            id={comment.id}
-            postId={comment.postId}
-            postOwnerId={postOwnerId}
-            onDeleteClick={(replyId) => handleDeleteClick(replyId)}
-          />
-        ))}
-      </div>
+      <Container.Main>
+        <div>
+          {postCommentsResponse.map(({ id }) => (
+            <UserComment
+              key={id}
+              commentId={id}
+              isTopLevel
+              postId={postId}
+              postOwnerId={postOwnerId}
+              onDeleteClick={(replyId) => handleDeleteClick(replyId)}
+            />
+          ))}
+        </div>
+        {postCommentsResponseLength < topLevelCommentsCount && (
+          <Container.Comments>
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              <Text.ShowMoreReplies
+                onClick={() => {
+                  fetchMore({
+                    variables: {
+                      input: {
+                        after:
+                          postCommentsResponse[postCommentsResponseLength - 1]
+                            .id,
+                        first: 5,
+                        postId,
+                      },
+                    },
+                    updateQuery: (previousResult, { fetchMoreResult }) => ({
+                      postComments: {
+                        ...previousResult.postComments,
+                        edges: [
+                          ...previousResult.postComments.edges,
+                          ...fetchMoreResult.postComments.edges,
+                        ],
+                        pageInfo: fetchMoreResult.postComments.pageInfo,
+                        totalCount:
+                          previousResult.postComments.totalCount +
+                          fetchMoreResult.postComments.totalCount,
+                      },
+                    }),
+                  });
+                }}
+              >
+                {remainingRepliesText}
+              </Text.ShowMoreReplies>
+            )}
+          </Container.Comments>
+        )}
+      </Container.Main>
     );
-  }, [comments, postId, postOwnerId, removeComment]);
+  }, [
+    loading,
+    postCommentsResponse,
+    postId,
+    postOwnerId,
+    topLevelCommentsCount,
+    fetchMore,
+    removeComment,
+  ]);
 }

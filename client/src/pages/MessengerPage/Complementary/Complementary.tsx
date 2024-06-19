@@ -1,6 +1,7 @@
 import { useMutation } from "@apollo/client";
 
 import { useCallback, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { IconType } from "react-icons";
 import { BsPersonSlash } from "react-icons/bs";
 import { FaDotCircle } from "react-icons/fa";
@@ -13,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import {
   CollapsibleList,
   CollapsibleListItem,
+  ConfirmationModal,
   EmojisModal,
   NicknamesModal,
   ThemesModal,
@@ -35,8 +37,9 @@ import {
   UpdateConversationNicknameData,
   UpdateConversationThemeData,
 } from "helpers";
+import { useScrollLock } from "hooks";
 import { Conversation, User, UserWithMessage } from "models";
-import { useAuthenticationStore, useSettingsStore } from "store";
+import { useAuthenticationStore, useModalStore, useSettingsStore } from "store";
 
 import { getMessageTheme } from "../MessengerPage.helpers";
 
@@ -57,6 +60,16 @@ export function Complementary({
   user,
 }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
+  const {
+    confirmationModalConfirmButtonText,
+    confirmationModalMessage,
+    confirmationModalTitle,
+    isConfirmationModalOpen,
+    closeConfirmationModal,
+    openConfirmationModal,
+    setConfirmationModalConfirmButtonText,
+    setConfirmationModalMessage,
+  } = useModalStore();
   const [blockUser] = useMutation<BlockUserData>(BLOCK_USER);
   const [removeUserFriend] =
     useMutation<RemoveUserFriendData>(REMOVE_USER_FRIEND);
@@ -70,6 +83,7 @@ export function Complementary({
     UPDATE_CONVERSATION_THEME
   );
   const navigate = useNavigate();
+  const { lockScroll, unlockScroll } = useScrollLock();
   const { theme } = useSettingsStore();
   const [isEmojisModalVisible, setIsEmojisModalVisible] = useState(false);
   const [isFilesSelected, setIsFilesSelected] = useState(false);
@@ -183,59 +197,21 @@ export function Complementary({
         icon: BsPersonSlash,
         text: "Block",
         onClick: () => {
-          // TODO
-          blockUser({
-            variables: {
-              input: {
-                blockedUserId: userId,
-                userId: authenticatedUser?.id,
-              },
-            },
-            refetchQueries: [
-              {
-                query: GET_USER_BY_ID,
-                variables: {
-                  input: {
-                    id: userId,
-                    returnUserIfBlocked: true,
-                  },
-                },
-              },
-            ],
-            onCompleted: (data) => {
-              console.log(data);
-              removeUserFriend({
-                variables: {
-                  input: {
-                    first: authenticatedUser?.id,
-                    second: userId,
-                  },
-                },
-                onCompleted: () => {
-                  unfollowUser({
-                    variables: {
-                      input: {
-                        followingUserId: userId,
-                        userId: authenticatedUser?.id,
-                      },
-                    },
-                  });
-                  unfollowUser({
-                    variables: {
-                      input: {
-                        followingUserId: authenticatedUser?.id,
-                        userId: userId,
-                      },
-                    },
-                  });
-                },
-              });
-            },
-          });
+          lockScroll();
+          setConfirmationModalConfirmButtonText("Block");
+          setConfirmationModalMessage(
+            "Are you sure you want to block the user?"
+          );
+          openConfirmationModal();
         },
       },
     ],
-    [authenticatedUser?.id, userId, blockUser, removeUserFriend, unfollowUser]
+    [
+      lockScroll,
+      openConfirmationModal,
+      setConfirmationModalConfirmButtonText,
+      setConfirmationModalMessage,
+    ]
   );
 
   const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
@@ -299,10 +275,12 @@ export function Complementary({
                   label="Customize chat"
                 />
               )}
-              <CollapsibleList
-                items={mediaAndFilesItems}
-                label="Media & files"
-              />
+              {files && files.length > 0 && media && media.length > 0 && (
+                <CollapsibleList
+                  items={mediaAndFilesItems}
+                  label="Media & files"
+                />
+              )}
               {!instanceOfUserWithMessage(user) && (
                 <CollapsibleList
                   items={privacyAndSupportItems}
@@ -411,6 +389,74 @@ export function Complementary({
           }}
         />
       )}
+      {isConfirmationModalOpen &&
+        createPortal(
+          <ConfirmationModal
+            confirmButtonText={confirmationModalConfirmButtonText}
+            message={confirmationModalMessage}
+            title={confirmationModalTitle}
+            onCloseClick={() => {
+              unlockScroll();
+              closeConfirmationModal();
+            }}
+            onConfirmClick={() => {
+              unlockScroll();
+              closeConfirmationModal();
+
+              // TODO
+              blockUser({
+                variables: {
+                  input: {
+                    blockedUserId: userId,
+                    userId: authenticatedUser?.id,
+                  },
+                },
+                refetchQueries: [
+                  {
+                    query: GET_USER_BY_ID,
+                    variables: {
+                      input: {
+                        authenticatedUserId: authenticatedUser?.id,
+                        returnUserIfBlocked: true,
+                        userId,
+                      },
+                    },
+                  },
+                ],
+                onCompleted: (data) => {
+                  console.log(data);
+                  removeUserFriend({
+                    variables: {
+                      input: {
+                        first: authenticatedUser?.id,
+                        second: userId,
+                      },
+                    },
+                    onCompleted: () => {
+                      unfollowUser({
+                        variables: {
+                          input: {
+                            followingUserId: userId,
+                            userId: authenticatedUser?.id,
+                          },
+                        },
+                      });
+                      unfollowUser({
+                        variables: {
+                          input: {
+                            followingUserId: authenticatedUser?.id,
+                            userId: userId,
+                          },
+                        },
+                      });
+                    },
+                  });
+                },
+              });
+            }}
+          />,
+          document.body
+        )}
     </>
   );
 }

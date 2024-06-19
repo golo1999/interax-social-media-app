@@ -66,6 +66,7 @@ export const COMMENT_DATA = gql`
     }
     repliesCount
     text
+    topLevelParentId
   }
 `;
 
@@ -120,6 +121,18 @@ export const POST_DATA = gql`
       firstName
       id
       lastName
+      profilePhoto {
+        comments {
+          ...CommentData
+        }
+        dateTime
+        description
+        isCurrent
+        id
+        ownerId
+        url
+        visibility
+      }
       profilePhotos {
         comments {
           ...CommentData
@@ -150,6 +163,24 @@ export const POST_DATA = gql`
       reactionType
       userId
     }
+    receiver {
+      firstName
+      id
+      lastName
+      profilePhotos {
+        comments {
+          ...CommentData
+        }
+        dateTime
+        description
+        isCurrent
+        id
+        ownerId
+        url
+        visibility
+      }
+      username
+    }
     receiverId
     shares {
       owner {
@@ -159,6 +190,7 @@ export const POST_DATA = gql`
       }
     }
     text
+    topLevelCommentsCount
     video
     visibility
   }
@@ -168,6 +200,24 @@ export const USER_DATA = gql`
   fragment UserData on User {
     biography
     birthDate
+    blockedUsers {
+      firstName
+      id
+      lastName
+      username
+    }
+    coverPhoto {
+      comments {
+        ...CommentData
+      }
+      dateTime
+      description
+      isCurrent
+      id
+      ownerId
+      url
+      visibility
+    }
     coverPhotos {
       comments {
         ...CommentData
@@ -204,6 +254,18 @@ export const USER_DATA = gql`
       }
       id
       lastName
+      profilePhoto {
+        comments {
+          ...CommentData
+        }
+        dateTime
+        description
+        isCurrent
+        id
+        ownerId
+        url
+        visibility
+      }
       profilePhotos {
         comments {
           ...CommentData
@@ -264,11 +326,34 @@ export const USER_DATA = gql`
       senderId
       text
     }
+    photos {
+      comments {
+        ...CommentData
+      }
+      dateTime
+      description
+      id
+      ownerId
+      url
+      visibility
+    }
     placesHistory {
       ...PlaceData
     }
     posts {
       ...PostData
+    }
+    profilePhoto {
+      comments {
+        ...CommentData
+      }
+      dateTime
+      description
+      isCurrent
+      id
+      ownerId
+      url
+      visibility
     }
     profilePhotos {
       comments {

@@ -9,7 +9,6 @@ import {
   GET_USER_BY_ID,
   GetConversationBetweenData,
   getTimePassedFromDateTime,
-  GetUserByIdData,
   instanceOfUserError,
   instanceOfUserWithMessage,
 } from "helpers";
@@ -32,16 +31,21 @@ import {
 interface Props {
   groupedMessage: GroupedMessage;
   isModal?: boolean;
+  searchInputText: string;
 }
 
-export function ChatListItem({ groupedMessage, isModal }: Props) {
+export function ChatListItem({
+  groupedMessage,
+  isModal,
+  searchInputText,
+}: Props) {
   const { authenticatedUser } = useAuthenticationStore();
   const [
     fetchConversationBetween,
     { data: conversation = { conversationBetween: null } },
   ] = useLazyQuery<GetConversationBetweenData>(GET_CONVERSATION_BETWEEN);
   const [fetchUserById, { data: user = { userById: null } }] =
-    useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+    useLazyQuery(GET_USER_BY_ID);
   const { pathname } = useLocation();
   const {
     activeMessageBoxes,
@@ -56,7 +60,13 @@ export function ChatListItem({ groupedMessage, isModal }: Props) {
 
   useEffect(() => {
     fetchUserById({
-      variables: { input: { id: userId, returnUserIfBlocked: true } },
+      variables: {
+        input: {
+          authenticatedUserId: authenticatedUser?.id,
+          returnUserIfBlocked: true,
+          userId,
+        },
+      },
     });
 
     if (userId) {
@@ -81,6 +91,11 @@ export function ChatListItem({ groupedMessage, isModal }: Props) {
       ? user.userById.user
       : user.userById),
   };
+  const fullName = `${firstName} ${lastName}`;
+
+  if (!fullName.toLowerCase().includes(searchInputText.toLowerCase())) {
+    return <></>;
+  }
 
   if (!messages) {
     return <></>;
@@ -89,13 +104,15 @@ export function ChatListItem({ groupedMessage, isModal }: Props) {
   function handleClick() {
     if (isModal) {
       const matchedMessageBox = activeMessageBoxes.find(
-        (messageBox) => messageBox.userId === userId
+        (messageBox) =>
+          messageBox.authenticatedUserId === authenticatedUser!.id &&
+          messageBox.userId === userId
       );
 
       if (!matchedMessageBox) {
-        addMessageBox(userId);
+        addMessageBox(authenticatedUser!.id, userId);
       } else if (matchedMessageBox.visibility === "HIDDEN") {
-        maximizeMessageBox(userId);
+        maximizeMessageBox(authenticatedUser!.id, userId);
       }
     } else if (userId !== pathnameUserId) {
       navigate(`/messages/t/${userId}`);
@@ -128,9 +145,7 @@ export function ChatListItem({ groupedMessage, isModal }: Props) {
         }
       />
       <Container.Details>
-        <DisplayedName {...themeProps}>
-          {firstName} {lastName}
-        </DisplayedName>
+        <DisplayedName {...themeProps}>{fullName}</DisplayedName>
         <Container.Message {...themeProps}>
           {senderId === authenticatedUser?.id && <span>You:</span>}
           {text ? <Message>{text}</Message> : <DisplayedEmoji />}

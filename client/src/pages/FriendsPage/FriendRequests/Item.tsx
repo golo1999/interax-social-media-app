@@ -5,7 +5,6 @@ import { CSSProperties, useEffect } from "react";
 import { UserPhoto } from "components";
 import {
   GET_USER_BY_ID,
-  GetUserByIdData,
   instanceOfUserError,
   instanceOfUserWithMessage,
 } from "helpers";
@@ -37,14 +36,18 @@ export function Item({
 }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
   const [fetchUserById, { data: user = { userById: null } }] =
-    useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+    useLazyQuery(GET_USER_BY_ID);
   const { theme } = useSettingsStore();
 
   const { sender } = request;
 
   useEffect(() => {
-    fetchUserById({ variables: { input: { id: sender } } });
-  }, [sender, fetchUserById]);
+    fetchUserById({
+      variables: {
+        input: { authenticatedUserId: authenticatedUser?.id, userId: sender },
+      },
+    });
+  }, [authenticatedUser, sender, fetchUserById]);
 
   function handleConfirmClick() {
     onRemoveClick(userId || null);

@@ -46,7 +46,7 @@ const Text = styled.span<TextProps>`
 `;
 
 interface Props {
-  authenticatedUser: User | null;
+  authenticatedUser: User | null | undefined;
   displayedEmoji: IconType;
   message: MessageModel;
   messageTheme: string;

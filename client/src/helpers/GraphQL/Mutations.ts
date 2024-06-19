@@ -1,19 +1,26 @@
 import { gql } from "@apollo/client";
 
 import {
-  Comment,
-  Conversation,
+  BlockUserResult,
   CollegeEducation,
+  Comment,
+  CommentReaction,
+  Conversation,
+  CoverPhoto,
+  FollowRelationship,
   Friendship,
   FriendshipRequest,
+  HidePostResult,
   HighSchoolEducation,
   Message,
   Place,
   Post,
-  RelationshipStatus,
-  Work,
-  CommentReaction,
   PostReaction,
+  ProfilePhoto,
+  RelationshipStatus,
+  SavedPost,
+  UserPhoto,
+  Work,
 } from "models";
 
 import {
@@ -39,6 +46,7 @@ export const ADD_COMMENT = gql`
         lastName
         username
       }
+      parentId
       reactions {
         reactionType
       }
@@ -46,6 +54,7 @@ export const ADD_COMMENT = gql`
         text
       }
       text
+      topLevelParentId
     }
   }
 `;
@@ -57,16 +66,11 @@ export interface AddCommentReactionData {
 export const ADD_COMMENT_REACTION = gql`
   mutation AddCommentReaction($input: AddCommentReactionInput!) {
     addCommentReaction(input: $input) {
-      id
+      commentId
       dateTime
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
+      id
+      reactionType
+      userId
     }
   }
 `;
@@ -194,6 +198,55 @@ export const ADD_USER_PLACE = gql`
   }
 `;
 
+export interface AddUserCoverPhotoData {
+  addUserCoverPhoto: CoverPhoto | null;
+}
+
+export const ADD_USER_COVER_PHOTO = gql`
+  mutation AddUserCoverPhoto($input: AddUserCoverPhotoInput!) {
+    addUserCoverPhoto(input: $input) {
+      dateTime
+      id
+      ownerId
+      url
+      visibility
+    }
+  }
+`;
+
+export interface AddUserPhotoData {
+  addUserPhoto: UserPhoto | null;
+}
+
+export const ADD_USER_PHOTO = gql`
+  mutation AddUserPhoto($input: AddUserPhotoInput!) {
+    addUserPhoto(input: $input) {
+      dateTime
+      description
+      id
+      ownerId
+      url
+      visibility
+    }
+  }
+`;
+
+export interface AddUserProfilePhotoData {
+  addUserProfilePhoto: ProfilePhoto | null;
+}
+
+export const ADD_USER_PROFILE_PHOTO = gql`
+  mutation AddUserProfilePhoto($input: AddUserProfilePhotoInput!) {
+    addUserProfilePhoto(input: $input) {
+      dateTime
+      id
+      ownerId
+      url
+      visibility
+    }
+  }
+`;
+
 export interface AddRelationshipStatusData {
   addUserRelationshipStatus: RelationshipStatus | null;
 }
@@ -225,12 +278,47 @@ export const ADD_USER_WORKPLACE = gql`
 `;
 
 export interface BlockUserData {
-  blockUser: string | null;
+  blockUser: BlockUserResult | null;
 }
 
 export const BLOCK_USER = gql`
   mutation BlockUser($input: BlockUserInput!) {
-    blockUser(input: $input)
+    blockUser(input: $input) {
+      blockedUserId
+      userId
+    }
+  }
+`;
+
+export interface ChangeUserCoverPhotoData {
+  changeUserCoverPhoto: CoverPhoto | null;
+}
+
+export const CHANGE_USER_COVER_PHOTO = gql`
+  mutation ChangeUserCoverPhoto($input: ChangeUserCoverPhotoInput!) {
+    changeUserCoverPhoto(input: $input) {
+      dateTime
+      id
+      ownerId
+      url
+      visibility
+    }
+  }
+`;
+
+export interface ChangeUserProfilePhotoData {
+  changeUserProfilePhoto: ProfilePhoto | null;
+}
+
+export const CHANGE_USER_PROFILE_PHOTO = gql`
+  mutation ChangeUserProfilePhoto($input: ChangeUserProfilePhotoInput!) {
+    changeUserProfilePhoto(input: $input) {
+      dateTime
+      id
+      ownerId
+      url
+      visibility
+    }
   }
 `;
 
@@ -249,22 +337,29 @@ export const CREATE_POST = gql`
 `;
 
 export interface FollowUserData {
-  followUser: string | null;
+  followUser: FollowRelationship | null;
 }
 
 export const FOLLOW_USER = gql`
   mutation FollowUser($input: FollowUserInput!) {
-    followUser(input: $input)
+    followUser(input: $input) {
+      followingUserId
+      userId
+    }
   }
 `;
 
 export interface HidePostData {
-  hidePost: string | null;
+  hidePost: HidePostResult | null;
 }
 
 export const HIDE_POST = gql`
   mutation HidePost($input: HidePostInput!) {
-    hidePost(input: $input)
+    hidePost(input: $input) {
+      id
+      postId
+      userId
+    }
   }
 `;
 
@@ -298,16 +393,12 @@ export const REMOVE_COMMENT_REACTION = gql`
 `;
 
 export interface RemovePostData {
-  removePost: Post | null;
+  removePost: string | null;
 }
 
 export const REMOVE_POST = gql`
-  ${COMMENT_DATA}
-  ${POST_DATA}
   mutation RemovePost($id: ID!) {
-    removePost(id: $id) {
-      ...PostData
-    }
+    removePost(id: $id)
   }
 `;
 
@@ -323,6 +414,20 @@ export const REMOVE_POST_REACTION = gql`
       postId
       reactionType
       userId
+    }
+  }
+`;
+
+export interface RemovePostSharesData {
+  removePostShares: Post[] | null;
+}
+
+export const REMOVE_POST_SHARES = gql`
+  ${COMMENT_DATA}
+  ${POST_DATA}
+  mutation RemovePostShares($id: ID!) {
+    removePostShares(id: $id) {
+      ...PostData
     }
   }
 `;
@@ -356,12 +461,16 @@ export const REMOVE_USER_FRIENDSHIP_REQUEST = gql`
 `;
 
 export interface SavePostData {
-  savePost: string | null;
+  savePost: SavedPost | null;
 }
 
 export const SAVE_POST = gql`
   mutation SavePost($input: SavePostInput!) {
-    savePost(input: $input)
+    savePost(input: $input) {
+      id
+      postId
+      userId
+    }
   }
 `;
 
@@ -378,33 +487,57 @@ export const SEND_USER_FRIENDSHIP_REQUEST = gql`
   }
 `;
 
+export interface SharePostData {
+  sharePost: Post[] | null;
+}
+
+export const SHARE_POST = gql`
+  ${COMMENT_DATA}
+  ${POST_DATA}
+  mutation SharePost($input: SharePostInput!) {
+    sharePost(input: $input) {
+      ...PostData
+    }
+  }
+`;
+
 export interface UnblockUserData {
-  unblockUser: string | null;
+  unblockUser: BlockUserResult | null;
 }
 
 export const UNBLOCK_USER = gql`
   mutation UnblockUser($input: BlockUserInput!) {
-    unblockUser(input: $input)
+    unblockUser(input: $input) {
+      blockedUserId
+      userId
+    }
   }
 `;
 
 export interface UnfollowUserData {
-  unfollowUser: string | null;
+  unfollowUser: FollowRelationship | null;
 }
 
 export const UNFOLLOW_USER = gql`
   mutation UnfollowUser($input: FollowUserInput!) {
-    unfollowUser(input: $input)
+    unfollowUser(input: $input) {
+      followingUserId
+      userId
+    }
   }
 `;
 
 export interface UnsavePostData {
-  unsavePost: string | null;
+  unsavePost: SavedPost | null;
 }
 
 export const UNSAVE_POST = gql`
   mutation UnsavePost($input: SavePostInput!) {
-    unsavePost(input: $input)
+    unsavePost(input: $input) {
+      id
+      postId
+      userId
+    }
   }
 `;
 

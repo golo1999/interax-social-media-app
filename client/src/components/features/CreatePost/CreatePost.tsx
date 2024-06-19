@@ -1,5 +1,5 @@
 import { UserPhoto } from "components";
-import { useAuthenticationStore } from "store";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Container } from "./CreatePost.style";
 
@@ -10,6 +10,7 @@ interface Props {
 
 export function CreatePost({ text, onTextContainerClick }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
 
   if (!authenticatedUser) {
     return <></>;
@@ -19,7 +20,13 @@ export function CreatePost({ text, onTextContainerClick }: Props) {
     <Container.Main>
       <Container.Items>
         <UserPhoto user={authenticatedUser} />
-        <Container.Text onClick={onTextContainerClick}>{text}</Container.Text>
+        <Container.Text
+          $isAuthenticated={!!authenticatedUser}
+          $theme={theme}
+          onClick={onTextContainerClick}
+        >
+          {text}
+        </Container.Text>
       </Container.Items>
     </Container.Main>
   );

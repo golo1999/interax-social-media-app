@@ -4,61 +4,13 @@ import { useMemo, useState } from "react";
 import { IconType } from "react-icons";
 import { HiHeart, HiThumbUp } from "react-icons/hi";
 import { MdClose } from "react-icons/md";
-import styled from "styled-components";
 
 import { Modal } from "components";
 import { Emoji } from "enums";
 import { Colors } from "environment";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
-const Button = {
-  Cancel: styled.button.attrs({ type: "button" })`
-    background-color: inherit;
-    border-radius: 5px;
-    color: ${Colors.BrightNavyBlue};
-    font-weight: bold;
-    padding: 0.5em 1em;
-
-    &:hover {
-      background-color: ${Colors.BlackOlive};
-    }
-  `,
-  Save: styled.button.attrs({ type: "button" })`
-    background-color: ${Colors.BrightNavyBlue};
-    border-radius: 5px;
-    color: ${Colors.Platinum};
-    font-weight: bold;
-    padding: 0.5em 2em;
-
-    &:hover {
-      background-color: ${Colors.BleuDeFrance};
-    }
-  `,
-};
-
-const List = styled.ul`
-  color: ${Colors.Platinum};
-  display: grid;
-  gap: 0.5em;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  height: fit-content;
-  list-style-type: none;
-`;
-
-interface ListItemProps {
-  isSelected: boolean;
-}
-
-const ListItem = styled.li<ListItemProps>`
-  ${({ isSelected }) =>
-    isSelected && `background-color: ${Colors.BlackOlive};`};
-  border-radius: 10px;
-  padding: 0.5em 10px;
-
-  &:hover {
-    ${({ isSelected }) =>
-      !isSelected && `background-color: ${Colors.BlackOlive};`}
-  }
-`;
+import { Button, List, ListItem } from "./EmojisModal.style";
 
 interface Item {
   icon: IconType;
@@ -76,6 +28,7 @@ export function EmojisModal({
   onCloseClick,
   onSaveClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const ITEMS = useMemo<Item[]>(
     () => [
       { icon: HiThumbUp, name: Emoji.LIKE },
@@ -83,7 +36,7 @@ export function EmojisModal({
     ],
     []
   );
-
+  const { theme } = useSettingsStore();
   const [selectedItem, setSelectedItem] = useState(
     ITEMS.find((item) => item.name === initiallySelectedItem) || ITEMS[0]
   );
@@ -99,15 +52,26 @@ export function EmojisModal({
     onCloseClick();
   }
 
+  const dividerColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
+  const emojiColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Platinum" : "DarkJungleGreen";
+  const iconColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Platinum" : "PhilippineGray";
+  const titleColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Platinum" : "VampireBlack";
+
   return (
     <Modal>
       <Modal.Header
+        iconColor={iconColor}
         isTemplate
         rightIcon={MdClose}
         title="Emoji"
+        titleColor={titleColor}
         onRightIconClick={onCloseClick}
       />
-      <Divider color="Onyx" />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <Modal.Body padding="1.5em">
         <List>
           {ITEMS.map((item, index) => {
@@ -116,11 +80,13 @@ export function EmojisModal({
 
             return (
               <ListItem
-                key={index}
+                $isAuthenticated={!!authenticatedUser}
+                $theme={theme}
                 isSelected={isSelected}
+                key={index}
                 onClick={() => handleItemClick(item)}
               >
-                <Icon size={24} />
+                <Icon color={Colors[emojiColor]} size={24} />
               </ListItem>
             );
           })}
@@ -132,7 +98,13 @@ export function EmojisModal({
         justifyContent="flex-end"
         padding="0.75em"
       >
-        <Button.Cancel onClick={onCloseClick}>Cancel</Button.Cancel>
+        <Button.Cancel
+          $isAuthenticated={!!authenticatedUser}
+          $theme={theme}
+          onClick={onCloseClick}
+        >
+          Cancel
+        </Button.Cancel>
         <Button.Save onClick={handleSaveClick}>Save</Button.Save>
       </Modal.Footer>
     </Modal>

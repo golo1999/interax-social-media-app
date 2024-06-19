@@ -7,6 +7,7 @@ import { MdBlock, MdClose } from "react-icons/md";
 import { Modal } from "components";
 import { ConversationTheme } from "enums";
 import { Colors } from "environment";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Button, Default, List, ListItem, Theme } from "./ThemesModal.style";
 
@@ -33,6 +34,7 @@ export function ThemesModal({
   onCloseClick,
   onSaveClick,
 }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const ITEMS = useMemo<Item[]>(
     () => [
       { icon: MdBlock, name: ConversationTheme.DEFAULT },
@@ -53,7 +55,7 @@ export function ThemesModal({
     ],
     []
   );
-
+  const { theme } = useSettingsStore();
   const [selectedItem, setSelectedItem] = useState(
     ITEMS.find((item) => item.name === initiallySelectedItem) || ITEMS[0]
   );
@@ -69,15 +71,24 @@ export function ThemesModal({
     onCloseClick();
   }
 
+  const dividerColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
+  const iconColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Platinum" : "PhilippineGray";
+  const titleColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Platinum" : "VampireBlack";
+
   return (
     <Modal>
       <Modal.Header
+        iconColor={iconColor}
         isTemplate
         rightIcon={MdClose}
         title="Themes"
+        titleColor={titleColor}
         onRightIconClick={onCloseClick}
       />
-      <Divider color="Onyx" />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <Modal.Body padding="1.5em">
         <List>
           {ITEMS.map((item, index) => {
@@ -86,14 +97,20 @@ export function ThemesModal({
 
             // Default item
             if (Icon) {
+              const iconColor =
+                !!authenticatedUser && theme === "DARK"
+                  ? Colors.Platinum
+                  : Colors.VampireBlack;
               return (
                 <ListItem
-                  key={index}
+                  $isAuthenticated={!!authenticatedUser}
+                  $theme={theme}
                   isSelected={isSelected}
+                  key={index}
                   onClick={() => handleItemClick(item)}
                 >
                   <Default>
-                    <Icon color={Colors.Platinum} size="3em" />
+                    <Icon color={iconColor} size="3em" />
                   </Default>
                 </ListItem>
               );
@@ -101,8 +118,10 @@ export function ThemesModal({
 
             return (
               <ListItem
-                key={index}
+                $isAuthenticated={!!authenticatedUser}
+                $theme={theme}
                 isSelected={isSelected}
+                key={index}
                 onClick={() => handleItemClick(item)}
               >
                 <Theme color={color} />
@@ -117,7 +136,13 @@ export function ThemesModal({
         justifyContent="flex-end"
         padding="0.75em"
       >
-        <Button.Cancel onClick={onCloseClick}>Cancel</Button.Cancel>
+        <Button.Cancel
+          $isAuthenticated={!!authenticatedUser}
+          $theme={theme}
+          onClick={onCloseClick}
+        >
+          Cancel
+        </Button.Cancel>
         <Button.Save onClick={handleSaveClick}>Save</Button.Save>
       </Modal.Footer>
     </Modal>

@@ -20,15 +20,21 @@ export const Container = styled.div<ThemeProps>`
   padding: 0.5em;
 `;
 
-export const Input = styled.input.attrs({ type: "text" })`
+export const Input = styled.input.attrs({ type: "text" })<ThemeProps>`
   background-color: inherit;
   border-radius: 20px;
-  color: ${Colors.GraniteGray};
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.PhilippineSilver
+      : Colors.GraniteGray};
   flex: 1;
   font-size: 15px;
   padding: 0.25em;
 
   &::placeholder {
-    color: ${Colors.GraniteGray};
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.PhilippineGray
+        : Colors.GraniteGray};
   }
 `;

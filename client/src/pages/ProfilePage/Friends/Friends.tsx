@@ -112,63 +112,51 @@ export function Friends({ user }: Props) {
               gridTemplateColumns: "repeat(2, 1fr)",
             }}
           >
-            {friends.map((friend, index) => {
-              return (
-                <Friend
-                  key={index}
-                  authenticatedUser={authenticatedUser}
-                  user={friend}
-                  // onAddFriendClick={() => {
-                  //   addUserFriend({
-                  //     variables: {
-                  //       input: {
-                  //         first: authenticatedUser?.id,
-                  //         second: friend.id,
-                  //       },
-                  //     },
-                  //     refetchQueries: [
-                  //       {
-                  //         query: GET_USER_BY_USERNAME,
-                  //         variables: { username: authenticatedUser?.username },
-                  //       },
-                  //     ],
-                  //   });
-                  // }}
-                  onAddFriendClick={() => {
-                    sendUserFriendRequest({
-                      variables: {
-                        input: {
-                          receiver: friend.id,
-                          sender: authenticatedUser?.id,
+            {friends.map((friend, index) => (
+              <Friend
+                key={index}
+                authenticatedUser={authenticatedUser}
+                user={friend}
+                onAddFriendClick={() =>
+                  sendUserFriendRequest({
+                    variables: {
+                      input: {
+                        receiver: friend.id,
+                        sender: authenticatedUser?.id,
+                      },
+                    },
+                    refetchQueries: [
+                      {
+                        query: GET_USER_BY_USERNAME,
+                        variables: {
+                          authenticatedUserId: authenticatedUser?.id,
+                          username: authenticatedUser?.username,
                         },
                       },
-                      refetchQueries: [
-                        {
-                          query: GET_USER_BY_USERNAME,
-                          variables: { username: authenticatedUser?.username },
-                        },
-                      ],
-                    });
-                  }}
-                  onRemoveFriendRequestClick={() => {
-                    removeUserFriendRequest({
-                      variables: {
-                        input: {
-                          receiver: friend.id,
-                          sender: authenticatedUser?.id,
+                    ],
+                  })
+                }
+                onRemoveFriendRequestClick={() =>
+                  removeUserFriendRequest({
+                    variables: {
+                      input: {
+                        receiver: friend.id,
+                        sender: authenticatedUser?.id,
+                      },
+                    },
+                    refetchQueries: [
+                      {
+                        query: GET_USER_BY_USERNAME,
+                        variables: {
+                          authenticatedUserId: authenticatedUser?.id,
+                          username: authenticatedUser?.username,
                         },
                       },
-                      refetchQueries: [
-                        {
-                          query: GET_USER_BY_USERNAME,
-                          variables: { username: authenticatedUser?.username },
-                        },
-                      ],
-                    });
-                  }}
-                />
-              );
-            })}
+                    ],
+                  })
+                }
+              />
+            ))}
           </div>
         </>
       ) : (
@@ -179,7 +167,7 @@ export function Friends({ user }: Props) {
 }
 
 interface FriendProps {
-  authenticatedUser: User | null;
+  authenticatedUser: User | null | undefined;
   user: User;
   onAddFriendClick: () => void;
   onRemoveFriendRequestClick: () => void;

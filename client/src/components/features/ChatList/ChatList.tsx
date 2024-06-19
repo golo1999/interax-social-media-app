@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { createRef, useMemo, useState } from "react";
 import { BsPencilSquare } from "react-icons/bs";
 import { HiOutlineArrowsExpand } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +24,8 @@ export function ChatList({ isModal }: Props) {
   const { closeChatModal } = useMessagesStore();
   const navigate = useNavigate();
   const { theme } = useSettingsStore();
+  const [searchInputText, setSearchInputText] = useState("");
+  const searchInputRef = createRef<HTMLInputElement>();
 
   const { id: authenticatedUserId, messages } = {
     ...authenticatedUser,
@@ -97,13 +99,18 @@ export function ChatList({ isModal }: Props) {
         </Header.Element>
         {groupedMessages.length > 0 ? (
           <>
-            <SearchInput placeholder="Search Messenger" />
+            <SearchInput
+              placeholder="Search Messenger"
+              ref={searchInputRef}
+              onTextChange={(text) => setSearchInputText(text)}
+            />
             <List>
               {groupedMessages.map((groupedMessage, index) => (
                 <ChatListItem
                   key={index}
                   isModal={isModal}
                   groupedMessage={groupedMessage}
+                  searchInputText={searchInputText}
                 />
               ))}
             </List>

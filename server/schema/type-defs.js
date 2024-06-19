@@ -20,6 +20,7 @@ const typeDefs = gql`
     parentId: ID
     postId: ID!
     text: String!
+    topLevelParentId: ID
   }
 
   input AddPostReactionInput {
@@ -35,6 +36,18 @@ const typeDefs = gql`
     school: String!
     to: String
     userId: ID!
+    visibility: Permission!
+  }
+
+  input AddUserCoverPhotoInput {
+    ownerId: ID!
+    url: String!
+    visibility: Permission!
+  }
+
+  input AddUserPhotoInput {
+    ownerId: ID!
+    url: String!
     visibility: Permission!
   }
 
@@ -61,6 +74,12 @@ const typeDefs = gql`
     visibility: Permission!
   }
 
+  input AddUserProfilePhotoInput {
+    ownerId: ID!
+    url: String!
+    visibility: Permission!
+  }
+
   input AddUserRelationshipStatusInput {
     status: RelationshipStatusType!
     userId: ID!
@@ -82,6 +101,22 @@ const typeDefs = gql`
     userId: ID!
   }
 
+  input ChangeUserCoverPhotoInput {
+    url: String!
+    userId: ID!
+  }
+
+  input ChangeUserProfilePhotoInput {
+    url: String!
+    userId: ID!
+  }
+
+  input CommentRepliesInput {
+    after: String
+    commentId: ID!
+    first: Int
+  }
+
   input CreatePostInput {
     ownerId: ID!
     parentId: ID
@@ -93,6 +128,12 @@ const typeDefs = gql`
   input FollowUserInput {
     followingUserId: ID!
     userId: ID!
+  }
+
+  input FriendsPostsByOwnerIdInput {
+    after: String
+    first: Int
+    ownerId: ID!
   }
 
   input GetConversationBetweenInput {
@@ -111,13 +152,25 @@ const typeDefs = gql`
   }
 
   input GetUserByIdInput {
-    id: ID!
+    authenticatedUserId: ID
     returnUserIfBlocked: Boolean
+    userId: ID!
+  }
+
+  input GetUserByUsernameInput {
+    authenticatedUserId: ID
+    username: String!
   }
 
   input HidePostInput {
     postId: ID!
     userId: ID!
+  }
+
+  input PostCommentsInput {
+    after: String
+    first: Int
+    postId: ID!
   }
 
   input RemoveCommentReactionInput {
@@ -143,6 +196,13 @@ const typeDefs = gql`
   input SendUserFriendshipRequestInput {
     receiver: ID!
     sender: ID!
+  }
+
+  input SharePostInput {
+    ownerId: ID!
+    postId: ID!
+    receiverId: ID!
+    visibility: Permission!
   }
 
   input UpdateConversationEmojiInput {
@@ -174,6 +234,20 @@ const typeDefs = gql`
     visibility: Permission!
   }
 
+  input UserFriendsByIdInput {
+    after: String
+    first: Int
+    id: ID!
+  }
+
+  input UserPostsByIdInput {
+    after: String
+    before: String
+    first: Int
+    last: Int
+    userId: ID!
+  }
+
   type BlockUserResult {
     blockedUserId: ID!
     userId: ID!
@@ -203,6 +277,18 @@ const typeDefs = gql`
     replies: [Comment!]!
     repliesCount: Int!
     text: String!
+    topLevelParentId: ID
+  }
+
+  type CommentsEdge {
+    node: Comment!
+    cursor: String!
+  }
+
+  type CommentsResult {
+    edges: [CommentsEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
   }
 
   type CommentReaction {
@@ -259,7 +345,14 @@ const typeDefs = gql`
     sender: ID!
   }
 
+  type FriendsPostsByOwnerIdResult {
+    edges: [PostsEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+  }
+
   type HidePostResult {
+    id: ID!
     postId: ID!
     userId: ID!
   }
@@ -292,6 +385,13 @@ const typeDefs = gql`
     text: String
   }
 
+  type PageInfo {
+    endCursor: String
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+  }
+
   type Place {
     id: ID!
     city: String!
@@ -319,8 +419,14 @@ const typeDefs = gql`
     receiverId: ID!
     shares: [Share!]!
     text: String
+    topLevelCommentsCount: Int!
     video: String
     visibility: Permission!
+  }
+
+  type PostsEdge {
+    node: Post!
+    cursor: String!
   }
 
   type PostPhoto {
@@ -369,6 +475,7 @@ const typeDefs = gql`
   }
 
   type SavedPost {
+    id: ID!
     postId: ID!
     userId: ID!
   }
@@ -383,6 +490,8 @@ const typeDefs = gql`
     id: ID!
     biography: String
     birthDate: String
+    blockedUsers: [User!]!
+    coverPhoto: CoverPhoto
     coverPhotos: [CoverPhoto!]!
     educationHistory: [EducationResult!]!
     email: String!
@@ -393,8 +502,10 @@ const typeDefs = gql`
     hiddenPosts: [Post!]!
     lastName: String!
     messages: [Message!]!
+    photos: [UserPhoto!]!
     placesHistory: [Place!]!
     posts: [Post!]!
+    profilePhoto: ProfilePhoto
     profilePhotos: [ProfilePhoto!]!
     relationshipStatus: RelationshipStatus
     savedPosts: [Post!]!
@@ -404,6 +515,24 @@ const typeDefs = gql`
 
   type UserError {
     message: String!
+  }
+
+  type UserPhoto {
+    id: ID!
+    comments: [Comment!]!
+    dateTime: String!
+    description: String
+    ownerId: ID!
+    reactions: [Reaction!]!
+    shares: [Share!]!
+    url: String!
+    visibility: Permission!
+  }
+
+  type UserPostsByIdResult {
+    edges: [PostsEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
   }
 
   type UserWithMessage {
@@ -437,24 +566,26 @@ const typeDefs = gql`
   }
 
   type Query {
-    authenticatedUser: User
     comment(id: ID!): Comment
     commentReactions(commentId: ID!): [Reaction!]
-    commentReplies(commentId: ID!): [Comment!]
+    commentReplies(input: CommentRepliesInput!): CommentsResult!
     comments: [Comment!]
     conversationBetween(input: GetConversationBetweenInput!): Conversation
     friendshipSuggestionsById(id: ID!): [User!]
-    friendsPostsByOwnerId(ownerId: ID!): [Post!]
+    friendsPostsByOwnerId(
+      input: FriendsPostsByOwnerIdInput!
+    ): FriendsPostsByOwnerIdResult!
     messagesBetween(input: GetMessagesBetweenInput!): [Message!]!
     post(id: ID!): Post
-    postComments(postId: ID!): [Comment!]
+    postComments(input: PostCommentsInput!): CommentsResult!
     posts: [Post!]
     postsByOwnerId(ownerId: ID!): [Post!]
     userBlockedList(id: ID!): [User!]
     userById(input: GetUserByIdInput!): UserByIdResult
-    userByUsername(username: String!): UserByUsernameResult
-    userFriendsById(id: ID!): [User!]
+    userByUsername(input: GetUserByUsernameInput!): UserByUsernameResult
+    userFriendsById(input: UserFriendsByIdInput!): [User!]!
     userFriendsByUsername(username: String!): [User!]
+    userPostsById(input: UserPostsByIdInput!): UserPostsByIdResult!
     userPostReaction(input: GetUserPostReactionInput!): PostReaction
     users: [User!]
   }
@@ -467,23 +598,30 @@ const typeDefs = gql`
     addUserCollegeEducation(
       input: AddUserCollegeEducationInput!
     ): CollegeEducation
+    addUserCoverPhoto(input: AddUserCoverPhotoInput!): CoverPhoto
     addUserFriend(input: AddUserFriendInput!): Friendship
     addUserHighSchoolEducation(
       input: AddUserHighSchoolEducationInput!
     ): HighSchoolEducation
+    addUserPhoto(input: AddUserPhotoInput!): UserPhoto
     addUserPlace(input: AddUserPlaceInput!): Place
+    addUserProfilePhoto(input: AddUserProfilePhotoInput!): ProfilePhoto
     addUserRelationshipStatus(
       input: AddUserRelationshipStatusInput!
     ): RelationshipStatus
     addUserWorkplace(input: AddUserWorkplaceInput!): Work
     blockUser(input: BlockUserInput!): BlockUserResult
+    changeUserCoverPhoto(input: ChangeUserCoverPhotoInput!): CoverPhoto
+    changeUserProfilePhoto(input: ChangeUserProfilePhotoInput!): ProfilePhoto
     createPost(input: CreatePostInput!): Post
     followUser(input: FollowUserInput!): FollowRelationship
     hidePost(input: HidePostInput!): HidePostResult
     removeComment(id: ID!): Comment
     removeCommentReaction(input: RemoveCommentReactionInput!): CommentReaction
-    removePost(id: ID!): Post
+    removeCommentReplies(id: ID!): [Comment!]
+    removePost(id: ID!): ID
     removePostReaction(input: RemovePostReactionInput!): PostReaction
+    removePostShares(id: ID!): [Post!]
     removeUserFriend(input: AddUserFriendInput!): Friendship
     removeUserFriendshipRequest(
       input: RemoveUserFriendshipRequestInput!
@@ -492,6 +630,7 @@ const typeDefs = gql`
     sendUserFriendshipRequest(
       input: SendUserFriendshipRequestInput!
     ): FriendshipRequest
+    sharePost(input: SharePostInput!): Post
     unblockUser(input: BlockUserInput!): BlockUserResult
     unfollowUser(input: FollowUserInput!): FollowRelationship
     unsavePost(input: SavePostInput!): SavedPost

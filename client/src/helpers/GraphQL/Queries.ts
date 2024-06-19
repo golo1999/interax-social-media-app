@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { TypedDocumentNode, gql } from "@apollo/client";
 
 import {
   Comment,
@@ -19,57 +19,6 @@ import {
   USER_DATA,
 } from "./Fragments";
 
-export interface GetAuthenticatedUserData {
-  authenticatedUser: User;
-}
-
-export const GET_AUTHENTICATED_USER = gql`
-  ${COMMENT_DATA}
-  ${PLACE_DATA}
-  ${POST_DATA}
-  ${USER_DATA}
-  query GetAuthenticatedUser {
-    authenticatedUser {
-      ...UserData
-    }
-  }
-`;
-
-export const GET_AUTHENTICATED_USER_WITH_FRIENDS = gql`
-  ${COMMENT_DATA}
-  query GetAuthenticatedUser {
-    authenticatedUser {
-      email
-      firstName
-      friends {
-        firstName
-        id
-        lastName
-        profilePhotos {
-          comments {
-            ...CommentData
-          }
-          dateTime
-          description
-          isCurrent
-          id
-          ownerId
-          url
-          visibility
-        }
-        username
-      }
-      friendshipRequests {
-        receiver
-        sender
-      }
-      id
-      lastName
-      username
-    }
-  }
-`;
-
 export interface GetCommentData {
   comment: Comment | null;
 }
@@ -83,15 +32,42 @@ export const GET_COMMENT = gql`
   }
 `;
 
+type PageInfo = {
+  endCursor: string | null;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  startCursor: string | null;
+};
+
+type CommentsEdge = { cursor: string; node: Comment };
+
+type GetCommentsResult = {
+  edges: CommentsEdge[];
+  pageInfo: PageInfo;
+  totalCount: number;
+};
+
 export interface GetCommentRepliesData {
-  commentReplies: Comment[] | null;
+  commentReplies: GetCommentsResult;
 }
 
 export const GET_COMMENT_REPLIES = gql`
   ${COMMENT_DATA}
-  query GetCommentReplies($commentId: ID!) {
-    commentReplies(commentId: $commentId) {
-      ...CommentData
+  query GetCommentReplies($input: CommentRepliesInput!) {
+    commentReplies(input: $input) {
+      edges {
+        cursor
+        node {
+          ...CommentData
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      totalCount
     }
   }
 `;
@@ -110,6 +86,7 @@ export const GET_CONVERSATION_BETWEEN = gql`
       }
       first
       firstNickname
+      id
       media {
         type
         url
@@ -121,55 +98,34 @@ export const GET_CONVERSATION_BETWEEN = gql`
   }
 `;
 
+type GetFriendsPostsByOwnerIdResult = {
+  edges: PostsEdge[];
+  pageInfo: PageInfo;
+  totalCount: number;
+};
+
 export interface GetFriendsPostsByUserIdData {
-  friendsPostsByOwnerId: Post[];
+  friendsPostsByOwnerId: GetFriendsPostsByOwnerIdResult;
 }
 
 export const GET_FRIENDS_POSTS_BY_USER_ID = gql`
   ${COMMENT_DATA}
-  query GetFriendsPostsByOwnerId($ownerId: ID!) {
-    friendsPostsByOwnerId(ownerId: $ownerId) {
-      canComment
-      canReact
-      canShare
-      comments {
-        ...CommentData
-      }
-      dateTime
-      id
-      owner {
-        firstName
-        id
-        lastName
-        username
-      }
-      parentId
-      photos {
-        id
-        ownerId
-        postId
-        text
-        url
-      }
-      reactions {
-        owner {
-          firstName
-          id
-          lastName
-          username
-        }
-        type
-      }
-      shares {
-        owner {
-          firstName
-          lastName
-          username
+  ${POST_DATA}
+  query GetFriendsPostsByOwnerId($input: FriendsPostsByOwnerIdInput!) {
+    friendsPostsByOwnerId(input: $input) {
+      edges {
+        cursor
+        node {
+          ...PostData
         }
       }
-      text
-      video
-      visibility
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      totalCount
     }
   }
 `;
@@ -179,7 +135,9 @@ export interface GetFriendshipSuggestionsByIdData {
 }
 
 export const GET_FRIENDSHIP_SUGGESTIONS_BY_ID = gql`
+  ${COLLEGE_EDUCATION_DATA}
   ${COMMENT_DATA}
+  ${HIGH_SCHOOL_EDUCATION_DATA}
   ${PLACE_DATA}
   ${POST_DATA}
   ${USER_DATA}
@@ -231,6 +189,31 @@ export const GET_POST = gql`
   }
 `;
 
+export interface GetPostCommentsData {
+  postComments: GetCommentsResult;
+}
+
+export const GET_POST_COMMENTS = gql`
+  ${COMMENT_DATA}
+  query GetPostComments($input: PostCommentsInput!) {
+    postComments(input: $input) {
+      edges {
+        cursor
+        node {
+          ...CommentData
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      totalCount
+    }
+  }
+`;
+
 export interface GetUserBlockedListData {
   userBlockedList: User[] | null;
 }
@@ -247,11 +230,22 @@ export const GET_USER_BLOCKED_LIST = gql`
   }
 `;
 
-export interface GetUserByIdData {
+interface GetUserByIdData {
   userById: User | UserError | UserWithMessage | null;
 }
 
-export const GET_USER_BY_ID = gql`
+interface GetUserByIdVariables {
+  input: {
+    authenticatedUserId?: string;
+    returnUserIfBlocked?: boolean;
+    userId: string;
+  };
+}
+
+export const GET_USER_BY_ID: TypedDocumentNode<
+  GetUserByIdData,
+  GetUserByIdVariables
+> = gql`
   ${COLLEGE_EDUCATION_DATA}
   ${COMMENT_DATA}
   ${HIGH_SCHOOL_EDUCATION_DATA}
@@ -276,19 +270,26 @@ export const GET_USER_BY_ID = gql`
   }
 `;
 
-export interface GetUserByUsernameData {
+interface GetUserByUsernameData {
   userByUsername: User | UserError | null;
 }
 
-export const GET_USER_BY_USERNAME = gql`
+interface GetUserByUsernameVariables {
+  input: { authenticatedUserId?: string; username: string };
+}
+
+export const GET_USER_BY_USERNAME: TypedDocumentNode<
+  GetUserByUsernameData,
+  GetUserByUsernameVariables
+> = gql`
   ${COLLEGE_EDUCATION_DATA}
   ${COMMENT_DATA}
   ${HIGH_SCHOOL_EDUCATION_DATA}
   ${PLACE_DATA}
   ${POST_DATA}
   ${USER_DATA}
-  query GetUserByUsername($username: String!) {
-    userByUsername(username: $username) {
+  query GetUserByUsername($input: GetUserByUsernameInput!) {
+    userByUsername(input: $input) {
       ... on User {
         ...UserData
       }
@@ -300,8 +301,8 @@ export const GET_USER_BY_USERNAME = gql`
 `;
 
 export const GET_USER_FRIENDS_BY_ID = gql`
-  query GetUserFriendsById($id: String!) {
-    userFriendsById(id: $id) {
+  query GetUserFriendsById($input: UserFriendsByIdInput!) {
+    userFriendsById(input: $input) {
       firstName
       id
       lastName
@@ -317,6 +318,40 @@ export const GET_USER_FRIENDS_BY_USERNAME = gql`
       id
       lastName
       username
+    }
+  }
+`;
+
+export type PostsEdge = { cursor: string; node: Post };
+
+type GetUserPostsByIdResult = {
+  edges: PostsEdge[];
+  pageInfo: PageInfo;
+  totalCount: number;
+};
+
+export interface GetUserPostsByIdData {
+  userPostsById: GetUserPostsByIdResult;
+}
+
+export const GET_USER_POSTS_BY_ID = gql`
+  ${COMMENT_DATA}
+  ${POST_DATA}
+  query GetUserPostsById($input: UserPostsByIdInput!) {
+    userPostsById(input: $input) {
+      edges {
+        cursor
+        node {
+          ...PostData
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      totalCount
     }
   }
 `;

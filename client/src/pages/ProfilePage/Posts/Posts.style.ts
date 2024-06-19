@@ -12,6 +12,10 @@ interface FriendsListContainerProps {
   friendsCount: number;
 }
 
+interface PhotosListContainerProps {
+  photosCount: number;
+}
+
 export const Container = {
   Column: {
     First: styled.div`
@@ -27,6 +31,17 @@ export const Container = {
       gap: 1em;
     `,
   },
+  FriendCard: styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+  `,
+  FriendsHeader: styled.div`
+    align-items: center;
+    display: flex;
+    gap: 1em;
+    justify-content: space-between;
+  `,
   FriendsList: styled.div<FriendsListContainerProps>`
     display: grid;
     gap: 0.5em 1em;
@@ -46,11 +61,27 @@ export const Container = {
       flex-direction: column;
     }
   `,
+  Photo: styled.div`
+    aspect-ratio: 1 / 1;
+    border-radius: 5px;
+    position: relative;
+  `,
   Photos: styled.div`
     align-items: center;
     display: flex;
     gap: 1em;
     justify-content: space-between;
+  `,
+  PhotosList: styled.div<PhotosListContainerProps>`
+    display: grid;
+    gap: 0.5em 1em;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: ${({ photosCount }) =>
+      !photosCount || photosCount <= 3
+        ? "repeat(1, minmax(0, 1fr))"
+        : photosCount <= 6
+        ? "repeat(2, minmax(0, 1fr))"
+        : "repeat(3, minmax(0, 1fr))"};
   `,
   Posts: styled.div`
     display: flex;
@@ -58,6 +89,15 @@ export const Container = {
     gap: 1em;
   `,
 };
+
+export const Photo = styled.img`
+  border-radius: inherit;
+  height: 100%;
+  inset: 0;
+  max-width: 100%;
+  object-fit: cover;
+  position: absolute;
+`;
 
 export const SeeButton = styled.button.attrs({ type: "button" })<ThemeProps>`
   background-color: inherit;
@@ -77,22 +117,44 @@ export const SeeButton = styled.button.attrs({ type: "button" })<ThemeProps>`
 `;
 
 export const Text = {
-  Friends: styled.span`
-    // light theme: VampireBlack
-    color: ${Colors.LightGray};
+  FriendFullName: styled.h5<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.LightGray
+        : Colors.VampireBlack};
+    overflow: hidden;
+    padding: 0 0 0.25em 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+  Friends: styled.span<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.LightGray
+        : Colors.VampireBlack};
     font-size: 20px;
     font-weight: bold;
   `,
-  Intro: styled.span`
-    // light theme: VampireBlack
-    color: ${Colors.LightGray};
+  FriendsCount: styled.span<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.SilverChalice
+        : Colors.GraniteGray};
+  `,
+  Intro: styled.span<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.LightGray
+        : Colors.VampireBlack};
     font-size: 20px;
     font-weight: bold;
     padding-bottom: 8px;
   `,
-  Photos: styled.span`
-    // light theme: VampireBlack
-    color: ${Colors.LightGray};
+  Photos: styled.span<ThemeProps>`
+    color: ${({ isAuthenticated, theme }) =>
+      isAuthenticated && theme === "DARK"
+        ? Colors.LightGray
+        : Colors.VampireBlack};
     font-size: 20px;
     font-weight: bold;
   `,

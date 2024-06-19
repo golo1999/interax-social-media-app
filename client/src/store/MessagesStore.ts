@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import { MessageBoxVisibility } from "types";
 
 interface ActiveMessageBox {
+  authenticatedUserId: string;
   userId: string;
   visibility: MessageBoxVisibility;
 }
@@ -11,11 +12,11 @@ interface ActiveMessageBox {
 type Store = {
   activeMessageBoxes: ActiveMessageBox[];
   isChatModalVisible: boolean;
-  addMessageBox: (userId: string) => void;
+  addMessageBox: (authenticatedUserId: string, userId: string) => void;
   closeChatModal: () => void;
-  closeMessageBox: (userId: string) => void;
-  maximizeMessageBox: (userId: string) => void;
-  minimizeMessageBox: (userId: string) => void;
+  closeMessageBox: (authenticatedUserId: string, userId: string) => void;
+  maximizeMessageBox: (authenticatedUserId: string, userId: string) => void;
+  minimizeMessageBox: (authenticatedUserId: string, userId: string) => void;
   openChatModal: () => void;
 };
 
@@ -24,12 +25,12 @@ export const useMessagesStore = create<Store>()(
     (set) => ({
       activeMessageBoxes: [],
       isChatModalVisible: false,
-      addMessageBox(userId) {
+      addMessageBox(authenticatedUserId, userId) {
         set((state) => ({
           ...state,
           activeMessageBoxes: [
             ...state.activeMessageBoxes,
-            { userId, visibility: "VISIBLE" },
+            { authenticatedUserId, userId, visibility: "VISIBLE" },
           ],
         }));
       },
@@ -40,19 +41,22 @@ export const useMessagesStore = create<Store>()(
           set((state) => ({ ...state, isChatModalVisible: false }));
         }
       },
-      closeMessageBox(userId) {
+      closeMessageBox(authenticatedUserId, userId) {
         set((state) => ({
           ...state,
           activeMessageBoxes: state.activeMessageBoxes.filter(
-            (messageBox) => messageBox.userId !== userId
+            (messageBox) =>
+              messageBox.authenticatedUserId === authenticatedUserId &&
+              messageBox.userId !== userId
           ),
         }));
       },
-      maximizeMessageBox(userId) {
+      maximizeMessageBox(authenticatedUserId, userId) {
         set((state) => ({
           ...state,
           activeMessageBoxes: state.activeMessageBoxes.map((messageBox) => {
             if (
+              messageBox.authenticatedUserId === authenticatedUserId &&
               messageBox.userId === userId &&
               messageBox.visibility === "HIDDEN"
             ) {
@@ -63,11 +67,12 @@ export const useMessagesStore = create<Store>()(
           }),
         }));
       },
-      minimizeMessageBox(userId) {
+      minimizeMessageBox(authenticatedUserId, userId) {
         set((state) => ({
           ...state,
           activeMessageBoxes: state.activeMessageBoxes.map((messageBox) => {
             if (
+              messageBox.authenticatedUserId === authenticatedUserId &&
               messageBox.userId === userId &&
               messageBox.visibility === "VISIBLE"
             ) {
@@ -87,7 +92,7 @@ export const useMessagesStore = create<Store>()(
       },
     }),
     {
-      name: "messages-storage",
+      name: "interax-messages-storage",
       partialize: ({ activeMessageBoxes }) => ({ activeMessageBoxes }),
     }
   )

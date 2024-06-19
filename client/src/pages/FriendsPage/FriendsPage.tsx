@@ -8,6 +8,7 @@ import { IoIosArrowForward } from "react-icons/io";
 import { Navigate } from "react-router-dom";
 
 import { Header, Navigation } from "components";
+import { Colors } from "environment";
 import {
   GET_FRIENDSHIP_SUGGESTIONS_BY_ID,
   GetFriendshipSuggestionsByIdData,
@@ -161,7 +162,10 @@ function AuthenticatedFriendsPage({
             onItemSelected={handleNavigationItemClick}
           />
         </Container.Navigation>
-        <Divider color={dividerColor} orientation="vertical" />
+        <Divider
+          orientation="vertical"
+          sx={{ borderColor: Colors[dividerColor] }}
+        />
         <Container.NavigationItem {...themeProps}>
           {selectedNavigationItem === NAVIGATION_ITEMS[1] ? (
             <FriendRequests

@@ -6,6 +6,7 @@ import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Dropdown, VisibilityModal } from "components";
 import { Permission } from "enums";
+import { Colors } from "environment";
 import {
   AddUserWorkplaceData,
   ADD_USER_WORKPLACE,
@@ -13,6 +14,7 @@ import {
 } from "helpers";
 import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
 import { Date as CustomDate, User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Button, Container, Form, Input, Label } from "../Form.style";
 
@@ -110,8 +112,9 @@ interface Props {
 }
 
 export function AddWorkplace({ user, onCancelClick, onSaveClick }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [addWorkplace] = useMutation<AddUserWorkplaceData>(ADD_USER_WORKPLACE);
-
+  const { theme } = useSettingsStore();
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
   const [selectedDropdownItems, setSelectedDropdownItems] = useState({
     from: {
@@ -184,7 +187,12 @@ export function AddWorkplace({ user, onCancelClick, onSaveClick }: Props) {
         onSaveClick();
       },
       refetchQueries: [
-        { query: GET_USER_BY_USERNAME, variables: { username } },
+        {
+          query: GET_USER_BY_USERNAME,
+          variables: {
+            input: { authenticatedUserId: authenticatedUser?.id, username },
+          },
+        },
       ],
     });
   };
@@ -196,6 +204,9 @@ export function AddWorkplace({ user, onCancelClick, onSaveClick }: Props) {
   const visibilityModalItems = useVisibilityModalItems();
 
   const { isCurrent } = getValues();
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -402,7 +413,7 @@ export function AddWorkplace({ user, onCancelClick, onSaveClick }: Props) {
           </>
         )}
       </Container.Dates>
-      <Divider color="Onyx" />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <Container.Buttons.Element>
         <Controller
           control={control}

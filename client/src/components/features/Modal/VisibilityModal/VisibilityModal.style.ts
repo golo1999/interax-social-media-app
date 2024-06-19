@@ -1,13 +1,19 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "types";
 
-interface Props {
-  isSelected: boolean;
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
 }
 
+type Props = {
+  isSelected: boolean;
+} & ThemeProps;
+
 export const Button = {
-  Cancel: styled.button.attrs({ type: "button" })`
+  Cancel: styled.button.attrs({ type: "button" })<ThemeProps>`
     background-color: inherit;
     border-radius: 5px;
     color: ${Colors.BrightNavyBlue};
@@ -15,7 +21,10 @@ export const Button = {
     padding: 0.5em 1em;
 
     &:hover {
-      background-color: ${Colors.BlackOlive};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.AntiFlashWhite};
     }
   `,
   Done: styled.button.attrs({ type: "button" })`
@@ -65,8 +74,13 @@ export const ListItem = {
   `,
   Element: styled.li<Props>`
     align-items: center;
-    ${({ isSelected }) =>
-      isSelected && `background-color: ${Colors.GunMetal};`};
+    ${({ $isAuthenticated, $theme, isSelected }) =>
+      isSelected &&
+      `background-color: ${
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.GunMetal
+          : Colors.AliceBlue
+      };`};
     border-radius: 5px;
     display: flex;
     justify-content: space-between;
@@ -74,21 +88,29 @@ export const ListItem = {
     padding: 0.5em;
 
     &:hover {
-      ${({ isSelected }) =>
-        !isSelected && `background-color: ${Colors.BlackOlive};`}
+      ${({ $isAuthenticated, $theme, isSelected }) =>
+        !isSelected &&
+        `background-color: ${
+          $isAuthenticated && $theme === "DARK"
+            ? Colors.BlackOlive
+            : Colors.AntiFlashWhite
+        };`}
     }
   `,
-  IconContainer: styled.div<Props>`
+  IconContainer: styled.div<ThemeProps>`
     align-items: center;
-    background-color: ${({ isSelected }) =>
-      isSelected ? Colors.Arsenic : Colors.DarkLiver};
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK" ? Colors.Arsenic : Colors.Platinum};
     border-radius: 50%;
     display: flex;
     justify-content: center;
     padding: 1em;
   `,
-  Title: styled.p`
-    color: ${Colors.Platinum};
+  Title: styled.p<ThemeProps>`
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.Platinum
+        : Colors.DarkJungleGreen};
     font-weight: 500;
   `,
 };

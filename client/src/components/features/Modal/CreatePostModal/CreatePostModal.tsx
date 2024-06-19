@@ -1,7 +1,7 @@
 import { useMutation } from "@apollo/client";
 import { Divider } from "@mui/material";
 
-import { useState } from "react";
+import { MutableRefObject, createRef, useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { MdArrowDropDown, MdClose, MdKeyboardBackspace } from "react-icons/md";
 
@@ -9,9 +9,9 @@ import { Modal, UserPhoto, VisibilityModal } from "components";
 import { Permission } from "enums";
 import { Colors } from "environment";
 import { CreatePostData, CREATE_POST, GET_USER_BY_USERNAME } from "helpers";
-import { useVisibilityModalItems } from "hooks";
+import { useOutsideClick, useVisibilityModalItems } from "hooks";
 import { User } from "models";
-import { useAuthenticationStore } from "store";
+import { useAuthenticationStore, useSettingsStore } from "store";
 import { ModalType } from "types";
 
 import { Button, Container, TextArea, Title } from "./CreatePostModal.style";
@@ -42,10 +42,10 @@ const resolver: Resolver<FormValues> = async (values) => {
 interface Props {
   user: User;
   onCloseClick: () => void;
-  onPostClick: () => void;
+  onPostCreated: () => void;
 }
 
-export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
+export function CreatePostModal({ user, onCloseClick, onPostCreated }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
   const [createPost] = useMutation<CreatePostData>(CREATE_POST);
 
@@ -63,9 +63,15 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
     mode: "onChange",
     resolver,
   });
-  const onSubmit: SubmitHandler<FormValues> = (data) => {
-    const { text, visibility } = data;
+  const { theme } = useSettingsStore();
+  const modalContainerRef = createRef<HTMLDivElement>();
 
+  useOutsideClick({
+    ref: modalContainerRef as MutableRefObject<HTMLElement>,
+    handle: onCloseClick,
+  });
+
+  const onSubmit: SubmitHandler<FormValues> = ({ text, visibility }) => {
     createPost({
       variables: {
         input: {
@@ -79,10 +85,15 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
       refetchQueries: [
         {
           query: GET_USER_BY_USERNAME,
-          variables: { username: user.username },
+          variables: {
+            input: {
+              authenticatedUserId: authenticatedUser?.id,
+              username: user.username,
+            },
+          },
         },
       ],
-      onCompleted: onPostClick,
+      onCompleted: onPostCreated,
     });
   };
 
@@ -93,11 +104,35 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
   }
 
   if (modalType === "POST_VISIBILITY") {
+    const titleColor: keyof typeof Colors =
+      !!authenticatedUser && theme === "DARK" ? "Platinum" : "VampireBlack";
+
     const bodyDescription = (
-      <div style={{ padding: "1em 1em 0 1em" }}>
-        <h4 style={{ color: Colors.Platinum }}>Who can see your post?</h4>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
+          padding: "1em 1em 0 1em",
+        }}
+      >
+        <h4
+          style={{
+            color:
+              !!authenticatedUser && theme === "DARK"
+                ? Colors.Platinum
+                : Colors.VampireBlack,
+          }}
+        >
+          Who can see your post?
+        </h4>
         <p style={{ fontSize: "medium" }}>
           Your post will show up in Feed, on your profile and in search results.
+        </p>
+        <p style={{ fontSize: "medium" }}>
+          Your default audience is set to{" "}
+          <span style={{ fontWeight: 500 }}>Only me</span>, but you can change
+          the audience of this specific post.
         </p>
       </div>
     );
@@ -110,6 +145,7 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
             isTemplate
             leftIcon={MdKeyboardBackspace}
             title="Post Audience"
+            titleColor={titleColor}
             onLeftIconClick={() => setModalType("CREATE_POST")}
           />
         }
@@ -125,9 +161,12 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
 
   const { firstName, lastName } = authenticatedUser;
 
+  const dividerColor: keyof typeof Colors =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Modal minHeight="50vh" width="550px">
+      <Modal minHeight="50vh" ref={modalContainerRef} width="550px">
         <Modal.Header
           alignItems="center"
           color="Platinum"
@@ -135,22 +174,39 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
           justifyContent="space-between"
           padding="0.75em"
         >
-          <Container.Icon isHidden>
+          <Container.Icon
+            $isAuthenticated={!!authenticatedUser}
+            $theme={theme}
+            isHidden
+          >
             <MdClose size={24} />
           </Container.Icon>
           <b>
-            <Title>Create Post</Title>
+            <Title $isAuthenticated={!!authenticatedUser} $theme={theme}>
+              Create Post
+            </Title>
           </b>
-          <Container.Icon onClick={onCloseClick}>
+          <Container.Icon
+            $isAuthenticated={!!authenticatedUser}
+            $theme={theme}
+            onClick={onCloseClick}
+          >
             <MdClose color={Colors.PhilippineGray} size={24} />
           </Container.Icon>
         </Modal.Header>
-        <Divider color="Onyx" />
+        <Divider sx={{ borderColor: Colors[dividerColor] }} />
         <Modal.Body direction="column" gap="1em" padding="1em">
           <div style={{ alignItems: "center", display: "flex", gap: "0.5em" }}>
             <UserPhoto user={authenticatedUser} />
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <p style={{ color: Colors.Platinum }}>
+              <p
+                style={{
+                  color:
+                    !!authenticatedUser && theme === "DARK"
+                      ? Colors.Platinum
+                      : Colors.VampireBlack,
+                }}
+              >
                 {firstName} {lastName}
               </p>
               <Controller
@@ -168,6 +224,8 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
 
                   return (
                     <Container.Visibility
+                      $isAuthenticated={!!authenticatedUser}
+                      $theme={theme}
                       onClick={() => setModalType("POST_VISIBILITY")}
                     >
                       {Icon && <Icon />}
@@ -182,6 +240,8 @@ export function CreatePostModal({ user, onCloseClick, onPostClick }: Props) {
             </div>
           </div>
           <TextArea
+            $isAuthenticated={!!authenticatedUser}
+            $theme={theme}
             {...register("text", { required: true })}
             placeholder="What's on your mind?"
             spellCheck={false}

@@ -6,6 +6,7 @@ import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Dropdown, VisibilityModal } from "components";
 import { Permission } from "enums";
+import { Colors } from "environment";
 import {
   AddCollegeEducationData,
   ADD_USER_COLLEGE_EDUCATION,
@@ -13,6 +14,7 @@ import {
 } from "helpers";
 import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
 import { Date as CustomDate, User } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Button, Container, Form, Input, Label } from "../Form.style";
 
@@ -113,10 +115,11 @@ interface Props {
 }
 
 export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [addCollegeEducation] = useMutation<AddCollegeEducationData>(
     ADD_USER_COLLEGE_EDUCATION
   );
-
+  const { theme } = useSettingsStore();
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
   const [selectedDropdownItems, setSelectedDropdownItems] = useState({
     from: {
@@ -142,6 +145,7 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
     mode: "onChange",
     resolver,
   });
+
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     const { degree, from, graduated, school, to, visibility } = data;
     const { id: userId, username } = user;
@@ -189,7 +193,15 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
         onSaveClick();
       },
       refetchQueries: [
-        { query: GET_USER_BY_USERNAME, variables: { username } },
+        {
+          query: GET_USER_BY_USERNAME,
+          variables: {
+            input: {
+              authenticatedUserId: authenticatedUser?.id,
+              username,
+            },
+          },
+        },
       ],
     });
   };
@@ -201,6 +213,9 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
   const visibilityModalItems = useVisibilityModalItems();
 
   const { graduated } = getValues();
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -407,7 +422,7 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
         isValid={!errors.degree}
         placeholder="Degree"
       />
-      <Divider color="Onyx" />
+      <Divider sx={{ borderColors: Colors[dividerColor] }} />
       <Container.Buttons.Element>
         <Controller
           control={control}

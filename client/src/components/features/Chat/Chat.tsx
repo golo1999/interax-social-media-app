@@ -16,13 +16,11 @@ import { Emoji } from "enums";
 import {
   ADD_MESSAGE,
   AddMessageData,
-  GET_AUTHENTICATED_USER,
   GET_CONVERSATION_BETWEEN,
   GET_MESSAGES_BETWEEN,
   GET_USER_BY_ID,
   GetConversationBetweenData,
   GetMessagesBetweenData,
-  GetUserByIdData,
   getDisplayedTime,
   instanceOfUserError,
   instanceOfUserWithMessage,
@@ -48,7 +46,7 @@ interface Props {
 }
 
 export function Chat({ chatHeight, userId }: Props) {
-  const { authenticatedUser } = useAuthenticationStore();
+  const { authenticatedUser, setAuthenticatedUser } = useAuthenticationStore();
   const [addMessage] = useMutation<AddMessageData>(ADD_MESSAGE);
   const [
     fetchConversationBetween,
@@ -57,14 +55,20 @@ export function Chat({ chatHeight, userId }: Props) {
   const [fetchMessagesBetween, { data: messages = { messagesBetween: null } }] =
     useLazyQuery<GetMessagesBetweenData>(GET_MESSAGES_BETWEEN);
   const [fetchUserById, { data: user = { userById: null } }] =
-    useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+    useLazyQuery(GET_USER_BY_ID);
   const inputRef = useRef() as MutableRefObject<HTMLInputElement>;
   const { theme } = useSettingsStore();
   const [footerIcon, setFooterIcon] = useState<FooterIcon>("THUMB_UP");
 
   useEffect(() => {
     fetchUserById({
-      variables: { input: { id: userId, returnUserIfBlocked: true } },
+      variables: {
+        input: {
+          authenticatedUserId: authenticatedUser?.id,
+          returnUserIfBlocked: true,
+          userId,
+        },
+      },
     });
 
     if (authenticatedUser) {
@@ -275,21 +279,16 @@ export function Chat({ chatHeight, userId }: Props) {
                       text: inputRef.current.value,
                     },
                   },
-                  refetchQueries: [
-                    { query: GET_AUTHENTICATED_USER },
-                    {
-                      query: GET_MESSAGES_BETWEEN,
-                      variables: {
-                        input: {
-                          first: authenticatedUser?.id,
-                          second: userId,
-                        },
-                      },
-                    },
-                    { query: GET_AUTHENTICATED_USER },
-                  ],
-                  onCompleted: () => {
+                  onCompleted: ({ addMessage: newMessage }) => {
                     inputRef.current.value = "";
+
+                    if (authenticatedUser && newMessage) {
+                      setAuthenticatedUser({
+                        ...authenticatedUser,
+                        messages: [...authenticatedUser.messages, newMessage],
+                      });
+                    }
+
                     setFooterIcon("THUMB_UP");
                     return;
                   },
@@ -312,20 +311,16 @@ export function Chat({ chatHeight, userId }: Props) {
                       text: null,
                     },
                   },
-                  refetchQueries: [
-                    { query: GET_AUTHENTICATED_USER },
-                    {
-                      query: GET_MESSAGES_BETWEEN,
-                      variables: {
-                        input: {
-                          first: authenticatedUser?.id,
-                          second: userId,
-                        },
-                      },
-                    },
-                  ],
-                  onCompleted: () => {
+                  onCompleted: ({ addMessage: newMessage }) => {
                     inputRef.current.value = "";
+
+                    if (authenticatedUser && newMessage) {
+                      setAuthenticatedUser({
+                        ...authenticatedUser,
+                        messages: [...authenticatedUser.messages, newMessage],
+                      });
+                    }
+
                     setFooterIcon("THUMB_UP");
                     return;
                   },

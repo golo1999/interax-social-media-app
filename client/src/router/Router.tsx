@@ -10,23 +10,22 @@ import {
   NotificationsList,
   SettingsList,
 } from "components";
-import {
-  GET_AUTHENTICATED_USER,
-  GET_USER_BY_ID,
-  GetAuthenticatedUserData,
-  GetUserByIdData,
-} from "helpers";
+import { GET_USER_BY_ID } from "helpers";
 import { User } from "models";
 import {
   AuthenticationPage,
   ForgotPasswordPage,
   FriendsPage,
   HomePage,
+  LoadingPage,
   MessengerPage,
   NotFoundPage,
   NotificationsPage,
+  PhotoPage,
   ProfilePage,
   RegistrationPage,
+  SavedPage,
+  SearchPage,
   WatchPage,
 } from "pages";
 import {
@@ -43,11 +42,8 @@ export function Router() {
     setIsLoading,
     setIsFinishedLoading,
   } = useAuthenticationStore();
-  const [fetchAuthenticatedUser] = useLazyQuery<GetAuthenticatedUserData>(
-    GET_AUTHENTICATED_USER
-  );
   const [fetchUserById, { data: user = { userById: null } }] =
-    useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+    useLazyQuery(GET_USER_BY_ID);
   const isForgotPasswordPage = useMatch("/forgot-password");
   const isLoginRoute = useMatch("/login");
   const isMessagesRoute = useMatch("/messages/t/:userId");
@@ -64,7 +60,10 @@ export function Router() {
         setIsLoading(true);
         fetchUserById({
           variables: {
-            input: { id: firebaseUser?.uid, returnUserIfBlocked: true },
+            input: {
+              returnUserIfBlocked: true,
+              userId: firebaseUser.uid,
+            },
           },
         });
         setIsLoading(false);
@@ -73,6 +72,8 @@ export function Router() {
           console.log({ userById: user.userById });
           setAuthenticatedUser(user.userById as User);
         }
+      } else {
+        setAuthenticatedUser(null);
       }
 
       setIsFinishedLoading(true);
@@ -89,7 +90,9 @@ export function Router() {
   ]);
 
   useEffect(() => {
-    console.log({ authenticatedUser });
+    if (typeof authenticatedUser !== "undefined") {
+      console.log({ authenticatedUser });
+    }
   }, [authenticatedUser]);
 
   // useEffect(() => {
@@ -109,6 +112,10 @@ export function Router() {
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, []);
 
+  if (typeof authenticatedUser === "undefined") {
+    return <LoadingPage />;
+  }
+
   return (
     <>
       <Routes>
@@ -118,8 +125,10 @@ export function Router() {
         <Route path="/login" element={<AuthenticationPage />} />
         <Route path="/messages/t/:userId" element={<MessengerPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/:userId" element={<ProfilePage />} />
+        <Route path="/photo/:photoId" element={<PhotoPage />} />
+        <Route path="/:username" element={<ProfilePage />} />
         <Route path="/registration" element={<RegistrationPage />} />
+        <Route path="/saved" element={<SavedPage />} />
         <Route path="/watch" element={<WatchPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
@@ -128,7 +137,10 @@ export function Router() {
         !isLoginRoute &&
         !isMessagesRoute &&
         !isRegistrationRoute &&
-        activeMessageBoxes.length > 0 && <MessageBoxesContainer />}
+        activeMessageBoxes.filter(
+          (messageBox) =>
+            messageBox.authenticatedUserId === authenticatedUser.id
+        ).length > 0 && <MessageBoxesContainer />}
       {isChatModalVisible && <ChatList isModal />}
       {isNotificationListVisible && <NotificationsList isModal />}
       {isSettingsListVisible && <SettingsList />}

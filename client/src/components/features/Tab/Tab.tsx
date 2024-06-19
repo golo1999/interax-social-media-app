@@ -62,7 +62,11 @@ export function Tab({
         <Name {...themeProps} textSize={textSize}>
           {name}
         </Name>
-        {description && <Description>{description}</Description>}
+        {description && (
+          <Description $isAuthenticated={!!authenticatedUser} $theme={theme}>
+            {description}
+          </Description>
+        )}
       </Container.Texts>
       {EndIcon && <EndIcon color={Colors[endIconColor]} size={endIconSize} />}
     </Container.Main>
