@@ -1,4 +1,4 @@
-import { useMutation } from "@apollo/client";
+import { gql, useMutation } from "@apollo/client";
 import { Divider } from "@mui/material";
 
 import { useState } from "react";
@@ -7,14 +7,14 @@ import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 import { Dropdown, VisibilityModal } from "components";
 import { Permission } from "enums";
 import { Colors } from "environment";
+import { ADD_USER_HIGH_SCHOOL_EDUCATION } from "helpers";
 import {
-  AddHighSchoolEducationData,
-  ADD_USER_HIGH_SCHOOL_EDUCATION,
-  GET_USER_BY_USERNAME,
-} from "helpers";
-import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
+  usePeriodDropdownItems,
+  useScrollLock,
+  useVisibilityModalItems,
+} from "hooks";
 import { Date as CustomDate, User } from "models";
-import { useAuthenticationStore, useSettingsStore } from "store";
+import { useAuthenticationStore, useModalStore, useSettingsStore } from "store";
 
 import { Button, Container, Form, Input, Label } from "../Form.style";
 
@@ -109,11 +109,31 @@ interface Props {
 
 export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const [addHighSchoolEducation] = useMutation<AddHighSchoolEducationData>(
-    ADD_USER_HIGH_SCHOOL_EDUCATION
-  );
+  const { isVisibilityModalOpen, closeVisibilityModal, openVisibilityModal } =
+    useModalStore();
+  const [addHighSchoolEducation] = useMutation(ADD_USER_HIGH_SCHOOL_EDUCATION, {
+    update: (cache, { data }) => {
+      cache.modify({
+        fields: {
+          educationHistory: (existingHistory = []) => {
+            const newHighSchoolEducationRef = cache.writeFragment({
+              data: data?.addUserHighSchoolEducation,
+              fragment: gql`
+                fragment NewHighSchoolEducation on HighSchoolEducation {
+                  id
+                }
+              `,
+            });
+
+            return [...existingHistory, newHighSchoolEducationRef];
+          },
+        },
+        id: cache.identify({ ...authenticatedUser }),
+      });
+    },
+  });
   const { theme } = useSettingsStore();
-  const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
+  const { lockScroll, unlockScroll } = useScrollLock();
   const [selectedDropdownItems, setSelectedDropdownItems] = useState({
     from: {
       month: DEFAULT_FORM_VALUES.from.month,
@@ -140,7 +160,7 @@ export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
   });
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     const { from, graduated, school, to, visibility } = data;
-    const { id: userId, username } = user;
+    const { id: userId } = user;
 
     const fromMonthAsNumber =
       new Date(`${from.month} ${from.day}, ${from.year}`).getMonth() + 1;
@@ -166,7 +186,7 @@ export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
         )
           .getTime()
           .toString()
-      : null;
+      : undefined;
 
     addHighSchoolEducation({
       variables: {
@@ -183,14 +203,6 @@ export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
         reset();
         onSaveClick();
       },
-      refetchQueries: [
-        {
-          query: GET_USER_BY_USERNAME,
-          variables: {
-            input: { authenticatedUserId: authenticatedUser?.id, username },
-          },
-        },
-      ],
     });
   };
 
@@ -421,7 +433,8 @@ export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
             return (
               <Button.Visibility
                 onClick={() => {
-                  setIsVisibilityModalOpen((prev) => !prev);
+                  lockScroll();
+                  openVisibilityModal();
                 }}
               >
                 {Icon && <Icon />}
@@ -447,7 +460,8 @@ export function AddHighSchool({ user, onCancelClick, onSaveClick }: Props) {
           items={visibilityModalItems}
           selectedItem={getValues("visibility")}
           onCloseClick={() => {
-            setIsVisibilityModalOpen((prev) => !prev);
+            unlockScroll();
+            closeVisibilityModal();
           }}
           onDoneClick={(item) => {
             setValue("visibility", item, { shouldValidate: true });

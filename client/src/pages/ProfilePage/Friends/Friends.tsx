@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { Container, Navbar, UserPhoto } from "components";
 import { Colors } from "environment";
 import {
-  AddUserFriendData,
   ADD_USER_FRIEND,
   GET_USER_BY_USERNAME,
   RemoveUserFriendRequestData,
@@ -27,7 +26,7 @@ interface Props {
 
 export function Friends({ user }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const [addUserFriend] = useMutation<AddUserFriendData>(ADD_USER_FRIEND);
+  const [addUserFriend] = useMutation(ADD_USER_FRIEND);
   const [removeUserFriendRequest] = useMutation<RemoveUserFriendRequestData>(
     REMOVE_USER_FRIENDSHIP_REQUEST
   );

@@ -18,3 +18,8 @@ type MessageConditionalTypes =
   | { emoji?: never; text: string };
 
 export type Message = MessageCommonTypes & MessageConditionalTypes;
+
+export type MessagesWithUserId = {
+  messages: Message[];
+  userId: string;
+};

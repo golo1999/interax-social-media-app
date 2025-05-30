@@ -14,7 +14,11 @@ export function PhotoPage() {
   const [downloadURL, setDownloadURL] = useState<string>("");
   const [isPageHovered, setIsPageHovered] = useState(false);
 
-  const storageRef = ref(firebaseStorage, "Postman.png");
+  // const storageRef = ref(firebaseStorage, "Postman.png");
+  const storageRef = ref(
+    firebaseStorage,
+    `G7hzLHBWCNhUQmjSFterlrrTeHc2/coverPhotos/1719851640238.png`
+  );
 
   useEffect(() => console.log({ downloadURL }), [downloadURL]);
 

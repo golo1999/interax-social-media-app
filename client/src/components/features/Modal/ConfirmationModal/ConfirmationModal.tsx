@@ -34,6 +34,11 @@ export function ConfirmationModal({
     handle: onCloseClick,
   });
 
+  function handleConfirmClick() {
+    onConfirmClick();
+    onCloseClick();
+  }
+
   const dividerColor: keyof typeof Colors =
     !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
   const iconColor: keyof typeof Colors =
@@ -72,7 +77,7 @@ export function ConfirmationModal({
         >
           Cancel
         </Button.Cancel>
-        <Button.Confirm onClick={onConfirmClick}>
+        <Button.Confirm onClick={handleConfirmClick}>
           {confirmButtonText}
         </Button.Confirm>
       </Modal.Footer>

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Route, Routes, useMatch } from "react-router-dom";
 
 import {
+  ChatHeads,
   ChatList,
   MessageBoxesContainer,
   NotificationsList,
@@ -46,7 +47,7 @@ export function Router() {
     useLazyQuery(GET_USER_BY_ID);
   const isForgotPasswordPage = useMatch("/forgot-password");
   const isLoginRoute = useMatch("/login");
-  const isMessagesRoute = useMatch("/messages/t/:userId");
+  const isMessengerRoute = useMatch("/messages/t/:userId");
   const isRegistrationRoute = useMatch("/registration");
   const { activeMessageBoxes, isChatModalVisible } = useMessagesStore();
   const { isNotificationListVisible, isSettingsListVisible } =
@@ -132,10 +133,11 @@ export function Router() {
         <Route path="/watch" element={<WatchPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      {!!authenticatedUser && !isMessengerRoute && <ChatHeads />}
       {!!authenticatedUser &&
         !isForgotPasswordPage &&
         !isLoginRoute &&
-        !isMessagesRoute &&
+        !isMessengerRoute &&
         !isRegistrationRoute &&
         activeMessageBoxes.filter(
           (messageBox) =>

@@ -17,7 +17,6 @@ import {
   GetCommentRepliesData,
   RemoveCommentReactionData,
   GetCommentData,
-  AddCommentData,
   ADD_COMMENT,
   GET_POST,
   GET_POST_COMMENTS,
@@ -54,6 +53,8 @@ export function UserComment({
   const [commentRepliesResponse, setCommentRepliesResponse] = useState<
     Comment[]
   >([]);
+  // const [fetchComment, { data: comment = { comment: null } }] =
+  //   useLazyQuery<GetCommentData>(GET_COMMENT);
   const { data: commentData = { comment: null } } = useQuery<GetCommentData>(
     GET_COMMENT,
     {
@@ -62,9 +63,32 @@ export function UserComment({
   );
   const [
     fetchCommentReplies,
-    { loading: isFetchingCommentReplies, fetchMore },
+    {
+      data: commentRepliesData = { commentReplies: [] },
+      loading: isFetchingCommentReplies,
+      fetchMore,
+    },
   ] = useLazyQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES);
-  const [addComment] = useMutation<AddCommentData>(ADD_COMMENT, {
+  // const {
+  //   data: commentRepliesData = { commentReplies: [] },
+  //   loading,
+  //   fetchMore,
+  // } = useQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES, {
+  //   notifyOnNetworkStatusChange: true,
+  //   variables: { input: { commentId, limit: 2, offset: 0 } },
+  //   onCompleted: ({ commentReplies }) => {
+  //     console.log({ response: commentReplies });
+  //     setCommentRepliesResponse(commentReplies);
+  //   },
+  // });
+  const [addComment] = useMutation(ADD_COMMENT, {
+    // refetchQueries: [
+    //   {
+    //     query: GET_FRIENDS_POSTS_BY_USER_ID,
+    //     variables: { ownerId: authenticatedUser?.id },
+    //   },
+    //   { query: GET_COMMENT_REPLIES, variables: { commentId } },
+    // ],
     refetchQueries: [{ query: GET_POST, variables: { id: postId } }],
   });
   const [addCommentReaction] = useMutation<AddCommentReactionData>(
@@ -81,6 +105,10 @@ export function UserComment({
   );
   const { theme } = useSettingsStore();
 
+  // useEffect(() => {
+  //   fetchComment({ variables: { id: commentId } });
+  // }, [commentId, fetchComment]);
+
   useEffect(() => {
     if (isTopLevel) {
       fetchCommentReplies({
@@ -91,6 +119,19 @@ export function UserComment({
             commentReplies.edges.map(({ node }) => node)
           ),
       });
+
+      // const {
+      //   data: commentRepliesData = { commentReplies: [] },
+      //   loading,
+      //   fetchMore,
+      // } = useQuery<GetCommentRepliesData>(GET_COMMENT_REPLIES, {
+      //   notifyOnNetworkStatusChange: true,
+      //   variables: { input: { commentId, limit: 2, offset: 0 } },
+      //   onCompleted: ({ commentReplies }) => {
+      //     console.log({ response: commentReplies });
+      //     setCommentRepliesResponse(commentReplies);
+      //   },
+      // });
     }
   }, [commentId, isTopLevel, fetchCommentReplies]);
 
@@ -202,6 +243,9 @@ export function UserComment({
 
   const isCommentOwner = owner.id === authenticatedUser?.id;
   const isPostOwner = postOwnerId === owner.id;
+
+  // console.log({ commentId, topLevelParentId });
+  // console.log({ commentId, data: commentRepliesData.commentReplies });
 
   return (
     <Container.Outer style={getOuterContainerStyle()}>
@@ -334,11 +378,11 @@ export function UserComment({
             addComment({
               variables: {
                 input: {
-                  commentOwnerId: authenticatedUser?.id,
+                  commentOwnerId: authenticatedUser!.id,
                   parentId: commentId,
                   postId,
                   text: commentText,
-                  topLevelParentId,
+                  topLevelParentId: topLevelParentId ?? undefined,
                 },
               },
               // TODO: adding a post comment works, but after adding a few replies to a comment, the app crashes
@@ -349,8 +393,23 @@ export function UserComment({
                   query: GET_POST_COMMENTS,
                   variables: { input: { first: 50, postId } },
                 },
+                // {
+                //   query: GET_COMMENT_REPLIES,
+                //   variables: {
+                //     input: {
+                //       commentId,
+                //       limit: 1,
+                //       offset: commentRepliesResponse.length,
+                //     },
+                //   },
+                // },
               ],
               onCompleted: ({ addComment: newComment }) => {
+                console.log({ commentId });
+                console.log({ newComment });
+                // fetchCommentReplies({
+                //   variables: { input: { commentId, limit: 2, offset: 0 } },
+                // });
                 fetchMore({
                   variables: {
                     input: {

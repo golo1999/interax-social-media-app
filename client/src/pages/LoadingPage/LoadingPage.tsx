@@ -13,10 +13,8 @@ interface ThemeProps {
 
 const Container = styled(Box)<ThemeProps>`
   align-items: center;
-  background-color: ${({ $isAuthenticated, $theme }) =>
-    $isAuthenticated && $theme === "DARK"
-      ? Colors.EerieBlack
-      : Colors.AntiFlashWhite};
+  background-color: ${({ $theme }) =>
+    $theme === "DARK" ? Colors.EerieBlack : Colors.AntiFlashWhite};
   display: flex;
   flex: 1;
   justify-content: center;

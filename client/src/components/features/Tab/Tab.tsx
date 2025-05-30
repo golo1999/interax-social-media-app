@@ -1,3 +1,6 @@
+import { SvgIconTypeMap } from "@mui/material";
+import { OverridableComponent } from "@mui/material/OverridableComponent";
+
 import { IconType } from "react-icons";
 
 import { Colors } from "environment";
@@ -8,7 +11,7 @@ import { Container, Description, Name } from "./Tab.style";
 interface Props {
   as?: undefined;
   description?: string;
-  endIcon?: IconType;
+  endIcon?: IconType | OverridableComponent<SvgIconTypeMap>;
   endIconColor?: keyof typeof Colors;
   endIconSize?: number | string;
   gap?: number | string;
@@ -16,7 +19,7 @@ interface Props {
   name: string;
   padding?: number | string;
   selectedBackgroundColor?: keyof typeof Colors;
-  startIcon?: IconType;
+  startIcon?: IconType | OverridableComponent<SvgIconTypeMap>;
   startIconColor?: keyof typeof Colors;
   startIconSize?: number | string;
   textSize?: number | string;
@@ -56,7 +59,10 @@ export function Tab({
       onClick={onClick}
     >
       {StartIcon && (
-        <StartIcon color={Colors[startIconColor]} size={startIconSize} />
+        <StartIcon
+          size={startIconSize}
+          style={{ color: Colors[startIconColor] }}
+        />
       )}
       <Container.Texts>
         <Name {...themeProps} textSize={textSize}>
@@ -68,7 +74,9 @@ export function Tab({
           </Description>
         )}
       </Container.Texts>
-      {EndIcon && <EndIcon color={Colors[endIconColor]} size={endIconSize} />}
+      {EndIcon && (
+        <EndIcon size={endIconSize} style={{ color: Colors[endIconColor] }} />
+      )}
     </Container.Main>
   );
 }

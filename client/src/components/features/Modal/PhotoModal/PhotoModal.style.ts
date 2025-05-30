@@ -48,7 +48,11 @@ export const FileInput = styled.input.attrs({ type: "file" })`
   display: none;
 `;
 
-export const Text = styled.p`
+export const Text = styled.p<ThemeProps>`
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.Platinum
+      : Colors.VampireBlack};
   user-select: none;
 `;
 

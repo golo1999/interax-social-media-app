@@ -4,7 +4,11 @@ import { useState } from "react";
 import { FaUser } from "react-icons/fa";
 
 import { Colors } from "environment";
-import { useAuthenticationStore, useMessagesStore } from "store";
+import {
+  useAuthenticationStore,
+  useMessagesStore,
+  useSettingsStore,
+} from "store";
 
 import { Container, Photo } from "./UserPhoto.style";
 import { Props } from "./UserPhoto.types";
@@ -24,6 +28,7 @@ export function UserPhoto({
 }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
   const { closeMessageBox } = useMessagesStore();
+  const { theme } = useSettingsStore();
   const [isCloseChatHeadIconVisible, setIsCloseChatHeadIconVisible] =
     useState(false);
 
@@ -44,6 +49,8 @@ export function UserPhoto({
   const { profilePhoto } = user;
 
   const hasProfilePhoto = !!profilePhoto;
+
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
 
   return (
     <Container.Main
@@ -74,16 +81,26 @@ export function UserPhoto({
           />
           {isChatHead && isCloseChatHeadIconVisible && (
             <Container.CloseChatHead
+              {...themeProps}
               onClick={(e) => {
                 e.stopPropagation();
                 closeMessageBox(authenticatedUser!.id, user.id);
               }}
             >
-              <Close sx={{ fontSize: "12px" }} />
+              <Close
+                sx={{
+                  color:
+                    !!authenticatedUser && theme === "DARK"
+                      ? Colors.Platinum
+                      : Colors.VampireBlack,
+                  fontSize: "12px",
+                }}
+              />
             </Container.CloseChatHead>
           )}
           {isProfilePhoto && authenticatedUser?.id === user.id && (
             <Container.ChangePhoto
+              {...themeProps}
               onClick={(e) => {
                 e.stopPropagation();
                 onChangePhotoClick();
@@ -91,7 +108,12 @@ export function UserPhoto({
             >
               <PhotoCamera
                 fontSize="small"
-                sx={{ color: Colors.VampireBlack }}
+                sx={{
+                  color:
+                    !!authenticatedUser && theme === "DARK"
+                      ? Colors.White
+                      : Colors.VampireBlack,
+                }}
               />
             </Container.ChangePhoto>
           )}
@@ -116,16 +138,26 @@ export function UserPhoto({
           />
           {isChatHead && isCloseChatHeadIconVisible && (
             <Container.CloseChatHead
+              {...themeProps}
               onClick={(e) => {
                 e.stopPropagation();
                 closeMessageBox(authenticatedUser!.id, user.id);
               }}
             >
-              <Close sx={{ fontSize: "12px" }} />
+              <Close
+                sx={{
+                  color:
+                    !!authenticatedUser && theme === "DARK"
+                      ? Colors.Platinum
+                      : Colors.VampireBlack,
+                  fontSize: "12px",
+                }}
+              />
             </Container.CloseChatHead>
           )}
           {isProfilePhoto && authenticatedUser?.id === user.id && (
             <Container.ChangePhoto
+              {...themeProps}
               onClick={(e) => {
                 e.stopPropagation();
                 onChangePhotoClick();
@@ -133,7 +165,12 @@ export function UserPhoto({
             >
               <PhotoCamera
                 fontSize="small"
-                sx={{ color: Colors.VampireBlack }}
+                sx={{
+                  color:
+                    !!authenticatedUser && theme === "DARK"
+                      ? Colors.White
+                      : Colors.VampireBlack,
+                }}
               />
             </Container.ChangePhoto>
           )}

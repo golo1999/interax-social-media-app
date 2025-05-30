@@ -42,7 +42,11 @@ type HeaderTemplateProps =
       onRightIconClick?: never;
     };
 
-export type ModalProps = ChildrenProps & { minHeight?: string; width?: string };
+export type ModalProps = ChildrenProps & {
+  maxHeight?: string;
+  minHeight?: string;
+  width?: string;
+};
 
 export type StyleProps = {
   alignItems?: FlexAlignItems;

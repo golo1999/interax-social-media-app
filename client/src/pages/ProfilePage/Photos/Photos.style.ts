@@ -29,8 +29,11 @@ export const Button = styled.button.attrs({ type: "button" })<ThemeProps>`
 `;
 
 export const Container = {
-  Main: styled.div`
-    background-color: white;
+  Main: styled.div<ThemeProps>`
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.RaisinBlack
+        : Colors.White};
     border-radius: 5px;
     display: flex;
     flex-direction: column;
@@ -56,6 +59,7 @@ export const Container = {
 };
 
 export const Photo = styled.img`
+  aspect-ratio: 1 / 1;
   border-radius: inherit;
   height: 100%;
   inset: 0;
@@ -64,8 +68,11 @@ export const Photo = styled.img`
   position: absolute;
 `;
 
-export const Title = styled.h3`
-  color: ${Colors.VampireBlack};
+export const Title = styled.h3<ThemeProps>`
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.LightGray
+      : Colors.VampireBlack};
   cursor: pointer;
   font-size: 20px;
   font-weight: bold;

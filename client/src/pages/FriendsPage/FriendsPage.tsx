@@ -163,6 +163,7 @@ function AuthenticatedFriendsPage({
           />
         </Container.Navigation>
         <Divider
+          flexItem
           orientation="vertical"
           sx={{ borderColor: Colors[dividerColor] }}
         />

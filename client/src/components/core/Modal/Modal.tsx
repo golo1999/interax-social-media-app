@@ -16,7 +16,7 @@ import {
 import { BodyProps, FooterProps, HeaderProps, ModalProps } from "./Modal.types";
 
 const BaseModal = forwardRef<HTMLDivElement, ModalProps>(
-  ({ children, minHeight, width }, containerRef) => {
+  ({ children, maxHeight, minHeight, width }, containerRef) => {
     const { authenticatedUser } = useAuthenticationStore();
     const { scrollPosition, theme } = useSettingsStore();
 
@@ -29,6 +29,7 @@ const BaseModal = forwardRef<HTMLDivElement, ModalProps>(
         <Container
           $isAuthenticated={!!authenticatedUser}
           $theme={theme}
+          maxHeight={maxHeight}
           minHeight={minHeight}
           ref={containerRef}
           width={width}

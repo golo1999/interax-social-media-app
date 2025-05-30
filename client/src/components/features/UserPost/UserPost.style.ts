@@ -36,8 +36,13 @@ export const Container = {
   `,
   Comments: styled.div`
     align-items: center;
+    cursor: pointer;
     display: flex;
     gap: 4px;
+
+    &:hover {
+      text-decoration: underline;
+    }
   `,
   CommentsReactionsShares: styled.div`
     display: flex;

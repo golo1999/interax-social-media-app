@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Waypoint } from "react-waypoint";
@@ -77,6 +77,102 @@ export function Posts({
   const { lockScroll, unlockScroll } = useScrollLock();
   const { theme } = useSettingsStore();
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
+
+  const displayedPosts = useMemo(
+    () =>
+      userPosts.userPostsById.edges.map(
+        ({ cursor, node: { id: postId } }, index, items) => {
+          const isHidden =
+            authenticatedUser?.hiddenPosts.some(({ id }) => id === postId) ||
+            false;
+
+          console.log({
+            postId,
+            isHidden,
+          });
+
+          if (isHidden) {
+            return <Fragment key={postId} />;
+          }
+
+          return (
+            <Fragment key={postId}>
+              <UserPost
+                postId={postId}
+                onPostShared={() => {
+                  // console.log({ shared: postId });
+                  // before items[0].node.id
+                  // console.log({ shared: items[0].cursor });
+                  fetchMore({
+                    variables: {
+                      input: { before: items[0].cursor, last: 1, userId },
+                    },
+                    updateQuery: (previousResult, { fetchMoreResult }) => ({
+                      userPostsById: {
+                        ...previousResult.userPostsById,
+                        edges: [
+                          ...fetchMoreResult.userPostsById.edges,
+                          ...previousResult.userPostsById.edges,
+                        ],
+                        pageInfo: {
+                          endCursor:
+                            previousResult.userPostsById.pageInfo.endCursor,
+                          hasNextPage:
+                            previousResult.userPostsById.pageInfo.hasNextPage,
+                          hasPreviousPage:
+                            fetchMoreResult.userPostsById.pageInfo
+                              .hasPreviousPage,
+                          startCursor:
+                            fetchMoreResult.userPostsById.pageInfo.startCursor,
+                        },
+                        totalCount:
+                          previousResult.userPostsById.totalCount +
+                          fetchMoreResult.userPostsById.totalCount,
+                      },
+                    }),
+                  });
+                }}
+              />
+              {index === items.length - 1 && (
+                <Waypoint
+                  onEnter={() => {
+                    if (userPosts.userPostsById.pageInfo.hasNextPage) {
+                      fetchMore({
+                        variables: {
+                          input: { after: cursor, first: 5, userId },
+                        },
+                        updateQuery: (previousResult, { fetchMoreResult }) => ({
+                          userPostsById: {
+                            ...previousResult.userPostsById,
+                            edges: [
+                              ...previousResult.userPostsById.edges,
+                              ...fetchMoreResult.userPostsById.edges,
+                            ],
+                            pageInfo: {
+                              ...previousResult.userPostsById.pageInfo,
+                              endCursor:
+                                fetchMoreResult.userPostsById.pageInfo
+                                  .endCursor,
+                              hasNextPage:
+                                fetchMoreResult.userPostsById.pageInfo
+                                  .hasNextPage,
+                            },
+                            totalCount:
+                              previousResult.userPostsById.totalCount +
+                              fetchMoreResult.userPostsById.totalCount,
+                          },
+                        }),
+                      });
+                    }
+                  }}
+                />
+              )}
+            </Fragment>
+          );
+        }
+      ),
+    [authenticatedUser?.hiddenPosts, userId, userPosts.userPostsById, fetchMore]
+  );
 
   return (
     <StyledContainer.Main>
@@ -192,86 +288,7 @@ export function Posts({
           </Container>
         )}
         {!!authenticatedUser && (
-          <StyledContainer.Posts>
-            {userPosts.userPostsById.edges.map(
-              ({ cursor, node: { id: postId } }, index, items) => (
-                <Fragment key={postId}>
-                  <UserPost
-                    postId={postId}
-                    onPostShared={() => {
-                      fetchMore({
-                        variables: {
-                          input: { before: items[0].cursor, last: 1, userId },
-                        },
-                        updateQuery: (previousResult, { fetchMoreResult }) => ({
-                          userPostsById: {
-                            ...previousResult.userPostsById,
-                            edges: [
-                              ...fetchMoreResult.userPostsById.edges,
-                              ...previousResult.userPostsById.edges,
-                            ],
-                            pageInfo: {
-                              endCursor:
-                                previousResult.userPostsById.pageInfo.endCursor,
-                              hasNextPage:
-                                previousResult.userPostsById.pageInfo
-                                  .hasNextPage,
-                              hasPreviousPage:
-                                fetchMoreResult.userPostsById.pageInfo
-                                  .hasPreviousPage,
-                              startCursor:
-                                fetchMoreResult.userPostsById.pageInfo
-                                  .startCursor,
-                            },
-                            totalCount:
-                              previousResult.userPostsById.totalCount +
-                              fetchMoreResult.userPostsById.totalCount,
-                          },
-                        }),
-                      });
-                    }}
-                  />
-                  {index === items.length - 1 && (
-                    <Waypoint
-                      onEnter={() => {
-                        if (userPosts.userPostsById.pageInfo.hasNextPage) {
-                          fetchMore({
-                            variables: {
-                              input: { after: cursor, first: 5, userId },
-                            },
-                            updateQuery: (
-                              previousResult,
-                              { fetchMoreResult }
-                            ) => ({
-                              userPostsById: {
-                                ...previousResult.userPostsById,
-                                edges: [
-                                  ...previousResult.userPostsById.edges,
-                                  ...fetchMoreResult.userPostsById.edges,
-                                ],
-                                pageInfo: {
-                                  ...previousResult.userPostsById.pageInfo,
-                                  endCursor:
-                                    fetchMoreResult.userPostsById.pageInfo
-                                      .endCursor,
-                                  hasNextPage:
-                                    fetchMoreResult.userPostsById.pageInfo
-                                      .hasNextPage,
-                                },
-                                totalCount:
-                                  previousResult.userPostsById.totalCount +
-                                  fetchMoreResult.userPostsById.totalCount,
-                              },
-                            }),
-                          });
-                        }
-                      }}
-                    />
-                  )}
-                </Fragment>
-              )
-            )}
-          </StyledContainer.Posts>
+          <StyledContainer.Posts>{displayedPosts}</StyledContainer.Posts>
         )}
       </StyledContainer.Column.Second>
       {isCreatePostModalOpen &&

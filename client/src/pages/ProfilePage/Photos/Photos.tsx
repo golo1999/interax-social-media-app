@@ -1,4 +1,4 @@
-import { useMutation } from "@apollo/client";
+import { gql, useMutation } from "@apollo/client";
 
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { memo, useCallback, useState } from "react";
@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 
 import { PhotoModal } from "components";
 import { Permission } from "enums";
-import { ADD_USER_PHOTO, AddUserPhotoData, firebaseStorage } from "helpers";
+import { ADD_USER_PHOTO, firebaseStorage } from "helpers";
 import { useScrollLock } from "hooks";
 import { UserPhoto } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
@@ -19,7 +19,27 @@ interface Props {
 
 export const Photos = memo(function Photos({ photos }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const [addUserPhoto] = useMutation<AddUserPhotoData>(ADD_USER_PHOTO);
+  const [addUserPhoto] = useMutation(ADD_USER_PHOTO, {
+    update: (cache, { data }) => {
+      cache.modify({
+        fields: {
+          photos: (existingPhotos = []) => {
+            const newPhotoRef = cache.writeFragment({
+              data: data?.addUserPhoto,
+              fragment: gql`
+                fragment NewPhoto on UserPhoto {
+                  id
+                }
+              `,
+            });
+
+            return [newPhotoRef, ...existingPhotos];
+          },
+        },
+        id: cache.identify({ ...authenticatedUser }),
+      });
+    },
+  });
   const { lockScroll, unlockScroll } = useScrollLock();
   const { theme } = useSettingsStore();
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
@@ -40,16 +60,16 @@ export const Photos = memo(function Photos({ photos }: Props) {
     setIsPhotoModalOpen(true);
   }, [lockScroll]);
 
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
   return (
     <>
-      <Container.Main>
+      <Container.Main {...themeProps}>
         <Container.Top>
-          <Title onClick={handleTitleClick}>Photos</Title>
-          <Button
-            $isAuthenticated={!!authenticatedUser}
-            $theme={theme}
-            onClick={openPhotoModal}
-          >
+          <Title {...themeProps} onClick={handleTitleClick}>
+            Photos
+          </Title>
+          <Button {...themeProps} onClick={openPhotoModal}>
             Add photo
           </Button>
         </Container.Top>
@@ -96,7 +116,7 @@ export const Photos = memo(function Photos({ photos }: Props) {
                   addUserPhoto({
                     variables: {
                       input: {
-                        ownerId: authenticatedUser?.id,
+                        ownerId: authenticatedUser!.id,
                         url,
                         visibility: Permission.PUBLIC,
                       },

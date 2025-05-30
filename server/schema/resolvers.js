@@ -107,6 +107,12 @@ const resolvers = {
       return [];
     },
   },
+  CoverPhoto: {
+    // TODO
+    comments: () => {
+      return [];
+    },
+  },
   EducationResult: {
     __resolveType(obj) {
       if (obj.degree && obj.level === EducationLevel.COLLEGE) {
@@ -144,6 +150,11 @@ const resolvers = {
       topLevelCommentsSnapshot.docs.forEach((doc) => comments.push(doc.data()));
 
       return comments;
+
+      // return comments.sort(
+      //   (post1, post2) =>
+      //     +new Date(Number(post1.dateTime) - +new Date(Number(post2.dateTime)))
+      // );
     },
     commentsCount: async ({ id }) => {
       const commentsCountSnapshot = await firestore
@@ -166,7 +177,7 @@ const resolvers = {
       return postOwnerSnapshot.docs[0].data();
     },
     // TODO
-    photos: ({ id }) => {
+    photos: async ({ id }) => {
       return _.filter(POST_PHOTOS_LIST, (photo) => photo.postId === id);
     },
     reactions: async ({ id }) => {
@@ -219,6 +230,40 @@ const resolvers = {
       return topLevelCommentsCountSnapshot.data().count;
     },
   },
+  PostWithSavedCollectionID: {
+    comments: async ({ id }) => {
+      const comments = await resolvers.Post.comments({ id });
+      return comments;
+    },
+    commentsCount: async ({ id }) => {
+      const commentsCount = await resolvers.Post.commentsCount({ id });
+      return commentsCount;
+    },
+    owner: async ({ ownerId }) => {
+      const owner = await resolvers.Post.owner({ ownerId });
+      return owner;
+    },
+    photos: async ({ id }) => {
+      const photos = await resolvers.Post.photos({ id });
+      return photos;
+    },
+    reactions: async ({ id }) => {
+      const reactions = await resolvers.Post.reactions({ id });
+      return reactions;
+    },
+    savedCollectionId: async ({ collectionId, savedCollectionId }) =>
+      savedCollectionId ?? collectionId,
+    shares: async ({ id }) => {
+      const shares = await resolvers.Post.shares({ id });
+      return shares;
+    },
+  },
+  ProfilePhoto: {
+    // TODO
+    comments: async () => {
+      return [];
+    },
+  },
   Share: {
     owner: async ({ ownerId }) => {
       const shareOwnerSnapshot = await firestore
@@ -262,6 +307,8 @@ const resolvers = {
 
       const photoSnapshot = await firestore
         .collection("photos")
+        .doc(userId)
+        .collection("cover")
         .where("url", "==", coverPhoto)
         .get();
 
@@ -282,11 +329,11 @@ const resolvers = {
         visibility: photoSnapshotData.visibility,
       };
     },
-    // TODO: To be tested
     coverPhotos: async ({ id: userId }) => {
       const coverPhotosSnapshot = await firestore
-        .collection("coverPhotos")
-        .where("userId", "==", userId)
+        .collection("photos")
+        .doc(userId)
+        .collection("cover")
         .get();
       const coverPhotos = [];
 
@@ -295,39 +342,69 @@ const resolvers = {
       return coverPhotos;
     },
     educationHistory: async ({ id: userId }) => {
-      const educationHistorySnapshot = await firestore
+      const subcollectionsSnapshot = await firestore
         .collection("educationHistory")
-        .where("userId", "==", userId)
-        .get();
+        .doc(userId)
+        .listCollections();
       const educationHistory = [];
 
-      educationHistorySnapshot.docs.forEach((doc) =>
-        educationHistory.push(doc.data())
-      );
+      for (const collectionSnapshot of subcollectionsSnapshot) {
+        const docsSnapshot = await collectionSnapshot.listDocuments();
+        for (const docSnapshot of docsSnapshot) {
+          const doc = await docSnapshot.get();
+          const data = doc.data();
+
+          educationHistory.push(data);
+        }
+      }
 
       return educationHistory;
     },
-    followingUsers: async ({ id: userId }) => {
-      const followingUsersSnapshot = await firestore
+    followedByUsers: async ({ id: userId }) => {
+      const followRelationshipsSnapshot = await firestore
         .collection("follows")
-        .where("userId", "==", userId)
+        .doc(userId)
+        .collection("followers")
         .get();
-      const followingUsers = [];
+      const users = [];
 
-      for (const doc of followingUsersSnapshot.docs) {
+      for (const doc of followRelationshipsSnapshot.docs) {
+        const { userId: followerUserId } = doc.data();
+        const userSnapshot = await firestore
+          .collection("users")
+          .where("id", "==", followerUserId)
+          .get();
+
+        if (!userSnapshot.empty) {
+          const userData = userSnapshot.docs[0].data();
+          users.push(userData);
+        }
+      }
+
+      return users;
+    },
+    followingUsers: async ({ id: userId }) => {
+      const followRelationshipsSnapshot = await firestore
+        .collection("follows")
+        .doc(userId)
+        .collection("following")
+        .get();
+      const users = [];
+
+      for (const doc of followRelationshipsSnapshot.docs) {
         const { followingUserId } = doc.data();
-        const followingUserSnapshot = await firestore
+        const userSnapshot = await firestore
           .collection("users")
           .where("id", "==", followingUserId)
           .get();
 
-        if (!followingUserSnapshot.empty) {
-          const followingUserData = followingUserSnapshot.docs[0].data();
-          followingUsers.push(followingUserData);
+        if (!userSnapshot.empty) {
+          const userData = userSnapshot.docs[0].data();
+          users.push(userData);
         }
       }
 
-      return followingUsers;
+      return users;
     },
     friends: async ({ id: userId }) => {
       const matchedFriendshipsSnapshot = await firestore
@@ -413,19 +490,52 @@ const resolvers = {
         .get();
       const messages = [];
 
-      messagesSnapshot.docs.forEach((doc) => messages.push(doc.data()));
+      messagesSnapshot.docs.forEach((doc) => {
+        const messageData = doc.data();
+        const { receiverId, senderId } = messageData;
+        const secondUserId = receiverId === userId ? senderId : receiverId;
+
+        if (!messages.some((message) => message.userId === secondUserId)) {
+          messages.push({ userId: secondUserId, messages: [messageData] });
+        } else {
+          const secondUserData = messages.find(
+            (message) => message.userId === secondUserId
+          );
+
+          if (secondUserData) {
+            secondUserData.messages.push(messageData);
+          }
+        }
+      });
+
+      messages.sort(
+        ({ messages: firstUserMessages }, { messages: secondUserMessages }) => {
+          const firstUserLastMessage =
+            firstUserMessages[firstUserMessages.length - 1];
+          const secondUserLastMessage =
+            secondUserMessages[secondUserMessages.length - 1];
+
+          return +new Date(
+            Number(secondUserLastMessage.dateTime) -
+              +new Date(Number(firstUserLastMessage.dateTime))
+          );
+        }
+      );
+
+      messages.forEach((message) => {
+        console.log({ userId: message.userId });
+        message.messages.forEach((m) => {
+          console.log({ message: m });
+        });
+      });
 
       return messages;
     },
     photos: async ({ id: userId }) => {
       const photosSnapshot = await firestore
         .collection("photos")
-        .where(
-          Filter.and(
-            Filter.where("ownerId", "==", userId),
-            Filter.where("type", "==", "DEFAULT")
-          )
-        )
+        .doc(userId)
+        .collection("default")
         .get();
       const posts = [];
 
@@ -494,6 +604,8 @@ const resolvers = {
 
       const photoSnapshot = await firestore
         .collection("photos")
+        .doc(parent.id)
+        .collection("profile")
         .where("url", "==", parent.profilePhoto)
         .get();
 
@@ -514,11 +626,11 @@ const resolvers = {
         visibility: photoSnapshotData.visibility,
       };
     },
-    // TODO: To be tested
     profilePhotos: async ({ id: userId }) => {
       const profilePhotosSnapshot = await firestore
         .collection("photos")
-        .where("userId", "==", userId)
+        .doc(userId)
+        .collection("profile")
         .get();
       const profilePhotos = [];
 
@@ -543,7 +655,8 @@ const resolvers = {
     savedPosts: async ({ id: userId }) => {
       const savedPostsSnapshot = await firestore
         .collection("savedPosts")
-        .where("userId", "==", userId)
+        .doc(userId)
+        .collection("posts")
         .get();
       const blockedUsers = await resolvers.User.blockedUsers({
         id: userId,
@@ -552,7 +665,7 @@ const resolvers = {
       const savedPosts = [];
 
       for (const doc of savedPostsSnapshot.docs) {
-        const { postId } = doc.data();
+        const { collectionId, postId } = doc.data();
         const postSnapshot = await firestore
           .collection("posts")
           .where("id", "==", postId)
@@ -574,7 +687,7 @@ const resolvers = {
               ({ postId: hiddenPostId }) => hiddenPostId === postId
             )
           ) {
-            savedPosts.push(post);
+            savedPosts.push({ ...post, collectionId });
           }
         }
       }
@@ -657,6 +770,38 @@ const resolvers = {
     },
     // TODO
     commentReplies: async (_parent, { input: { after, commentId, first } }) => {
+      // const topLevelCommentsSnapshot = await query.get();
+      // const comments = [];
+
+      // topLevelCommentsSnapshot.docs.forEach((doc) => comments.push(doc.data()));
+
+      // const endCursor =
+      //   comments.length > 0 ? comments[comments.length - 1].id : null;
+      // const nextTopLevelCommentSnapshot = await firestore
+      //   .collection("postComments")
+      //   .where(
+      //     Filter.and(
+      //       Filter.where("parentId", "==", null),
+      //       Filter.where("postId", "==", postId)
+      //     )
+      //   )
+      //   .orderBy("dateTime")
+      //   .startAfter(endCursor)
+      //   .limit(1)
+      //   .count()
+      //   .get();
+      // const hasNextPage = nextTopLevelCommentSnapshot.data().count > 0;
+
+      // return {
+      //   edges: comments.map((comment) => ({
+      //     cursor: comment.id,
+      //     node: comment,
+      //   })),
+      //   pageInfo: { hasNextPage, endCursor },
+      //   totalCount: comments.length,
+      // };
+      //
+
       // Checking if the comment exists
       const commentsCountSnapshot = await firestore
         .collection("postComments")
@@ -767,8 +912,9 @@ const resolvers = {
           emoji: Emoji.LIKE,
           first,
           firstNickname: null,
+          id: `ConversationBetween${first}&${second}`,
           second,
-          secondNickname,
+          secondNickname: null,
           theme: ConversationTheme.DEFAULT,
         };
       }
@@ -781,6 +927,107 @@ const resolvers = {
       _parent,
       { input: { after = null, first = null, ownerId } }
     ) => {
+      // TODO: The following code is from the "userPostsById" method
+
+      // // Checking if the user exists
+      // const usersCountSnapshot = await firestore
+      //   .collection("users")
+      //   .where("id", "==", userId)
+      //   .count()
+      //   .get();
+
+      // if (usersCountSnapshot.data().count === 0) {
+      //   return {
+      //     edges: [],
+      //     pageInfo: { hasNextPage: false, endCursor: null },
+      //     totalCount: 0,
+      //   };
+      // }
+
+      // let query = firestore
+      //   .collection("posts")
+      //   .where("receiverId", "==", userId)
+      //   .orderBy("dateTime", "desc");
+
+      // if (after) {
+      //   const afterDocSnapshot = await firestore
+      //     .collection("posts")
+      //     .doc(after)
+      //     .get();
+      //   query = query.startAfter(afterDocSnapshot);
+      // }
+
+      // if (first) {
+      //   query = query.limit(first);
+      // }
+
+      // const postsSnapshot = await query.get();
+      // const blockedUsers = await resolvers.User.blockedUsers({
+      //   id: userId,
+      // });
+      // const hiddenPosts = await resolvers.User.hiddenPosts({ id: userId });
+      // const posts = [];
+
+      // postsSnapshot.docs.forEach((doc) => {
+      //   const post = doc.data();
+      //   const {
+      //     id: postId,
+      //     ownerId: postOwnerId,
+      //     receiverId: postReceiverId,
+      //   } = post;
+
+      //   if (
+      //     blockedUsers.some(
+      //       ({ id: blockedUserId }) =>
+      //         blockedUserId === postOwnerId || blockedUserId === postReceiverId
+      //     )
+      //   ) {
+      //     console.log({ postId }, "isUserBlocked");
+      //   }
+
+      //   if (
+      //     hiddenPosts.some(
+      //       ({ ownerId: hiddenPostOwnerId }) =>
+      //         hiddenPostOwnerId === postOwnerId
+      //     )
+      //   ) {
+      //     console.log({ postId }, "isPostHidden");
+      //   }
+
+      //   if (
+      //     // If the post isn't owned or received by a blocked user
+      //     !blockedUsers.some(
+      //       ({ id: blockedUserId }) =>
+      //         blockedUserId === postOwnerId || blockedUserId === postReceiverId
+      //     ) &&
+      //     // If the post isn't hidden by the user
+      //     !hiddenPosts.some(
+      //       ({ ownerId: hiddenPostOwnerId }) =>
+      //         hiddenPostOwnerId === postOwnerId
+      //     )
+      //   ) {
+      //     posts.push(post);
+      //   }
+      // });
+
+      // const endCursor = posts[posts.length - 1].id;
+      // const nextPostSnapshot = await firestore
+      //   .collection("posts")
+      //   .where("receiverId", "==", userId)
+      //   .orderBy("dateTime", "desc")
+      //   .startAfter(endCursor)
+      //   .limit(1)
+      //   .count()
+      //   .get();
+      // const hasNextPage = nextPostSnapshot.data().count > 0;
+
+      // return {
+      //   edges: posts.map((post) => ({ cursor: post.id, node: post })),
+      //   pageInfo: { hasNextPage, endCursor: posts[posts.length - 1].id },
+      //   totalCount: posts.length,
+      // };
+      //
+
       // Checking if the owner exists
       const ownersCountSnapshot = await firestore
         .collection("users")
@@ -1044,6 +1291,32 @@ const resolvers = {
 
       return posts;
     },
+    savedPostCollectionCount: async (
+      _parent,
+      { input: { collectionId, userId } }
+    ) => {
+      const postCount = await firestore
+        .collection("savedPosts")
+        .doc(userId)
+        .collection("posts")
+        .where("collectionId", "==", collectionId)
+        .count()
+        .get();
+
+      return postCount.data().count;
+    },
+    savedPostCollections: async (_parent, { userId }) => {
+      const collectionsSnapshot = await firestore
+        .collection("savedPosts")
+        .doc(userId)
+        .collection("collections")
+        .get();
+      const collections = [];
+
+      collectionsSnapshot.docs.forEach((doc) => collections.push(doc.data()));
+
+      return collections;
+    },
     userById: async (
       _parent,
       {
@@ -1109,24 +1382,17 @@ const resolvers = {
       const { id: matchedUserId } = matchedUser;
 
       if (authenticatedUserId) {
-        // Checking if there is a block relationship between the authenticated user and the searched user
-        const blockedUsersSnapshot = await firestore
-          .collection("blockedUsers")
-          .where(
-            Filter.or(
-              Filter.and(
-                Filter.where("blockedUserId", "==", authenticatedUserId),
-                Filter.where("userId", "==", matchedUserId)
-              ),
-              Filter.and(
-                Filter.where("blockedUserId", "==", matchedUserId),
-                Filter.where("userId", "==", authenticatedUserId)
-              )
-            )
-          )
-          .get();
+        const authenticatedUserBlockedUsers = await resolvers.User.blockedUsers(
+          {
+            id: authenticatedUserId,
+          }
+        );
 
-        if (!blockedUsersSnapshot.empty) {
+        // Checking if there is a block relationship between
+        // The authenticated user and the searched user
+        if (
+          authenticatedUserBlockedUsers.some(({ id }) => id === matchedUserId)
+        ) {
           return { message: "BLOCKED" };
         }
       }
@@ -1147,6 +1413,58 @@ const resolvers = {
       _parent,
       { input: { after, before, first, last, userId } }
     ) => {
+      // S8k4v9HgqE1KYaVFtxXA
+      // Y51OmKjrZvEZ1osUAqiv
+      // 8oIwVggc45oLHFVB1xQy
+      // FcbSzFOR4Yt0NCZpqk9k
+      // tuNMNTF7fkHQrvcM2M9a
+      // ruAWPsymE9gO9d0yW8C6
+      // jWWcKQ1PQrzeO94KMDK7
+      // xNTDZZHwMWiX2UXOF2rq
+      // 0AwwOMC6NwpxVev4YrD6
+
+      // const postsSnapshot = await firestore
+      //   .collection("posts")
+      //   .where(
+      //     Filter.or(
+      //       Filter.where("ownerId", "==", userId),
+      //       Filter.where("receiverId", "==", userId)
+      //     )
+      //   )
+      //   .get();
+      // const blockedUsers = await resolvers.User.blockedUsers({
+      //   id: userId,
+      // });
+      // const hiddenPosts = await resolvers.User.hiddenPosts({ id: userId });
+      // const posts = [];
+
+      // postsSnapshot.docs.forEach((doc) => {
+      //   const post = doc.data();
+      //   const { ownerId: postOwnerId, receiverId: postReceiverId } = post;
+
+      //   if (
+      //     // If the post isn't owned or received by a blocked user
+      //     !blockedUsers.some(
+      //       ({ id: blockedUserId }) =>
+      //         blockedUserId === postOwnerId || blockedUserId === postReceiverId
+      //     ) &&
+      //     // If the post isn't hidden by the user
+      //     !hiddenPosts.some(
+      //       ({ ownerId: hiddenPostOwnerId }) =>
+      //         hiddenPostOwnerId === postOwnerId
+      //     )
+      //   ) {
+      //     posts.push(post);
+      //   }
+      // });
+
+      // return posts.sort(
+      //   (post1, post2) =>
+      //     +new Date(Number(post2.dateTime) - +new Date(Number(post1.dateTime)))
+      // );
+
+      //
+
       // Checking if the user exists
       const usersCountSnapshot = await firestore
         .collection("users")
@@ -1287,6 +1605,13 @@ const resolvers = {
       }
 
       return postReactionSnapshot.docs[0].data();
+
+      // const matchedPost = _.find(POSTS_LIST, (post) => post.id === postId);
+      // const matchedReaction = _.find(
+      //   matchedPost.reactions,
+      //   (reaction) => reaction.owner.id === userId
+      // );
+      // return matchedReaction;
     },
     userBlockedList: async (_parent, { id: userId }) => {
       // Checking if the user exists
@@ -1424,7 +1749,15 @@ const resolvers = {
     },
     addMessage: async (
       _parent,
-      { input: { emoji, parentId, receiverId, senderId, text } }
+      {
+        input: {
+          emoji = null,
+          parentId = null,
+          receiverId,
+          senderId,
+          text = null,
+        },
+      }
     ) => {
       // Checking if the users exist
       const usersCountSnapshot = await firestore
@@ -1448,11 +1781,11 @@ const resolvers = {
 
       const newMessage = {
         dateTime: new Date().getTime().toString(),
-        emoji: emoji || null,
+        emoji,
         parentId,
         receiverId,
         senderId,
-        text: text || null,
+        text,
       };
       const { id } = await firestore.collection("messages").add(newMessage);
       await firestore.collection("messages").doc(id).update({ id });
@@ -1521,9 +1854,48 @@ const resolvers = {
 
       return { ...newPostReaction, id };
     },
+    addSavedPostCollection: async (
+      _parent,
+      { input: { name, userId, visibility } }
+    ) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
+      }
+
+      const newCollection = { name, visibility };
+      const { id } = await firestore
+        .collection("savedPosts")
+        .doc(userId)
+        .collection("collections")
+        .add(newCollection);
+      await firestore
+        .collection("savedPosts")
+        .doc(userId)
+        .collection("collections")
+        .doc(id)
+        .update({ id });
+
+      return { ...newCollection, id };
+    },
     addUserCollegeEducation: async (
       _parent,
-      { input: { degree, from, graduated, school, to, userId, visibility } }
+      {
+        input: {
+          degree,
+          from,
+          graduated,
+          school,
+          to = null,
+          userId,
+          visibility,
+        },
+      }
     ) => {
       // Checking if the user exists
       const userSnapshot = await firestore
@@ -1547,8 +1919,15 @@ const resolvers = {
       };
       const { id } = await firestore
         .collection("educationHistory")
+        .doc(userId)
+        .collection("collegeEducation")
         .add(newEducation);
-      await firestore.collection("educationHistory").doc(id).update({ id });
+      await firestore
+        .collection("educationHistory")
+        .doc(userId)
+        .collection("collegeEducation")
+        .doc(id)
+        .update({ id });
 
       return { ...newEducation, id };
     },
@@ -1573,8 +1952,17 @@ const resolvers = {
         type: "COVER",
         visibility,
       };
-      const { id } = await firestore.collection("photos").add(newCoverPhoto);
-      await firestore.collection("photos").doc(id).update({ id });
+      const { id } = await firestore
+        .collection("photos")
+        .doc(ownerId)
+        .collection("cover")
+        .add(newCoverPhoto);
+      await firestore
+        .collection("photos")
+        .doc(ownerId)
+        .collection("cover")
+        .doc(id)
+        .update({ id });
 
       return { ...newCoverPhoto, id };
     },
@@ -1649,8 +2037,15 @@ const resolvers = {
       };
       const { id } = await firestore
         .collection("educationHistory")
+        .doc(userId)
+        .collection("highSchoolEducation")
         .add(newEducation);
-      await firestore.collection("educationHistory").doc(id).update({ id });
+      await firestore
+        .collection("educationHistory")
+        .doc(userId)
+        .collection("highSchoolEducation")
+        .doc(id)
+        .update({ id });
 
       return { ...newEducation, id };
     },
@@ -1672,8 +2067,17 @@ const resolvers = {
         type: "DEFAULT",
         visibility,
       };
-      const { id } = await firestore.collection("photos").add(newPhoto);
-      await firestore.collection("photos").doc(id).update({ id });
+      const { id } = await firestore
+        .collection("photos")
+        .doc(ownerId)
+        .collection("default")
+        .add(newPhoto);
+      await firestore
+        .collection("photos")
+        .doc(ownerId)
+        .collection("default")
+        .doc(id)
+        .update({ id });
 
       return { ...newPhoto, id };
     },
@@ -1725,8 +2129,17 @@ const resolvers = {
         type: "PROFILE",
         visibility,
       };
-      const { id } = await firestore.collection("photos").add(newProfilePhoto);
-      await firestore.collection("photos").doc(id).update({ id });
+      const { id } = await firestore
+        .collection("photos")
+        .doc(ownerId)
+        .collection("profile")
+        .add(newProfilePhoto);
+      await firestore
+        .collection("photos")
+        .doc(ownerId)
+        .collection("profile")
+        .doc(id)
+        .update({ id });
 
       return { ...newProfilePhoto, id };
     },
@@ -1859,6 +2272,8 @@ const resolvers = {
       // Checking if the photo exists
       const photoSnapshot = await firestore
         .collection("photos")
+        .doc(userId)
+        .collection("cover")
         .where("url", "==", url)
         .get();
 
@@ -1898,6 +2313,8 @@ const resolvers = {
       // Checking if the photo exists
       const photoSnapshot = await firestore
         .collection("photos")
+        .doc(userId)
+        .collection("profile")
         .where("url", "==", url)
         .get();
 
@@ -2055,7 +2472,7 @@ const resolvers = {
         .add(newHiddenPost);
       await firestore.collection("hiddenPosts").doc(id).update({ id });
 
-      return { ...newHiddenPost, id };
+      return postSnapshot.docs[0].data();
     },
     removeComment: async (_parent, { id }) => {
       // Checking if the comment exists
@@ -2122,7 +2539,7 @@ const resolvers = {
     removeCommentReplies: async (_parent, { id }) => {
       return [];
     },
-    removePost: async (_parent, { id: postId }) => {
+    removePost: async (_parent, { input: { postId, userId } }) => {
       // Checking if the post exists
       const postSnapshot = await firestore
         .collection("posts")
@@ -2171,12 +2588,16 @@ const resolvers = {
       // Removing the post from the saved posts list
       const savedPostsSnapshot = await firestore
         .collection("savedPosts")
+        .doc(userId)
+        .collection("posts")
         .where("postId", "==", postId)
         .get();
 
       for (const savedPostsDoc of savedPostsSnapshot.docs) {
         await firestore
           .collection("savedPosts")
+          .doc(userId)
+          .collection("posts")
           .doc(savedPostsDoc.data().id)
           .delete();
       }
@@ -2230,7 +2651,7 @@ const resolvers = {
 
       return removedPostReaction;
     },
-    removePostShares: async (_parent, { id: postId }) => {
+    removePostShares: async (_parent, { input: { postId, userId } }) => {
       // Checking if the post exists
       const postsCountSnapshot = await firestore
         .collection("posts")
@@ -2291,12 +2712,16 @@ const resolvers = {
         //  Removing the shared post from the saved posts list
         const savedPostsSnapshot = await firestore
           .collection("savedPosts")
+          .doc(userId)
+          .collection("posts")
           .where("postId", "==", sharedPostId)
           .get();
 
         for (const savedPostsDoc of savedPostsSnapshot.docs) {
           await firestore
             .collection("savedPosts")
+            .doc(userId)
+            .collection("posts")
             .doc(savedPostsDoc.data().id)
             .delete();
         }
@@ -2307,6 +2732,43 @@ const resolvers = {
       }
 
       return postShares;
+    },
+    removeSavedPostCollection: async (
+      _parent,
+      { input: { collectionId, userId } }
+    ) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the collection exists
+      const collectionSnapshot = await firestore
+        .collection("savedPosts")
+        .doc(userId)
+        .collection("collections")
+        .doc(collectionId)
+        .get();
+
+      if (!collectionSnapshot.exists) {
+        return null;
+      }
+
+      const collection = collectionSnapshot.data();
+
+      await firestore
+        .collection("savedPosts")
+        .doc(userId)
+        .collection("collections")
+        .doc(collectionId)
+        .delete();
+
+      return collection;
     },
     removeUserFriend: async (_parent, { input: { first, second } }) => {
       if (first === second) {
@@ -2405,7 +2867,8 @@ const resolvers = {
 
       return request;
     },
-    savePost: async (_parent, { input: { postId, userId } }) => {
+    // TODO: It must return PostWithSavedCollectionID
+    savePost: async (_parent, { input: { collectionId, postId, userId } }) => {
       // Checking if the user exists
       const userSnapshot = await firestore
         .collection("users")
@@ -2426,13 +2889,15 @@ const resolvers = {
         return null;
       }
 
-      // Checking if the user already saved the post
+      // Checking if the user already saved the post in the desired collection
       const savedPostsSnapshot = await firestore
         .collection("savedPosts")
+        .doc(userId)
+        .collection("posts")
         .where(
           Filter.and(
-            Filter.where("userId", "==", userId),
-            Filter.where("postId", "==", postId)
+            Filter.where("postId", "==", postId),
+            Filter.where("collectionId", "==", collectionId)
           )
         )
         .get();
@@ -2441,12 +2906,24 @@ const resolvers = {
         return null;
       }
 
-      const newSavedPost = { postId, userId };
+      const newSavedPost = { collectionId, postId, userId };
 
-      const { id } = await firestore.collection("savedPosts").add(newSavedPost);
-      await firestore.collection("savedPosts").doc(id).update({ id });
+      const { id } = await firestore
+        .collection("savedPosts")
+        .doc(userId)
+        .collection("posts")
+        .add(newSavedPost);
+      await firestore
+        .collection("savedPosts")
+        .doc(userId)
+        .collection("posts")
+        .doc(id)
+        .update({ id });
 
-      return { ...newSavedPost, id };
+      return {
+        ...postSnapshot.docs[0].data(),
+        ...{ savedCollectionId: collectionId },
+      };
     },
     sendUserFriendshipRequest: async (
       _parent,
@@ -2686,12 +3163,9 @@ const resolvers = {
       // Checking if the user saved the post
       const savedPostsSnapshot = await firestore
         .collection("savedPosts")
-        .where(
-          Filter.and(
-            Filter.where("userId", "==", userId),
-            Filter.where("postId", "==", postId)
-          )
-        )
+        .doc(userId)
+        .collection("posts")
+        .where("postId", "==", postId)
         .get();
 
       if (savedPostsSnapshot.empty) {
@@ -2703,6 +3177,8 @@ const resolvers = {
 
       await firestore
         .collection("savedPosts")
+        .doc(userId)
+        .collection("posts")
         .doc(savePostRelationshipId)
         .delete();
 
@@ -2710,7 +3186,7 @@ const resolvers = {
     },
     updateConversationEmoji: async (
       _parent,
-      { input: { emoji, first, second } }
+      { input: { emojiName, first, second } }
     ) => {
       // Checking if the users exist
       const usersCountSnapshot = await firestore
@@ -2747,7 +3223,7 @@ const resolvers = {
 
       if (conversationDetailsSnapshot.empty) {
         // Adding conversation's emoji
-        const newConversationDetails = { emoji, first, second };
+        const newConversationDetails = { emoji: emojiName, first, second };
 
         const { id } = await firestore
           .collection("conversationDetails")
@@ -2767,16 +3243,16 @@ const resolvers = {
       await firestore
         .collection("conversationDetails")
         .doc(id)
-        .update({ emoji });
+        .update({ emoji: emojiName });
 
       return {
         ...conversationDetails,
-        emoji,
+        emoji: emojiName,
       };
     },
     updateConversationNickname: async (
       _parent,
-      { input: { first, nickname, second, userId } }
+      { input: { first, nickname = null, second, userId } }
     ) => {
       // Checking the "userId" is either the first or the second user
       if (userId !== first && userId !== second) {
@@ -2976,6 +3452,59 @@ const resolvers = {
         ...conversationDetails,
         theme,
       };
+    },
+    updateSavedPostCollection: async (
+      _parent,
+      { input: { collectionId, name = null, userId, visibility = null } }
+    ) => {
+      // Checking if the user exists
+      const userSnapshot = await firestore
+        .collection("users")
+        .where("id", "==", userId)
+        .get();
+
+      if (userSnapshot.empty) {
+        return null;
+      }
+
+      // Checking if the collection exists
+      const collectionSnapshot = await firestore
+        .collection("savedPosts")
+        .doc(userId)
+        .collection("collections")
+        .doc(collectionId)
+        .get();
+
+      if (!collectionSnapshot.exists) {
+        return null;
+      }
+
+      const collectionData = collectionSnapshot.data();
+      let isUpdated = false;
+
+      if (name && name !== collectionData.name) {
+        collectionData.name = name;
+        isUpdated = true;
+      }
+
+      if (visibility && visibility !== collectionData.visibility) {
+        collectionData.visibility = visibility;
+
+        if (!isUpdated) {
+          isUpdated = true;
+        }
+      }
+
+      if (isUpdated) {
+        await firestore
+          .collection("savedPosts")
+          .doc(userId)
+          .collection("collections")
+          .doc(collectionId)
+          .update({ ...collectionData });
+      }
+
+      return collectionData;
     },
     updateUserPlace: async (
       _parent,

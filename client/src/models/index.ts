@@ -1,7 +1,10 @@
+import { SvgIconTypeMap } from "@mui/material";
+import { OverridableComponent } from "@mui/material/OverridableComponent";
+
 import { IconType } from "react-icons";
 
 import { CollegeEducation, HighSchoolEducation } from "./Education";
-import { Message } from "./Message";
+import { Message, MessagesWithUserId } from "./Message";
 import { Place } from "./Place";
 
 import {
@@ -102,8 +105,6 @@ export type FriendshipRequest = {
   sender: string;
 };
 
-export type HidePostResult = { id: string; postId: string; userId: string };
-
 export type Media = {
   __typename?: "Media";
   type: MediaType;
@@ -111,9 +112,9 @@ export type Media = {
 };
 
 export type NavigationItem = {
-  endIcon?: IconType;
+  endIcon?: IconType | OverridableComponent<SvgIconTypeMap>;
   name: string;
-  startIcon: IconType;
+  startIcon: IconType | OverridableComponent<SvgIconTypeMap>;
   onClick?: () => void;
 };
 
@@ -146,6 +147,8 @@ export type Post = {
   video: string | null;
   visibility: Permission;
 };
+
+export type PostWithSavedCollectionID = Post & { savedCollectionId: string };
 
 export type PostPhoto = {
   __typename?: "PostPhoto";
@@ -198,9 +201,17 @@ export type RelationshipStatus = {
 
 export type SavedPost = {
   __typename?: "SavedPost";
+  collectionId: string;
   id: string;
   postId: string;
   userId: string;
+};
+
+export type SavedPostCollection = {
+  id: string;
+  isChecked?: boolean;
+  name: string;
+  visibility: Permission;
 };
 
 export type Share = {
@@ -228,19 +239,20 @@ export type User = {
   educationHistory: (CollegeEducation | HighSchoolEducation)[];
   email: string;
   firstName: string;
+  followedByUsers: User[];
   followingUsers: User[];
   friends: User[];
   friendshipRequests: FriendshipRequest[];
   hiddenPosts: Post[];
   lastName: string;
-  messages: Message[];
+  messages: MessagesWithUserId[];
   photos: UserPhoto[];
   placesHistory: Place[];
   posts: Post[];
   profilePhoto: ProfilePhoto | null;
   profilePhotos: ProfilePhoto[];
   relationshipStatus: RelationshipStatus | null;
-  savedPosts: Post[];
+  savedPosts: PostWithSavedCollectionID[];
   username: string;
   workHistory: Work[];
 };

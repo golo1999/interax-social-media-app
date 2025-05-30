@@ -29,6 +29,12 @@ const typeDefs = gql`
     userId: ID!
   }
 
+  input AddSavedPostCollectionInput {
+    name: String!
+    userId: String!
+    visibility: Permission!
+  }
+
   input AddUserCollegeEducationInput {
     degree: String!
     from: String!
@@ -178,8 +184,23 @@ const typeDefs = gql`
     userId: ID!
   }
 
+  input RemovePostInput {
+    postId: ID!
+    userId: ID!
+  }
+
   input RemovePostReactionInput {
     postId: ID!
+    userId: ID!
+  }
+
+  input RemovePostSharesInput {
+    postId: ID!
+    userId: ID!
+  }
+
+  input RemoveSavedPostCollectionInput {
+    collectionId: ID!
     userId: ID!
   }
 
@@ -189,7 +210,13 @@ const typeDefs = gql`
   }
 
   input SavePostInput {
+    collectionId: ID!
     postId: ID!
+    userId: ID!
+  }
+
+  input SavedPostCollectionCountInput {
+    collectionId: ID!
     userId: ID!
   }
 
@@ -205,8 +232,13 @@ const typeDefs = gql`
     visibility: Permission!
   }
 
+  input UnsavePostInput {
+    postId: ID!
+    userId: ID!
+  }
+
   input UpdateConversationEmojiInput {
-    emoji: Emoji!
+    emojiName: String!
     first: ID!
     second: ID!
   }
@@ -222,6 +254,13 @@ const typeDefs = gql`
     first: ID!
     second: ID!
     theme: ConversationTheme!
+  }
+
+  input UpdateSavedPostCollectionInput {
+    collectionId: ID!
+    name: String
+    userId: ID!
+    visibility: Permission
   }
 
   input UpdateUserPlaceInput {
@@ -351,12 +390,6 @@ const typeDefs = gql`
     totalCount: Int!
   }
 
-  type HidePostResult {
-    id: ID!
-    postId: ID!
-    userId: ID!
-  }
-
   type HighSchoolEducation {
     id: ID!
     from: String!
@@ -374,15 +407,20 @@ const typeDefs = gql`
   }
 
   type Message {
-    id: ID!
     dateTime: String!
     emoji: Emoji
+    id: ID!
     parentId: ID
     reactions: [Reaction!]!
     receiverId: ID!
     replies: [Message!]!
     senderId: ID!
     text: String
+  }
+
+  type MessagesWithUserId {
+    messages: [Message!]!
+    userId: ID!
   }
 
   type PageInfo {
@@ -417,6 +455,29 @@ const typeDefs = gql`
     reactions: [PostReaction!]!
     receiver: User!
     receiverId: ID!
+    shares: [Share!]!
+    text: String
+    topLevelCommentsCount: Int!
+    video: String
+    visibility: Permission!
+  }
+
+  type PostWithSavedCollectionID {
+    canComment: Permission!
+    canReact: Permission!
+    canShare: Permission!
+    comments: [Comment!]!
+    commentsCount: Int!
+    dateTime: String!
+    id: ID!
+    owner: User!
+    ownerId: ID!
+    parentId: ID
+    photos: [PostPhoto!]!
+    reactions: [PostReaction!]!
+    receiver: User!
+    receiverId: ID!
+    savedCollectionId: ID!
     shares: [Share!]!
     text: String
     topLevelCommentsCount: Int!
@@ -475,9 +536,17 @@ const typeDefs = gql`
   }
 
   type SavedPost {
+    collectionId: ID!
     id: ID!
     postId: ID!
     userId: ID!
+  }
+
+  type SavedPostCollection {
+    id: String!
+    isChecked: Boolean
+    name: String!
+    visibility: Permission!
   }
 
   type Share {
@@ -496,19 +565,20 @@ const typeDefs = gql`
     educationHistory: [EducationResult!]!
     email: String!
     firstName: String!
+    followedByUsers: [User!]!
     followingUsers: [User!]!
     friends: [User!]!
     friendshipRequests: [FriendshipRequest!]!
     hiddenPosts: [Post!]!
     lastName: String!
-    messages: [Message!]!
+    messages: [MessagesWithUserId!]!
     photos: [UserPhoto!]!
     placesHistory: [Place!]!
     posts: [Post!]!
     profilePhoto: ProfilePhoto
     profilePhotos: [ProfilePhoto!]!
     relationshipStatus: RelationshipStatus
-    savedPosts: [Post!]!
+    savedPosts: [PostWithSavedCollectionID!]!
     username: String!
     workHistory: [Work!]!
   }
@@ -580,6 +650,8 @@ const typeDefs = gql`
     postComments(input: PostCommentsInput!): CommentsResult!
     posts: [Post!]
     postsByOwnerId(ownerId: ID!): [Post!]
+    savedPostCollectionCount(input: SavedPostCollectionCountInput!): Int!
+    savedPostCollections(userId: ID!): [SavedPostCollection!]!
     userBlockedList(id: ID!): [User!]
     userById(input: GetUserByIdInput!): UserByIdResult
     userByUsername(input: GetUserByUsernameInput!): UserByUsernameResult
@@ -595,6 +667,9 @@ const typeDefs = gql`
     addCommentReaction(input: AddCommentReactionInput!): CommentReaction
     addMessage(input: AddMessageInput!): Message
     addPostReaction(input: AddPostReactionInput!): PostReaction
+    addSavedPostCollection(
+      input: AddSavedPostCollectionInput!
+    ): SavedPostCollection
     addUserCollegeEducation(
       input: AddUserCollegeEducationInput!
     ): CollegeEducation
@@ -615,30 +690,36 @@ const typeDefs = gql`
     changeUserProfilePhoto(input: ChangeUserProfilePhotoInput!): ProfilePhoto
     createPost(input: CreatePostInput!): Post
     followUser(input: FollowUserInput!): FollowRelationship
-    hidePost(input: HidePostInput!): HidePostResult
+    hidePost(input: HidePostInput!): Post
     removeComment(id: ID!): Comment
     removeCommentReaction(input: RemoveCommentReactionInput!): CommentReaction
     removeCommentReplies(id: ID!): [Comment!]
-    removePost(id: ID!): ID
+    removePost(input: RemovePostInput!): ID
     removePostReaction(input: RemovePostReactionInput!): PostReaction
-    removePostShares(id: ID!): [Post!]
+    removePostShares(input: RemovePostSharesInput!): [Post!]
+    removeSavedPostCollection(
+      input: RemoveSavedPostCollectionInput!
+    ): SavedPostCollection
     removeUserFriend(input: AddUserFriendInput!): Friendship
     removeUserFriendshipRequest(
       input: RemoveUserFriendshipRequestInput!
     ): FriendshipRequest
-    savePost(input: SavePostInput!): SavedPost
+    savePost(input: SavePostInput!): PostWithSavedCollectionID
     sendUserFriendshipRequest(
       input: SendUserFriendshipRequestInput!
     ): FriendshipRequest
     sharePost(input: SharePostInput!): Post
     unblockUser(input: BlockUserInput!): BlockUserResult
     unfollowUser(input: FollowUserInput!): FollowRelationship
-    unsavePost(input: SavePostInput!): SavedPost
+    unsavePost(input: UnsavePostInput!): SavedPost
     updateConversationEmoji(input: UpdateConversationEmojiInput!): Conversation
     updateConversationNickname(
       input: UpdateConversationNicknameInput!
     ): Conversation
     updateConversationTheme(input: UpdateConversationThemeInput!): Conversation
+    updateSavedPostCollection(
+      input: UpdateSavedPostCollectionInput!
+    ): SavedPostCollection
     updateUserPlace(input: UpdateUserPlaceInput!): Place
   }
 

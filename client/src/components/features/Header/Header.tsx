@@ -1,9 +1,12 @@
+import { Divider } from "@mui/material";
+
 import { IconItem } from "components";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { AuthenticatedHeader } from "./AuthenticatedHeader";
 import { Container } from "./Header.style";
 import { NotAuthenticatedHeader } from "./NotAuthenticatedHeader";
+import { Colors } from "environment";
 
 interface Props {
   items: IconItem[];
@@ -31,6 +34,7 @@ export function Header({ items, selectedItem }: Props) {
           <NotAuthenticatedHeader />
         )}
       </Container.Top>
+      {theme === "DARK" && <Divider sx={{ borderColor: Colors.Arsenic }} />}
     </Container.Main>
   );
 }

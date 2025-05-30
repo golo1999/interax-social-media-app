@@ -9,7 +9,11 @@ interface ThemeProps {
 }
 
 export const Container = {
-  Main: styled.div.attrs({ role: "complementary" })`
+  Main: styled.div.attrs({ role: "complementary" })<ThemeProps>`
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.RaisinBlack
+        : Colors.White};
     display: flex;
     flex-direction: column;
     gap: 1em;

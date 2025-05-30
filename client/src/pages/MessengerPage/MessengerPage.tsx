@@ -15,7 +15,6 @@ import { Colors } from "environment";
 import {
   GET_CONVERSATION_BETWEEN,
   GET_USER_BY_ID,
-  GetConversationBetweenData,
   instanceOfUserError,
   instanceOfUserWithMessage,
 } from "helpers";
@@ -56,7 +55,7 @@ function AuthenticatedMessengerPage({
   const [
     fetchConversationBetween,
     { data: conversation = { conversationBetween: null } },
-  ] = useLazyQuery<GetConversationBetweenData>(GET_CONVERSATION_BETWEEN);
+  ] = useLazyQuery(GET_CONVERSATION_BETWEEN);
   const [
     fetchUserById,
     { data: user = { userById: null }, loading: isFetchingUser },
@@ -165,7 +164,7 @@ function AuthenticatedMessengerPage({
           orientation="vertical"
           sx={{ borderColor: Colors[dividerColor] }}
         />
-        <Container.Chat>
+        <Container.Chat {...themeProps}>
           <Container.ChatHeader>
             <Container.User
               {...themeProps}
@@ -202,9 +201,13 @@ function AuthenticatedMessengerPage({
             </Container.User>
             <Container.Icons>
               <Container.Icon
+                {...themeProps}
                 onClick={() => setIsComplementaryVisible((value) => !value)}
               >
-                <MdInfo color={getMessageTheme(conversationTheme)} size={24} />
+                <MdInfo
+                  color={Colors[getMessageTheme(conversationTheme)]}
+                  size={24}
+                />
               </Container.Icon>
             </Container.Icons>
           </Container.ChatHeader>

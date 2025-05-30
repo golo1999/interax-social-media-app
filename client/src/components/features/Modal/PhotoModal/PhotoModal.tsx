@@ -38,6 +38,8 @@ export function PhotoModal({ onCloseClick, onSaveClick }: Props) {
     onCloseClick();
   }
 
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
+
   const dividerColor: keyof typeof Colors =
     !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
   const iconColor: keyof typeof Colors =
@@ -63,7 +65,7 @@ export function PhotoModal({ onCloseClick, onSaveClick }: Props) {
             src={URL.createObjectURL(selectedFile)}
           />
         ) : (
-          <Text>No file selected</Text>
+          <Text {...themeProps}>No file selected</Text>
         )}
       </Modal.Body>
       <Modal.Footer
@@ -85,8 +87,7 @@ export function PhotoModal({ onCloseClick, onSaveClick }: Props) {
           />
           <label htmlFor="file-upload-input">
             <Button.Cancel
-              $isAuthenticated={!!authenticatedUser}
-              $theme={theme}
+              {...themeProps}
               onClick={() => {
                 fileInputRef.current?.click();
               }}
@@ -96,11 +97,7 @@ export function PhotoModal({ onCloseClick, onSaveClick }: Props) {
           </label>
         </div>
         <Container.Buttons>
-          <Button.Cancel
-            $isAuthenticated={!!authenticatedUser}
-            $theme={theme}
-            onClick={onCloseClick}
-          >
+          <Button.Cancel {...themeProps} onClick={onCloseClick}>
             Cancel
           </Button.Cancel>
           <Button.Save onClick={handleSaveClick}>Save</Button.Save>

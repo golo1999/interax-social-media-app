@@ -1,13 +1,22 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "types";
 
 import { ContainerProps, PhotoProps } from "./UserPhoto.types";
 
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
+}
+
 export const Container = {
-  ChangePhoto: styled.div`
+  ChangePhoto: styled.div<ThemeProps>`
     align-items: center;
-    background-color: ${Colors.Platinum};
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.BlackOlive
+        : Colors.Platinum};
     border-radius: 50%;
     bottom: 0;
     cursor: pointer;
@@ -19,12 +28,16 @@ export const Container = {
     width: fit-content;
 
     &:hover {
-      background-color: ${Colors.LightGray};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.DarkLiver
+          : Colors.LightGray};
     }
   `,
-  CloseChatHead: styled.div`
+  CloseChatHead: styled.div<ThemeProps>`
     align-items: center;
-    background-color: white;
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK" ? Colors.BlackOlive : Colors.White};
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -34,7 +47,10 @@ export const Container = {
     top: 0;
 
     &:hover {
-      background-color: ${Colors.AntiFlashWhite};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.DarkLiver
+          : Colors.AntiFlashWhite};
     }
   `,
   Main: styled.div<ContainerProps>`

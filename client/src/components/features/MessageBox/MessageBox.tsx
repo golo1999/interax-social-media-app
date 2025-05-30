@@ -8,7 +8,6 @@ import { Colors } from "environment";
 import {
   GET_USER_BY_ID,
   GET_CONVERSATION_BETWEEN,
-  GetConversationBetweenData,
   instanceOfUserError,
   instanceOfUserWithMessage,
 } from "helpers";
@@ -28,7 +27,7 @@ export function MessageBox({ userId, onCloseClick, onMinimizeClick }: Props) {
   const [
     fetchConversationBetween,
     { data: conversation = { conversationBetween: null } },
-  ] = useLazyQuery<GetConversationBetweenData>(GET_CONVERSATION_BETWEEN);
+  ] = useLazyQuery(GET_CONVERSATION_BETWEEN);
   const [fetchUserById, { data: user = { userById: null } }] =
     useLazyQuery(GET_USER_BY_ID);
   const mainContainerRef = useRef() as MutableRefObject<HTMLDivElement>;

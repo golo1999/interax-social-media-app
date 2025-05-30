@@ -9,7 +9,11 @@ interface ThemeProps {
 }
 
 export const Container = {
-  Chat: styled.div`
+  Chat: styled.div<ThemeProps>`
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.RaisinBlack
+        : Colors.White};
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -29,14 +33,17 @@ export const Container = {
     margin-top: 55px;
     max-height: calc(100vh - 55px);
   `,
-  Icon: styled.div`
+  Icon: styled.div<ThemeProps>`
     align-items: center;
     border-radius: 50%;
     display: flex;
     padding: 0.25em;
 
     &:hover {
-      background-color: ${Colors.BlackOlive};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.AntiFlashWhite};
     }
   `,
   Icons: styled.div`

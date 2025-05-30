@@ -25,8 +25,8 @@ export const Input = styled.input.attrs({ type: "text" })<ThemeProps>`
   border-radius: 20px;
   color: ${({ $isAuthenticated, $theme }) =>
     $isAuthenticated && $theme === "DARK"
-      ? Colors.PhilippineSilver
-      : Colors.GraniteGray};
+      ? Colors.MetallicSilver
+      : Colors.DarkLiver};
   flex: 1;
   font-size: 15px;
   padding: 0.25em;
@@ -34,7 +34,7 @@ export const Input = styled.input.attrs({ type: "text" })<ThemeProps>`
   &::placeholder {
     color: ${({ $isAuthenticated, $theme }) =>
       $isAuthenticated && $theme === "DARK"
-        ? Colors.PhilippineGray
-        : Colors.GraniteGray};
+        ? Colors.MetallicSilver
+        : Colors.DarkLiver};
   }
 `;

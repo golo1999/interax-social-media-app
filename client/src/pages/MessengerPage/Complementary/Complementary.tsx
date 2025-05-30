@@ -27,15 +27,10 @@ import {
   GET_USER_BY_ID,
   instanceOfUserWithMessage,
   REMOVE_USER_FRIEND,
-  RemoveUserFriendData,
   UNFOLLOW_USER,
-  UnfollowUserData,
   UPDATE_CONVERSATION_EMOJI,
   UPDATE_CONVERSATION_NICKNAME,
   UPDATE_CONVERSATION_THEME,
-  UpdateConversationEmojiData,
-  UpdateConversationNicknameData,
-  UpdateConversationThemeData,
 } from "helpers";
 import { useScrollLock } from "hooks";
 import { Conversation, User, UserWithMessage } from "models";
@@ -71,17 +66,37 @@ export function Complementary({
     setConfirmationModalMessage,
   } = useModalStore();
   const [blockUser] = useMutation<BlockUserData>(BLOCK_USER);
-  const [removeUserFriend] =
-    useMutation<RemoveUserFriendData>(REMOVE_USER_FRIEND);
-  const [unfollowUser] = useMutation<UnfollowUserData>(UNFOLLOW_USER);
-  const [updateConversationEmoji] = useMutation<UpdateConversationEmojiData>(
-    UPDATE_CONVERSATION_EMOJI
+  const [removeUserFriend] = useMutation(REMOVE_USER_FRIEND);
+  const [unfollowUser] = useMutation(UNFOLLOW_USER);
+  const [updateConversationEmoji] = useMutation(UPDATE_CONVERSATION_EMOJI, {
+    update: (cache, { data }) => {
+      cache.modify({
+        fields: {
+          emoji: (existingEmoji) => {
+            if (!data) {
+              return existingEmoji;
+            }
+
+            return data.updateConversationEmoji?.emoji;
+          },
+        },
+        id: cache.identify({ ...conversation }),
+      });
+    },
+  });
+  const [updateConversationNickname] = useMutation(
+    UPDATE_CONVERSATION_NICKNAME,
+    {
+      update: (cache, { data }) => {
+        // TODO
+      },
+    }
   );
-  const [updateConversationNickname] =
-    useMutation<UpdateConversationNicknameData>(UPDATE_CONVERSATION_NICKNAME);
-  const [updateConversationTheme] = useMutation<UpdateConversationThemeData>(
-    UPDATE_CONVERSATION_THEME
-  );
+  const [updateConversationTheme] = useMutation(UPDATE_CONVERSATION_THEME, {
+    update: (cache, { data }) => {
+      // TODO
+    },
+  });
   const navigate = useNavigate();
   const { lockScroll, unlockScroll } = useScrollLock();
   const { theme } = useSettingsStore();
@@ -114,7 +129,6 @@ export function Complementary({
     files,
     first,
     firstNickname,
-    id: conversationId,
     media,
     second,
     secondNickname,
@@ -223,7 +237,7 @@ export function Complementary({
 
   return (
     <>
-      <Container.Main>
+      <Container.Main {...themeProps}>
         {isFilesSelected || isMediaSelected ? (
           <MediaFiles
             files={files}
@@ -302,18 +316,24 @@ export function Complementary({
           onSaveClick={(selectedEmoji) => {
             if (selectedEmoji !== emoji) {
               updateConversationEmoji({
-                variables: { input: { emoji: selectedEmoji, first, second } },
-                refetchQueries: [
-                  {
-                    query: GET_CONVERSATION_BETWEEN,
-                    variables: {
-                      input: {
-                        first: authenticatedUser?.id,
-                        second: userId,
-                      },
-                    },
+                variables: {
+                  input: {
+                    emojiName: selectedEmoji,
+                    first: first!,
+                    second: second!,
                   },
-                ],
+                },
+                // refetchQueries: [
+                //   {
+                //     query: GET_CONVERSATION_BETWEEN,
+                //     variables: {
+                //       input: {
+                //         first: authenticatedUser?.id,
+                //         second: userId,
+                //       },
+                //     },
+                //   },
+                // ],
               });
             }
           }}
@@ -334,28 +354,28 @@ export function Complementary({
               (id === second && nickname !== secondNickname)
             ) {
               const matchedUserId = id === first ? first : second;
-              const newNickname = nickname !== "" ? nickname : null;
+              const newNickname = nickname !== "" ? nickname : undefined;
 
               updateConversationNickname({
                 variables: {
                   input: {
-                    first,
+                    first: first!,
                     nickname: newNickname,
-                    second,
-                    userId: matchedUserId,
+                    second: second!,
+                    userId: matchedUserId!,
                   },
                 },
-                refetchQueries: [
-                  {
-                    query: GET_CONVERSATION_BETWEEN,
-                    variables: {
-                      input: {
-                        first: authenticatedUser?.id,
-                        second: userId,
-                      },
-                    },
-                  },
-                ],
+                // refetchQueries: [
+                //   {
+                //     query: GET_CONVERSATION_BETWEEN,
+                //     variables: {
+                //       input: {
+                //         first: authenticatedUser?.id,
+                //         second: userId,
+                //       },
+                //     },
+                //   },
+                // ],
               });
             }
           }}
@@ -372,18 +392,24 @@ export function Complementary({
           onSaveClick={(selectedTheme) => {
             if (selectedTheme !== conversationTheme) {
               updateConversationTheme({
-                variables: { input: { first, second, theme: selectedTheme } },
-                refetchQueries: [
-                  {
-                    query: GET_CONVERSATION_BETWEEN,
-                    variables: {
-                      input: {
-                        first: authenticatedUser?.id,
-                        second: userId,
-                      },
-                    },
+                variables: {
+                  input: {
+                    first: first!,
+                    second: second!,
+                    theme: selectedTheme,
                   },
-                ],
+                },
+                // refetchQueries: [
+                //   {
+                //     query: GET_CONVERSATION_BETWEEN,
+                //     variables: {
+                //       input: {
+                //         first: authenticatedUser?.id,
+                //         second: userId,
+                //       },
+                //     },
+                //   },
+                // ],
               });
             }
           }}
@@ -400,9 +426,6 @@ export function Complementary({
               closeConfirmationModal();
             }}
             onConfirmClick={() => {
-              unlockScroll();
-              closeConfirmationModal();
-
               // TODO
               blockUser({
                 variables: {
@@ -428,24 +451,24 @@ export function Complementary({
                   removeUserFriend({
                     variables: {
                       input: {
-                        first: authenticatedUser?.id,
-                        second: userId,
+                        first: authenticatedUser!.id,
+                        second: userId!,
                       },
                     },
                     onCompleted: () => {
                       unfollowUser({
                         variables: {
                           input: {
-                            followingUserId: userId,
-                            userId: authenticatedUser?.id,
+                            followingUserId: userId!,
+                            userId: authenticatedUser!.id,
                           },
                         },
                       });
                       unfollowUser({
                         variables: {
                           input: {
-                            followingUserId: authenticatedUser?.id,
-                            userId: userId,
+                            followingUserId: authenticatedUser!.id,
+                            userId: userId!,
                           },
                         },
                       });

@@ -1,7 +1,8 @@
+import { Bookmark } from "@mui/icons-material";
+
 import { useMemo } from "react";
 import { AiFillShop } from "react-icons/ai";
 import { HiUsers, HiUserGroup } from "react-icons/hi";
-import { IoBookmark } from "react-icons/io5";
 import { MdOndemandVideo } from "react-icons/md";
 import { Navigate, useNavigate } from "react-router-dom";
 
@@ -28,7 +29,7 @@ export function HomePage() {
       },
       {
         name: "SAVED",
-        startIcon: IoBookmark,
+        startIcon: Bookmark,
         onClick: () => navigate("/saved"),
       },
       {

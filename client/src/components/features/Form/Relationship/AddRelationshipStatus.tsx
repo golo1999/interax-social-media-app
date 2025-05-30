@@ -1,23 +1,19 @@
 import { useMutation } from "@apollo/client";
 import { Divider } from "@mui/material";
 
-import { useState } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Dropdown, VisibilityModal } from "components";
 import { Permission, RelationshipStatusType } from "enums";
 import { Colors } from "environment";
-import {
-  AddRelationshipStatusData,
-  ADD_USER_RELATIONSHIP_STATUS,
-  GET_USER_BY_USERNAME,
-} from "helpers";
+import { ADD_USER_RELATIONSHIP_STATUS } from "helpers";
 import {
   useRelationshipStatusDropdownItems,
+  useScrollLock,
   useVisibilityModalItems,
 } from "hooks";
 import { RelationshipStatus, User } from "models";
-import { useAuthenticationStore, useSettingsStore } from "store";
+import { useAuthenticationStore, useModalStore, useSettingsStore } from "store";
 
 import { Button, Container, Form } from "../Form.style";
 
@@ -55,11 +51,26 @@ export function AddRelationshipStatus({
   onSaveClick,
 }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const [addRelationshipStatus] = useMutation<AddRelationshipStatusData>(
-    ADD_USER_RELATIONSHIP_STATUS
-  );
+  const { isVisibilityModalOpen, closeVisibilityModal, openVisibilityModal } =
+    useModalStore();
+  const [addRelationshipStatus] = useMutation(ADD_USER_RELATIONSHIP_STATUS, {
+    update: (cache, { data }) => {
+      cache.modify({
+        fields: {
+          relationshipStatus: (existingRelationshipStatus) => {
+            if (!data) {
+              return existingRelationshipStatus;
+            }
+
+            return data.addUserRelationshipStatus;
+          },
+        },
+        id: cache.identify({ ...authenticatedUser }),
+      });
+    },
+  });
+  const { lockScroll, unlockScroll } = useScrollLock();
   const { theme } = useSettingsStore();
-  const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
 
   const {
     control,
@@ -75,24 +86,18 @@ export function AddRelationshipStatus({
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     console.log(data);
     const { status, visibility } = data;
-    const { id: userId, username } = user;
+    const { id: userId } = user;
 
-    addRelationshipStatus({
-      variables: {
-        input: { status, userId, visibility },
-      },
-      onCompleted: () => {
-        onSaveClick();
-      },
-      refetchQueries: [
-        {
-          query: GET_USER_BY_USERNAME,
-          variables: {
-            input: { authenticatedUserId: authenticatedUser?.id, username },
-          },
+    if (status !== "STATUS") {
+      addRelationshipStatus({
+        variables: {
+          input: { status, userId, visibility },
         },
-      ],
-    });
+        onCompleted: () => {
+          onSaveClick();
+        },
+      });
+    }
   };
 
   const dropdownItems = useRelationshipStatusDropdownItems();
@@ -150,7 +155,8 @@ export function AddRelationshipStatus({
             return (
               <Button.Visibility
                 onClick={() => {
-                  setIsVisibilityModalOpen((prev) => !prev);
+                  lockScroll();
+                  openVisibilityModal();
                 }}
               >
                 {Icon && <Icon />}
@@ -175,7 +181,8 @@ export function AddRelationshipStatus({
           items={visibilityModalItems}
           selectedItem={getValues("visibility")}
           onCloseClick={() => {
-            setIsVisibilityModalOpen((prev) => !prev);
+            unlockScroll();
+            closeVisibilityModal();
           }}
           onDoneClick={(item) => {
             setValue("visibility", item, { shouldValidate: true });

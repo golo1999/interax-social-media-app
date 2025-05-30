@@ -1,3 +1,6 @@
+import { SvgIconTypeMap } from "@mui/material";
+import { OverridableComponent } from "@mui/material/OverridableComponent";
+
 import { IconType } from "react-icons";
 import { useNavigate } from "react-router-dom";
 
@@ -8,9 +11,9 @@ import { Container, List } from "./Navigation.style";
 import { Colors } from "environment";
 
 export interface NavigationItem {
-  endIcon?: IconType;
+  endIcon?: IconType | OverridableComponent<SvgIconTypeMap>;
   name: string;
-  startIcon: IconType;
+  startIcon: IconType | OverridableComponent<SvgIconTypeMap>;
   onClick?: () => void;
 }
 

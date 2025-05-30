@@ -11,7 +11,7 @@ import {
   useSettingsStore,
 } from "store";
 
-import { Container, Footer, Header, List } from "./ChatList.style";
+import { Container, Footer, Header, List, Text } from "./ChatList.style";
 import { GroupedMessage } from "./ChatList.types";
 import { ChatListItem } from "./ChatListItem";
 
@@ -27,43 +27,43 @@ export function ChatList({ isModal }: Props) {
   const [searchInputText, setSearchInputText] = useState("");
   const searchInputRef = createRef<HTMLInputElement>();
 
-  const { id: authenticatedUserId, messages } = {
+  const { id: authenticatedUserId, messages = [] } = {
     ...authenticatedUser,
   };
 
   console.log({ messages });
 
-  const groupedMessages = useMemo(() => {
-    const list: GroupedMessage[] = [];
+  // const groupedMessages = useMemo(() => {
+  //   const list: GroupedMessage[] = [];
 
-    messages?.forEach((message) => {
-      const { receiverId, senderId } = message;
-      const userId = senderId === authenticatedUserId ? receiverId : senderId;
-      const matchedGroupedMessage = list.find(
-        (groupedMessage) => groupedMessage.userId === userId
-      );
+  //   messages?.forEach((message) => {
+  //     const { receiverId, senderId } = message;
+  //     const userId = senderId === authenticatedUserId ? receiverId : senderId;
+  //     const matchedGroupedMessage = list.find(
+  //       (groupedMessage) => groupedMessage.userId === userId
+  //     );
 
-      if (matchedGroupedMessage) {
-        matchedGroupedMessage.messages?.push(message);
-      } else {
-        list.push({
-          messages: [message],
-          userId,
-        });
-      }
-    });
+  //     if (matchedGroupedMessage) {
+  //       matchedGroupedMessage.messages?.push(message);
+  //     } else {
+  //       list.push({
+  //         messages: [message],
+  //         userId,
+  //       });
+  //     }
+  //   });
 
-    return list.length > 0 ? list : [];
-  }, [authenticatedUserId, messages]);
+  //   return list.length > 0 ? list : [];
+  // }, [authenticatedUserId, messages]);
 
-  console.log({ groupedMessages });
+  // console.log({ groupedMessages });
 
   function handleSeeInMessengerClick() {
     closeChatModal();
 
-    if (groupedMessages.length > 0) {
+    if (messages.length > 0) {
       // navigating to the first chat
-      navigate(`/messages/t/${groupedMessages[0].userId}`);
+      navigate(`/messages/t/${messages[0].userId}`);
     }
   }
 
@@ -79,7 +79,7 @@ export function ChatList({ isModal }: Props) {
       <Container.GroupedMessages>
         <Header.Element>
           <Header.Title {...themeProps}>Chats</Header.Title>
-          {groupedMessages.length > 0 && (
+          {messages.length > 0 && (
             <Header.IconsContainer>
               {isModal && (
                 <Container.Icon {...themeProps}>
@@ -97,7 +97,7 @@ export function ChatList({ isModal }: Props) {
             </Header.IconsContainer>
           )}
         </Header.Element>
-        {groupedMessages.length > 0 ? (
+        {messages.length > 0 ? (
           <>
             <SearchInput
               placeholder="Search Messenger"
@@ -105,7 +105,7 @@ export function ChatList({ isModal }: Props) {
               onTextChange={(text) => setSearchInputText(text)}
             />
             <List>
-              {groupedMessages.map((groupedMessage, index) => (
+              {messages.map((groupedMessage, index) => (
                 <ChatListItem
                   key={index}
                   isModal={isModal}
@@ -116,10 +116,12 @@ export function ChatList({ isModal }: Props) {
             </List>
           </>
         ) : (
-          <p>No messages found...</p>
+          <Text.NoMessages {...themeProps}>
+            No messages found...
+          </Text.NoMessages>
         )}
       </Container.GroupedMessages>
-      {groupedMessages.length > 0 && isModal && (
+      {messages.length > 0 && isModal && (
         <Footer.Element onClick={handleSeeInMessengerClick}>
           <Footer.Text>See all in Messenger</Footer.Text>
         </Footer.Element>

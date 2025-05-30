@@ -25,6 +25,7 @@ import {
   PostPhotos,
   ReactionEmojis,
   UserPhoto,
+  ViewPostModal,
   WriteComment,
 } from "components";
 import { Permission, ReactionType } from "enums";
@@ -34,7 +35,6 @@ import {
   ADD_POST_REACTION,
   REMOVE_POST_REACTION,
   getTimePassedFromDateTime,
-  AddCommentData,
   AddPostReactionData,
   RemovePostReactionData,
   GET_POST,
@@ -44,6 +44,7 @@ import {
   GET_USER_POSTS_BY_ID,
 } from "helpers";
 import { useScrollLock } from "hooks";
+import { LoadingPage } from "pages";
 import {
   useAuthenticationStore,
   useMessagesStore,
@@ -80,11 +81,13 @@ interface PostReactionCount {
 interface Props {
   postId: string;
   onPostShared: () => void;
+  onRedirect?: () => void;
 }
 
-export function UserPost({ postId, onPostShared }: Props) {
+export function UserPost({ postId, onPostShared, onRedirect }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
   const isProfileRoute = useMatch("/:username");
+  const { isChatModalVisible, closeChatModal } = useMessagesStore();
   const {
     confirmationModalConfirmButtonText,
     confirmationModalMessage,
@@ -97,7 +100,7 @@ export function UserPost({ postId, onPostShared }: Props) {
     setConfirmationModalMessage,
     setSharedPostId,
   } = useModalStore();
-  const [addComment] = useMutation<AddCommentData>(ADD_COMMENT);
+  const [addComment] = useMutation(ADD_COMMENT);
   const [addPostReaction] = useMutation<AddPostReactionData>(
     ADD_POST_REACTION,
     {
@@ -122,16 +125,17 @@ export function UserPost({ postId, onPostShared }: Props) {
     useRef() as MutableRefObject<HTMLInputElement>;
   const emojisContainerRef = useRef() as MutableRefObject<HTMLInputElement>;
   const textContainerRef = useRef() as MutableRefObject<HTMLDivElement>;
+  const { lockScroll, unlockScroll } = useScrollLock();
   const [isHoveringOverEmojis, setIsHoveringOverEmojis] = useState(false);
   const [isHoveringOverReactionButton, setIsHoveringOverReactionButton] =
     useState(false);
   const [isTextCompletelyVisible, setIsTextCompletelyVisible] = useState(false);
+  const [isViewPostModalOpen, setIsViewPostModalOpen] = useState(false);
   const [isWriteCommentVisible, setIsWriteCommentVisible] = useState(false);
   const [postReactionsCount, setPostReactionsCount] = useState<
     PostReactionCount[]
   >([]);
-  const { isChatModalVisible, closeChatModal } = useMessagesStore();
-  const { lockScroll, unlockScroll } = useScrollLock();
+
   const {
     isPostOptionsListVisible,
     isSettingsListVisible,
@@ -327,26 +331,28 @@ export function UserPost({ postId, onPostShared }: Props) {
   const hasShares = shares && shares.length > 0;
 
   if (isFetchingPostData) {
-    return (
-      <div>
-        <p>Fetching post...</p>
-      </div>
-    );
+    return <LoadingPage />;
   }
 
   return (
-    <Container vertical>
+    <Container vertical style={{ flex: 1 }}>
       <Header>
         <StyledContainer.PostOwner>
           <UserPhoto
             user={owner}
-            onPhotoClick={() => navigate(`/${ownerUsername}`)}
+            onPhotoClick={() => {
+              onRedirect?.();
+              navigate(`/${ownerUsername}`);
+            }}
           />
           <div>
             <Text.PostOwnerName
               isAuthenticated={!!authenticatedUser}
               theme={theme}
-              onClick={() => navigate(`/${ownerUsername}`)}
+              onClick={() => {
+                onRedirect?.();
+                navigate(`/${ownerUsername}`);
+              }}
             >
               {postOwnerNameText}
             </Text.PostOwnerName>
@@ -396,17 +402,19 @@ export function UserPost({ postId, onPostShared }: Props) {
               <StyledContainer.PostOwner>
                 <UserPhoto
                   user={parentPostData.post.owner}
-                  onPhotoClick={() =>
-                    navigate(`/${parentPostData.post?.owner.username}`)
-                  }
+                  onPhotoClick={() => {
+                    onRedirect?.();
+                    navigate(`/${parentPostData.post?.owner.username}`);
+                  }}
                 />
                 <div>
                   <Text.PostOwnerName
                     isAuthenticated={!!authenticatedUser}
                     theme={theme}
-                    onClick={() =>
-                      navigate(`/${parentPostData.post?.owner.username}`)
-                    }
+                    onClick={() => {
+                      onRedirect?.();
+                      navigate(`/${parentPostData.post?.owner.username}`);
+                    }}
                   >
                     {parentPostData.post.owner.firstName}{" "}
                     {parentPostData.post.owner.lastName}
@@ -483,7 +491,12 @@ export function UserPost({ postId, onPostShared }: Props) {
           </StyledContainer.EmojisReactions>
           <StyledContainer.CommentsShares>
             {commentsCount > 0 && (
-              <StyledContainer.Comments>
+              <StyledContainer.Comments
+                onClick={() => {
+                  lockScroll();
+                  setIsViewPostModalOpen(true);
+                }}
+              >
                 {
                   <Text.CommentsCount>
                     {commentsCount}
@@ -622,8 +635,7 @@ export function UserPost({ postId, onPostShared }: Props) {
             addComment({
               variables: {
                 input: {
-                  commentOwnerId: authenticatedUser?.id,
-                  parentId: null,
+                  commentOwnerId: authenticatedUser!.id,
                   postId,
                   text: commentText,
                 },
@@ -647,7 +659,6 @@ export function UserPost({ postId, onPostShared }: Props) {
             title={confirmationModalTitle}
             onCloseClick={handleConfirmationModalCloseClick}
             onConfirmClick={() => {
-              handleConfirmationModalCloseClick();
               sharePost({
                 variables: {
                   input: {
@@ -675,8 +686,30 @@ export function UserPost({ postId, onPostShared }: Props) {
                         : postId,
                     },
                   },
+                  //// NOT WORKING
+                  // {
+                  //   query: GET_USER_POSTS_BY_ID,
+                  //   variables: {
+                  //     input: {
+                  //       after: TODO,
+                  //       first: 1,
+                  //       userId: authenticatedUser?.id,
+                  //     },
+                  //   },
+                  // },
                 ],
               });
+            }}
+          />,
+          document.body
+        )}
+      {isViewPostModalOpen &&
+        createPortal(
+          <ViewPostModal
+            post={postData.post}
+            onCloseClick={() => {
+              unlockScroll();
+              setIsViewPostModalOpen(false);
             }}
           />,
           document.body

@@ -97,3 +97,13 @@ export const List = styled.ul`
   list-style-type: none;
   user-select: none;
 `;
+
+export const Text = {
+  NoMessages: styled.p<ThemeProps>`
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.Platinum
+        : Colors.VampireBlack};
+    padding: 0 0.5em;
+  `,
+};

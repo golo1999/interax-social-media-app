@@ -7,7 +7,6 @@ import { UserPhoto } from "components";
 import {
   GET_CONVERSATION_BETWEEN,
   GET_USER_BY_ID,
-  GetConversationBetweenData,
   getTimePassedFromDateTime,
   instanceOfUserError,
   instanceOfUserWithMessage,
@@ -43,7 +42,7 @@ export function ChatListItem({
   const [
     fetchConversationBetween,
     { data: conversation = { conversationBetween: null } },
-  ] = useLazyQuery<GetConversationBetweenData>(GET_CONVERSATION_BETWEEN);
+  ] = useLazyQuery(GET_CONVERSATION_BETWEEN);
   const [fetchUserById, { data: user = { userById: null } }] =
     useLazyQuery(GET_USER_BY_ID);
   const { pathname } = useLocation();
@@ -73,7 +72,7 @@ export function ChatListItem({
       fetchConversationBetween({
         variables: {
           input: {
-            first: authenticatedUser?.id,
+            first: authenticatedUser!.id,
             second: userId,
           },
         },

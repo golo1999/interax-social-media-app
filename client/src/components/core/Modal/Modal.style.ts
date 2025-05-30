@@ -34,6 +34,7 @@ export const Background = styled.div<BackgroundProps>`
 `;
 
 type ContainerProps = {
+  maxHeight?: string;
   minHeight?: string;
   width?: string;
 } & ThemeProps;
@@ -47,7 +48,7 @@ export const Container = styled.div<ContainerProps>`
   flex-direction: column;
   /* min-height: 50vh; */
   min-height: ${({ minHeight }) => minHeight || "fit-content"};
-  max-height: 75vh;
+  max-height: ${({ maxHeight }) => maxHeight || "90vh"};
   /* width: 550px; */
   width: ${({ width }) => width || "fit-content"};
 `;

@@ -64,6 +64,7 @@ export const Container = {
   TopIcon: styled.div`
     align-items: center;
     border-radius: 50%;
+    cursor: pointer;
     display: flex;
     justify-content: center;
     padding: 0.25rem;

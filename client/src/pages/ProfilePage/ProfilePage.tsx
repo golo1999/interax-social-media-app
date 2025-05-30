@@ -1,4 +1,4 @@
-import { useMutation, useSuspenseQuery } from "@apollo/client";
+import { gql, useMutation, useSuspenseQuery } from "@apollo/client";
 import { Divider } from "@mui/material";
 
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
@@ -23,16 +23,10 @@ import {
   ADD_USER_COVER_PHOTO,
   ADD_USER_FRIEND,
   ADD_USER_PROFILE_PHOTO,
-  AddUserCoverPhotoData,
-  AddUserFriendData,
-  AddUserProfilePhotoData,
   CHANGE_USER_COVER_PHOTO,
   CHANGE_USER_PROFILE_PHOTO,
-  ChangeUserCoverPhotoData,
-  ChangeUserProfilePhotoData,
   firebaseStorage,
   FOLLOW_USER,
-  FollowUserData,
   GET_USER_BY_USERNAME,
   instanceOfUserError,
   REMOVE_USER_FRIENDSHIP_REQUEST,
@@ -104,19 +98,12 @@ function SuccessProfilePage({ user }: SuccessProps) {
   const headerItems = useHeaderItems();
   const { pathname } = useLocation();
   const { addMessageBox } = useMessagesStore();
-  const [addUserCoverPhoto] =
-    useMutation<AddUserCoverPhotoData>(ADD_USER_COVER_PHOTO);
-  const [addUserFriend] = useMutation<AddUserFriendData>(ADD_USER_FRIEND);
-  const [addUserProfilePhoto] = useMutation<AddUserProfilePhotoData>(
-    ADD_USER_PROFILE_PHOTO
-  );
-  const [changeUserCoverPhoto] = useMutation<ChangeUserCoverPhotoData>(
-    CHANGE_USER_COVER_PHOTO
-  );
-  const [changeUserProfilePhoto] = useMutation<ChangeUserProfilePhotoData>(
-    CHANGE_USER_PROFILE_PHOTO
-  );
-  const [followUser] = useMutation<FollowUserData>(FOLLOW_USER);
+  const [addUserCoverPhoto] = useMutation(ADD_USER_COVER_PHOTO);
+  const [addUserFriend] = useMutation(ADD_USER_FRIEND);
+  const [addUserProfilePhoto] = useMutation(ADD_USER_PROFILE_PHOTO);
+  const [changeUserCoverPhoto] = useMutation(CHANGE_USER_COVER_PHOTO);
+  const [changeUserProfilePhoto] = useMutation(CHANGE_USER_PROFILE_PHOTO);
+  const [followUser] = useMutation(FOLLOW_USER);
   const [removeUserFriendRequest] = useMutation<RemoveUserFriendRequestData>(
     REMOVE_USER_FRIENDSHIP_REQUEST
   );
@@ -289,7 +276,7 @@ function SuccessProfilePage({ user }: SuccessProps) {
             addUserCoverPhoto({
               variables: {
                 input: {
-                  ownerId: authenticatedUser?.id,
+                  ownerId: authenticatedUser!.id,
                   url,
                   visibility: Permission.PUBLIC,
                 },
@@ -297,7 +284,33 @@ function SuccessProfilePage({ user }: SuccessProps) {
               onCompleted: () => {
                 changeUserCoverPhoto({
                   variables: {
-                    input: { url, userId: authenticatedUser?.id },
+                    input: { url, userId: authenticatedUser!.id },
+                  },
+                  update: (cache, { data }) => {
+                    const newPhotoRef = cache.writeFragment({
+                      data: data?.changeUserCoverPhoto,
+                      fragment: gql`
+                        fragment NewPhoto on CoverPhoto {
+                          id
+                        }
+                      `,
+                    });
+
+                    cache.modify({
+                      fields: {
+                        coverPhoto: (existingPhoto) => {
+                          if (!data) {
+                            return existingPhoto;
+                          }
+
+                          return newPhotoRef;
+                        },
+                        coverPhotos: (existingPhotos = []) => {
+                          return [newPhotoRef, ...existingPhotos];
+                        },
+                      },
+                      id: cache.identify({ ...authenticatedUser }),
+                    });
                   },
                 });
               },
@@ -307,7 +320,7 @@ function SuccessProfilePage({ user }: SuccessProps) {
             addUserProfilePhoto({
               variables: {
                 input: {
-                  ownerId: authenticatedUser?.id,
+                  ownerId: authenticatedUser!.id,
                   url,
                   visibility: Permission.PUBLIC,
                 },
@@ -315,7 +328,33 @@ function SuccessProfilePage({ user }: SuccessProps) {
               onCompleted: () => {
                 changeUserProfilePhoto({
                   variables: {
-                    input: { url, userId: authenticatedUser?.id },
+                    input: { url, userId: authenticatedUser!.id },
+                  },
+                  update: (cache, { data }) => {
+                    const newPhotoRef = cache.writeFragment({
+                      data: data?.changeUserProfilePhoto,
+                      fragment: gql`
+                        fragment NewPhoto on ProfilePhoto {
+                          id
+                        }
+                      `,
+                    });
+
+                    cache.modify({
+                      fields: {
+                        profilePhoto: (existingPhoto) => {
+                          if (!data) {
+                            return existingPhoto;
+                          }
+
+                          return newPhotoRef;
+                        },
+                        profilePhotos: (existingPhotos = []) => {
+                          return [newPhotoRef, ...existingPhotos];
+                        },
+                      },
+                      id: cache.identify({ ...authenticatedUser }),
+                    });
                   },
                 });
               },
@@ -346,7 +385,14 @@ function SuccessProfilePage({ user }: SuccessProps) {
     <StyledContainer.Main isAuthenticated={!!authenticatedUser} theme={theme}>
       <Header selectedItem={null} items={headerItems} />
       <StyledContainer.Top isAuthenticated={!!authenticatedUser} theme={theme}>
-        <StyledContainer.CoverPhoto hasCoverPhoto={hasCoverPhoto}>
+        <StyledContainer.CoverPhoto
+          hasCoverPhoto={hasCoverPhoto}
+          onClick={() => {
+            if (hasCoverPhoto) {
+              navigate(`/photo/${coverPhoto.id}`);
+            }
+          }}
+        >
           {hasCoverPhoto && <CoverPhoto src={coverPhoto.url} />}
           {userId === authenticatedUser?.id && (
             <B.EditCoverPhoto
@@ -375,6 +421,7 @@ function SuccessProfilePage({ user }: SuccessProps) {
             onPhotoClick={() => {
               if (hasProfilePhoto) {
                 // TODO: Navigate to "PhotoPage"
+                navigate(`/photo/${profilePhoto.id}`);
               }
             }}
           />

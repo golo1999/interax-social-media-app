@@ -2,15 +2,9 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import { Header } from "components";
 import { useHeaderItems } from "hooks";
-import { useAuthenticationStore } from "store";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
-import {
-  Button,
-  Container,
-  ContentUnavailable,
-  GoBack,
-  Icon,
-} from "./NotFoundPage.style";
+import { Button, Container, Icon, Text } from "./NotFoundPage.style";
 
 export function NotFoundPage() {
   const { authenticatedUser, isFinishedLoading } = useAuthenticationStore();
@@ -27,19 +21,27 @@ export function NotFoundPage() {
 }
 
 function AuthenticatedNotFoundPage() {
+  const { authenticatedUser } = useAuthenticationStore();
   const headerItems = useHeaderItems();
   const navigate = useNavigate();
+  const { theme } = useSettingsStore();
+
+  const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
 
   return (
-    <Container.Main>
+    <Container.Main {...themeProps}>
       <Header items={headerItems} selectedItem={null} />
       <Container.Content>
-        <Icon size={72} />
-        <ContentUnavailable>
+        <Icon {...themeProps} size={72} />
+        <Text.ContentUnavailable {...themeProps}>
           This content isn't available right now
-        </ContentUnavailable>
-        <Button onClick={() => navigate("/")}>Go to News Feed</Button>
-        <GoBack onClick={() => navigate(-1)}>Go Back</GoBack>
+        </Text.ContentUnavailable>
+        <Container.Navigation>
+          <Button onClick={() => navigate("/")}>Go to News Feed</Button>
+          <Text.GoBack {...themeProps} onClick={() => navigate(-1)}>
+            Go Back
+          </Text.GoBack>
+        </Container.Navigation>
       </Container.Content>
     </Container.Main>
   );

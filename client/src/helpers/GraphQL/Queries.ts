@@ -5,6 +5,7 @@ import {
   Conversation,
   Message,
   Post,
+  SavedPostCollection,
   User,
   UserError,
   UserWithMessage,
@@ -16,6 +17,7 @@ import {
   HIGH_SCHOOL_EDUCATION_DATA,
   PLACE_DATA,
   POST_DATA,
+  POST_WITH_SAVED_COLLECTION_ID_DATA,
   USER_DATA,
 } from "./Fragments";
 
@@ -32,7 +34,7 @@ export const GET_COMMENT = gql`
   }
 `;
 
-type PageInfo = {
+export type PageInfo = {
   endCursor: string | null;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
@@ -72,11 +74,18 @@ export const GET_COMMENT_REPLIES = gql`
   }
 `;
 
-export interface GetConversationBetweenData {
+interface GetConversationBetweenData {
   conversationBetween: Conversation | null;
 }
 
-export const GET_CONVERSATION_BETWEEN = gql`
+interface GetConversationBetweenVariables {
+  input: { first: string; second: string };
+}
+
+export const GET_CONVERSATION_BETWEEN: TypedDocumentNode<
+  GetConversationBetweenData,
+  GetConversationBetweenVariables
+> = gql`
   query GetConversationBetween($input: GetConversationBetweenInput!) {
     conversationBetween(input: $input) {
       emoji
@@ -98,17 +107,24 @@ export const GET_CONVERSATION_BETWEEN = gql`
   }
 `;
 
-type GetFriendsPostsByOwnerIdResult = {
+export type GetFriendsPostsByOwnerIdResult = {
   edges: PostsEdge[];
   pageInfo: PageInfo;
   totalCount: number;
 };
 
-export interface GetFriendsPostsByUserIdData {
+interface GetFriendsPostsByOwnerIdVariables {
+  input: { after?: string; first?: number; ownerId: string };
+}
+
+interface GetFriendsPostsByUserIdData {
   friendsPostsByOwnerId: GetFriendsPostsByOwnerIdResult;
 }
 
-export const GET_FRIENDS_POSTS_BY_USER_ID = gql`
+export const GET_FRIENDS_POSTS_BY_USER_ID: TypedDocumentNode<
+  GetFriendsPostsByUserIdData,
+  GetFriendsPostsByOwnerIdVariables
+> = gql`
   ${COMMENT_DATA}
   ${POST_DATA}
   query GetFriendsPostsByOwnerId($input: FriendsPostsByOwnerIdInput!) {
@@ -148,11 +164,18 @@ export const GET_FRIENDSHIP_SUGGESTIONS_BY_ID = gql`
   }
 `;
 
-export interface GetMessagesBetweenData {
+interface GetMessagesBetweenData {
   messagesBetween: Message[] | null;
 }
 
-export const GET_MESSAGES_BETWEEN = gql`
+interface GetMessagesBetweenVariables {
+  input: { first: string; second: string };
+}
+
+export const GET_MESSAGES_BETWEEN: TypedDocumentNode<
+  GetMessagesBetweenData,
+  GetMessagesBetweenVariables
+> = gql`
   query GetMessagesBetween($input: GetMessagesBetweenInput!) {
     messagesBetween(input: $input) {
       dateTime
@@ -214,6 +237,45 @@ export const GET_POST_COMMENTS = gql`
   }
 `;
 
+interface GetSavedPostCollectionCountData {
+  savedPostCollectionCount: number;
+}
+
+interface GetSavedPostCollectionCountVariables {
+  input: { collectionId: string; userId: string };
+}
+
+export const GET_SAVED_POST_COLLECTION_COUNT: TypedDocumentNode<
+  GetSavedPostCollectionCountData,
+  GetSavedPostCollectionCountVariables
+> = gql`
+  query GetSavedPostCollectionCount($input: SavedPostCollectionCountInput!) {
+    savedPostCollectionCount(input: $input)
+  }
+`;
+
+interface GetSavedPostCollectionsData {
+  savedPostCollections: SavedPostCollection[];
+}
+
+interface GetSavedPostCollectionsVariables {
+  userId: string;
+}
+
+export const GET_SAVED_POST_COLLECTIONS: TypedDocumentNode<
+  GetSavedPostCollectionsData,
+  GetSavedPostCollectionsVariables
+> = gql`
+  query GetSavedPostCollections($userId: ID!) {
+    savedPostCollections(userId: $userId) {
+      id
+      isChecked
+      name
+      visibility
+    }
+  }
+`;
+
 export interface GetUserBlockedListData {
   userBlockedList: User[] | null;
 }
@@ -251,6 +313,7 @@ export const GET_USER_BY_ID: TypedDocumentNode<
   ${HIGH_SCHOOL_EDUCATION_DATA}
   ${PLACE_DATA}
   ${POST_DATA}
+  ${POST_WITH_SAVED_COLLECTION_ID_DATA}
   ${USER_DATA}
   query GetUserById($input: GetUserByIdInput!) {
     userById(input: $input) {
@@ -287,6 +350,7 @@ export const GET_USER_BY_USERNAME: TypedDocumentNode<
   ${HIGH_SCHOOL_EDUCATION_DATA}
   ${PLACE_DATA}
   ${POST_DATA}
+  ${POST_WITH_SAVED_COLLECTION_ID_DATA}
   ${USER_DATA}
   query GetUserByUsername($input: GetUserByUsernameInput!) {
     userByUsername(input: $input) {

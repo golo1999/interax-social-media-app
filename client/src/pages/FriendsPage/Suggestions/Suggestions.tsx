@@ -92,7 +92,7 @@ export function Suggestions({
           )}
         </>
       ) : (
-        <SectionNoData>
+        <SectionNoData {...themeProps}>
           There are no friendship suggestions to show.
         </SectionNoData>
       )}

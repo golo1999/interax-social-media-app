@@ -1,67 +1,88 @@
-import { useLazyQuery } from "@apollo/client";
+import { useSuspenseQuery } from "@apollo/client";
 
-import { CSSProperties, useEffect } from "react";
+import { Fragment, Suspense, useMemo } from "react";
+import styled from "styled-components";
 
 import { UserPost } from "components";
 import { Colors } from "environment";
 import {
-  GetFriendsPostsByUserIdData,
   GET_FRIENDS_POSTS_BY_USER_ID,
+  GetFriendsPostsByOwnerIdResult,
 } from "helpers";
-import { useAuthenticationStore } from "store";
 import { LoadingPage } from "pages";
+import { useAuthenticationStore } from "store";
 
-interface Props {
-  style?: CSSProperties;
+const Container = {
+  NoContent: styled.div`
+    padding-top: 3rem;
+  `,
+  Posts: styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+  `,
+};
+
+const Text = {
+  NoContent: styled.p`
+    color: ${Colors.LightGray};
+  `,
+};
+
+export function Posts() {
+  return (
+    <Suspense
+      fallback={
+        <Container.NoContent>
+          <LoadingPage />
+        </Container.NoContent>
+      }
+    >
+      <LoadingPosts />
+    </Suspense>
+  );
 }
 
-export function Posts({ style }: Props) {
+function LoadingPosts() {
   const { authenticatedUser } = useAuthenticationStore();
-  const [
-    fetchFriendsPostsByUserId,
-    {
-      called,
-      data: friendsPostsByUserIdData = { friendsPostsByOwnerId: null },
-      loading,
-    },
-  ] = useLazyQuery<GetFriendsPostsByUserIdData>(GET_FRIENDS_POSTS_BY_USER_ID);
+  const { data } = useSuspenseQuery(GET_FRIENDS_POSTS_BY_USER_ID, {
+    variables: { input: { ownerId: authenticatedUser!.id } },
+  });
+  const { friendsPostsByOwnerId } = data;
 
-  useEffect(() => {
-    fetchFriendsPostsByUserId({
-      variables: { input: { ownerId: authenticatedUser?.id } },
-    });
-  }, [authenticatedUser, fetchFriendsPostsByUserId]);
-
-  if (called && loading) {
+  if (friendsPostsByOwnerId.totalCount === 0) {
     return (
-      <div style={{ paddingTop: "3rem" }}>
-        <LoadingPage />
-      </div>
+      <Container.NoContent>
+        <Text.NoContent>No posts found...</Text.NoContent>
+      </Container.NoContent>
     );
   }
 
-  if (!friendsPostsByUserIdData.friendsPostsByOwnerId) {
-    return (
-      <section style={style}>
-        <p style={{ color: Colors.LightGray }}>No posts found...</p>
-      </section>
-    );
-  }
+  return <SuccessPosts posts={friendsPostsByOwnerId} />;
+}
 
-  function getContent() {
-    if (called && loading) {
-      return <p style={{ color: Colors.LightGray }}>Loading...</p>;
-    }
+interface SuccessProps {
+  posts: GetFriendsPostsByOwnerIdResult;
+}
 
-    const friendsPosts = friendsPostsByUserIdData.friendsPostsByOwnerId;
+function SuccessPosts({ posts }: SuccessProps) {
+  const { edges } = posts;
 
-    if (!friendsPosts || friendsPosts.totalCount === 0) {
-      return <p style={{ color: Colors.LightGray }}>No posts found...</p>;
-    }
+  const { authenticatedUser } = useAuthenticationStore();
 
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "1em" }}>
-        {friendsPosts.edges.map(({ cursor, node: { id: postId } }, index) => (
+  const displayedPosts = useMemo(
+    () =>
+      edges.map(({ cursor, node: { id: postId } }) => {
+        const isHidden =
+          authenticatedUser?.hiddenPosts.some(({ id }) => id === cursor) ||
+          false;
+        console.log({ cursor, isHidden });
+
+        if (isHidden) {
+          return <Fragment key={postId} />;
+        }
+
+        return (
           <UserPost
             key={postId}
             postId={postId}
@@ -69,10 +90,10 @@ export function Posts({ style }: Props) {
               // TODO
             }}
           />
-        ))}
-      </div>
-    );
-  }
+        );
+      }),
+    [authenticatedUser?.hiddenPosts, edges]
+  );
 
-  return <section style={style}>{getContent()}</section>;
+  return <Container.Posts>{displayedPosts}</Container.Posts>;
 }

@@ -3,6 +3,7 @@ import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { firebaseAuth } from "helpers";
+import { useOutsideClick } from "hooks";
 import { useAuthenticationStore, useSettingsStore } from "store";
 import { SettingsListContent } from "types";
 
@@ -10,7 +11,7 @@ import { Default } from "./Default";
 import { Display } from "./Display";
 import { Language } from "./Language";
 import { Settings } from "./Settings";
-import { Container } from "./SettingsList.style";
+import { Background, Container } from "./SettingsList.style";
 
 export function SettingsList() {
   const { authenticatedUser, setAuthenticatedUser } = useAuthenticationStore();
@@ -23,6 +24,11 @@ export function SettingsList() {
   useEffect(() => {
     setMainContainerHeight(mainContainerRef.current?.clientHeight);
   }, [content]);
+
+  useOutsideClick({
+    ref: mainContainerRef,
+    handle: closeSettingsList,
+  });
 
   const { username } = { ...authenticatedUser };
 
@@ -78,32 +84,34 @@ export function SettingsList() {
   const themeProps = { $isAuthenticated: !!authenticatedUser, $theme: theme };
 
   return (
-    <Container.Main
-      {...themeProps}
-      height={mainContainerHeight}
-      ref={mainContainerRef}
-    >
-      {content === "DEFAULT" ? (
-        <Default
-          onDisplayTabClick={handleDisplayTabClick}
-          onLogOutTabClick={handleLogOutTabClick}
-          onSettingsTabClick={handleSettingsTabClick}
-          onUserTabClick={handleUserTabClick}
-        />
-      ) : content === "DISPLAY" ? (
-        <Display
-          onBackIconClick={() => handleBackIconClick(content)}
-          onDarkModeOffTabClick={handleDarkModeOffTabClick}
-          onDarkModeOnTabClick={handleDarkModeOnTabClick}
-        />
-      ) : content === "SETTINGS" ? (
-        <Settings
-          onBackIconClick={() => handleBackIconClick(content)}
-          onLanguageTabClick={handleLanguageTabClick}
-        />
-      ) : (
-        <Language onBackIconClick={() => handleBackIconClick(content)} />
-      )}
-    </Container.Main>
+    <Background>
+      <Container.Main
+        {...themeProps}
+        height={mainContainerHeight}
+        ref={mainContainerRef}
+      >
+        {content === "DEFAULT" ? (
+          <Default
+            onDisplayTabClick={handleDisplayTabClick}
+            onLogOutTabClick={handleLogOutTabClick}
+            onSettingsTabClick={handleSettingsTabClick}
+            onUserTabClick={handleUserTabClick}
+          />
+        ) : content === "DISPLAY" ? (
+          <Display
+            onBackIconClick={() => handleBackIconClick(content)}
+            onDarkModeOffTabClick={handleDarkModeOffTabClick}
+            onDarkModeOnTabClick={handleDarkModeOnTabClick}
+          />
+        ) : content === "SETTINGS" ? (
+          <Settings
+            onBackIconClick={() => handleBackIconClick(content)}
+            onLanguageTabClick={handleLanguageTabClick}
+          />
+        ) : (
+          <Language onBackIconClick={() => handleBackIconClick(content)} />
+        )}
+      </Container.Main>
+    </Background>
   );
 }
