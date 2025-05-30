@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { MdClose, MdKeyboardBackspace } from "react-icons/md";
 
 import { Colors } from "environment";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import {
   Background,
@@ -15,10 +16,24 @@ import {
 import { BodyProps, FooterProps, HeaderProps, ModalProps } from "./Modal.types";
 
 const BaseModal = forwardRef<HTMLDivElement, ModalProps>(
-  ({ children, minHeight, width }, containerRef) => {
+  ({ children, maxHeight, minHeight, width }, containerRef) => {
+    const { authenticatedUser } = useAuthenticationStore();
+    const { scrollPosition, theme } = useSettingsStore();
+
     return (
-      <Background>
-        <Container ref={containerRef} minHeight={minHeight} width={width}>
+      <Background
+        $isAuthenticated={!!authenticatedUser}
+        $theme={theme}
+        $scrollPosition={scrollPosition}
+      >
+        <Container
+          $isAuthenticated={!!authenticatedUser}
+          $theme={theme}
+          maxHeight={maxHeight}
+          minHeight={minHeight}
+          ref={containerRef}
+          width={width}
+        >
           {children}
         </Container>
       </Background>
@@ -90,6 +105,9 @@ function Header({
   onLeftIconClick,
   onRightIconClick,
 }: HeaderProps) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
   if (isTemplate) {
     const LeftIcon = leftIcon || MdKeyboardBackspace;
     const RightIcon = rightIcon || MdClose;
@@ -113,11 +131,21 @@ function Header({
             <MdKeyboardBackspace color={iconColor} size={iconSize} />
           </IconContainer>
         )} */}
-        <IconContainer isHidden={!leftIcon} onClick={onLeftIconClick}>
+        <IconContainer
+          $isAuthenticated={!!authenticatedUser}
+          $theme={theme}
+          isHidden={!leftIcon}
+          onClick={onLeftIconClick}
+        >
           <LeftIcon color={Colors[iconColor]} size={iconSize} />
         </IconContainer>
         <Title color={titleColor}>{title}</Title>
-        <IconContainer isHidden={!rightIcon} onClick={onRightIconClick}>
+        <IconContainer
+          $isAuthenticated={!!authenticatedUser}
+          $theme={theme}
+          isHidden={!rightIcon}
+          onClick={onRightIconClick}
+        >
           <RightIcon color={Colors[iconColor]} size={iconSize} />
         </IconContainer>
         {/* {RightIcon ? (

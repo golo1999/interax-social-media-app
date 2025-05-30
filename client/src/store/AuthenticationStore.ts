@@ -3,16 +3,16 @@ import { create } from "zustand";
 import { User } from "models";
 
 type Store = {
-  authenticatedUser: User | null;
-  isLoading: boolean;
+  authenticatedUser: User | null | undefined;
   isFinishedLoading: boolean;
+  isLoading: boolean;
   setAuthenticatedUser: (user: User | null) => void;
-  setIsLoading: (value: boolean) => void;
   setIsFinishedLoading: (value: boolean) => void;
+  setIsLoading: (value: boolean) => void;
 };
 
 export const useAuthenticationStore = create<Store>((set) => ({
-  authenticatedUser: null,
+  authenticatedUser: undefined,
   isLoading: false,
   isFinishedLoading: false,
   setAuthenticatedUser(user) {

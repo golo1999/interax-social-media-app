@@ -34,8 +34,6 @@ const RelationshipStatus = {
   WIDOWED: "WIDOWED",
 };
 
-const AUTHENTICATED_USER_ID = "1";
-
 const BLOCKED_USERS_LIST = [];
 
 const COMMENTS_LIST = [
@@ -1131,7 +1129,6 @@ const USERS_LIST = [
 ];
 
 module.exports = {
-  AUTHENTICATED_USER_ID,
   BLOCKED_USERS_LIST,
   COMMENTS_LIST,
   CONVERSATIONS_LIST,

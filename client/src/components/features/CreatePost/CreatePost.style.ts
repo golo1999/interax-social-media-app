@@ -1,6 +1,12 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme } from "types";
+
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
+}
 
 export const Container = {
   Items: styled.div`
@@ -12,18 +18,27 @@ export const Container = {
     display: flex;
     flex-direction: column;
   `,
-  Text: styled.div`
+  Text: styled.div<ThemeProps>`
     align-items: center;
-    background-color: ${Colors.BlackOlive};
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.BlackOlive
+        : Colors.AntiFlashWhite};
     border-radius: 20px;
-    color: ${Colors.MetallicSilver};
+    color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.MetallicSilver
+        : Colors.DarkLiver};
     display: flex;
     flex: 1;
     padding: 0.5em 1em;
     user-select: none;
 
     &:hover {
-      background-color: ${Colors.DarkLiver};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.DarkLiver
+          : Colors.Platinum};
     }
   `,
 };

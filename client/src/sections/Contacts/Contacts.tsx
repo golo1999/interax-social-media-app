@@ -40,13 +40,15 @@ export function Contacts({ style }: Props) {
 
         function handleClick() {
           const matchedMessageBox = activeMessageBoxes.find(
-            (messageBox) => messageBox.userId === friendId
+            (messageBox) =>
+              messageBox.authenticatedUserId === authenticatedUser?.id &&
+              messageBox.userId === friendId
           );
 
           if (!matchedMessageBox) {
-            addMessageBox(friendId);
+            addMessageBox(authenticatedUser!.id, friendId);
           } else if (matchedMessageBox.visibility === "HIDDEN") {
-            maximizeMessageBox(friendId);
+            maximizeMessageBox(authenticatedUser!.id, friendId);
           }
         }
 

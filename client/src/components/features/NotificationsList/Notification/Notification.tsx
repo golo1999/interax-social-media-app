@@ -10,7 +10,6 @@ import {
   GET_USER_BY_ID,
   getDate,
   getTimePassedFromDateTime,
-  GetUserByIdData,
   instanceOfUserError,
   instanceOfUserWithMessage,
 } from "helpers";
@@ -30,16 +29,21 @@ export const Notification = memo(function Notification({
 }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
   const [fetchUserById, { data: user = { userById: null } }] =
-    useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+    useLazyQuery(GET_USER_BY_ID);
   const { theme } = useSettingsStore();
 
   const { dateTime, eventProducerId, isRead, type } = notification;
 
   useEffect(() => {
     fetchUserById({
-      variables: { input: { id: eventProducerId } },
+      variables: {
+        input: {
+          authenticatedUserId: authenticatedUser?.id,
+          userId: eventProducerId,
+        },
+      },
     });
-  }, [eventProducerId, fetchUserById]);
+  }, [authenticatedUser, eventProducerId, fetchUserById]);
 
   if (instanceOfUserError(user.userById) || !user.userById) {
     return <></>;

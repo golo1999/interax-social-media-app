@@ -5,12 +5,12 @@ import { PostReaction } from "models";
 interface ReactionButtonTextProps {
   currentUserId?: string;
   hasReacted: boolean;
-  reactions: PostReaction[] | null;
+  reactions: PostReaction[] | undefined;
 }
 
 interface ReactionButtonTextColorProps {
   currentUserId?: string;
-  reactions: PostReaction[] | null;
+  reactions: PostReaction[] | undefined;
 }
 
 interface ReactionIconProps {
@@ -19,14 +19,10 @@ interface ReactionIconProps {
 
 interface UserPostReactionProps {
   currentUserId?: string;
-  reactions: PostReaction[] | null;
+  reactions: PostReaction[] | undefined;
 }
 
-export function getCommentsText(commentsCount: number) {
-  return commentsCount > 1 ? `${commentsCount} comments` : "1 comment";
-}
-
-export function getPostReactionsCount(reactions: PostReaction[] | null) {
+export function getPostReactionsCount(reactions: PostReaction[] | undefined) {
   let reactionsCount = [
     { count: 0, icon: AppIcons.Like, type: ReactionType.LIKE },
     { count: 0, icon: AppIcons.Love, type: ReactionType.LOVE },
@@ -50,7 +46,7 @@ export function getPostReactionsCount(reactions: PostReaction[] | null) {
   });
 
   const existingReactions = reactionsCount
-    .filter((r) => r.count > 0)
+    .filter(({ count }) => count > 0)
     .sort((a, b) => (a.count < b.count ? 1 : -1));
 
   return existingReactions;
@@ -78,10 +74,9 @@ export function getReactionButtonTextColor({
   currentUserId,
   reactions,
 }: ReactionButtonTextColorProps) {
-  const userReactionType = reactions
-    ? reactions.find((reaction) => reaction.userId === currentUserId)
-        ?.reactionType
-    : undefined;
+  const userReactionType = reactions?.find(
+    (reaction) => reaction.userId === currentUserId
+  )?.reactionType;
 
   if (typeof userReactionType === "undefined") {
     return Colors.PhilippineGray;
@@ -118,10 +113,6 @@ export function getReactionIcon({ reactionType }: ReactionIconProps) {
     default:
       return undefined;
   }
-}
-
-export function getSharesText(sharesCount: number) {
-  return sharesCount > 1 ? `${sharesCount} shares` : `${sharesCount} share`;
 }
 
 export function getUserPostReaction({

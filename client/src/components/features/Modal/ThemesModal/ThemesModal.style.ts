@@ -1,9 +1,15 @@
 import styled from "styled-components";
 
 import { Colors } from "environment";
+import { Theme as ThemeType } from "types";
+
+interface AppThemeProps {
+  $isAuthenticated: boolean;
+  $theme: ThemeType;
+}
 
 export const Button = {
-  Cancel: styled.button.attrs({ type: "button" })`
+  Cancel: styled.button.attrs({ type: "button" })<AppThemeProps>`
     background-color: inherit;
     border-radius: 5px;
     color: ${Colors.BrightNavyBlue};
@@ -11,7 +17,10 @@ export const Button = {
     padding: 0.5em 1em;
 
     &:hover {
-      background-color: ${Colors.BlackOlive};
+      background-color: ${({ $isAuthenticated, $theme }) =>
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.Platinum};
     }
   `,
   Save: styled.button.attrs({ type: "button" })`
@@ -41,27 +50,37 @@ export const List = styled.ul`
   list-style-type: none;
 `;
 
-interface ListItemProps {
+type ListItemProps = {
   isSelected: boolean;
-}
+} & AppThemeProps;
 
 export const ListItem = styled.li<ListItemProps>`
-  ${({ isSelected }) =>
-    isSelected && `background-color: ${Colors.BlackOlive};`};
+  ${({ $isAuthenticated, $theme, isSelected }) =>
+    isSelected &&
+    `background-color: ${
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.BlackOlive
+        : Colors.AliceBlue
+    };`};
   border-radius: 15px;
   padding: 0.5em;
 
   &:hover {
-    ${({ isSelected }) =>
-      !isSelected && `background-color: ${Colors.BlackOlive};`}
+    ${({ $isAuthenticated, $theme, isSelected }) =>
+      !isSelected &&
+      `background-color: ${
+        $isAuthenticated && $theme === "DARK"
+          ? Colors.BlackOlive
+          : Colors.AliceBlue
+      };`}
   }
 `;
 
-interface ThemeProps {
+interface ThemeItemProps {
   color: keyof typeof Colors;
 }
 
-export const Theme = styled.div<ThemeProps>`
+export const Theme = styled.div<ThemeItemProps>`
   background-color: ${({ color }) => Colors[color]};
   border-radius: 50%;
   height: 3em;

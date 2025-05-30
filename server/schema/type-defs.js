@@ -20,12 +20,19 @@ const typeDefs = gql`
     parentId: ID
     postId: ID!
     text: String!
+    topLevelParentId: ID
   }
 
   input AddPostReactionInput {
     postId: ID!
     reactionType: ReactionType!
     userId: ID!
+  }
+
+  input AddSavedPostCollectionInput {
+    name: String!
+    userId: String!
+    visibility: Permission!
   }
 
   input AddUserCollegeEducationInput {
@@ -35,6 +42,18 @@ const typeDefs = gql`
     school: String!
     to: String
     userId: ID!
+    visibility: Permission!
+  }
+
+  input AddUserCoverPhotoInput {
+    ownerId: ID!
+    url: String!
+    visibility: Permission!
+  }
+
+  input AddUserPhotoInput {
+    ownerId: ID!
+    url: String!
     visibility: Permission!
   }
 
@@ -61,6 +80,12 @@ const typeDefs = gql`
     visibility: Permission!
   }
 
+  input AddUserProfilePhotoInput {
+    ownerId: ID!
+    url: String!
+    visibility: Permission!
+  }
+
   input AddUserRelationshipStatusInput {
     status: RelationshipStatusType!
     userId: ID!
@@ -82,6 +107,22 @@ const typeDefs = gql`
     userId: ID!
   }
 
+  input ChangeUserCoverPhotoInput {
+    url: String!
+    userId: ID!
+  }
+
+  input ChangeUserProfilePhotoInput {
+    url: String!
+    userId: ID!
+  }
+
+  input CommentRepliesInput {
+    after: String
+    commentId: ID!
+    first: Int
+  }
+
   input CreatePostInput {
     ownerId: ID!
     parentId: ID
@@ -93,6 +134,12 @@ const typeDefs = gql`
   input FollowUserInput {
     followingUserId: ID!
     userId: ID!
+  }
+
+  input FriendsPostsByOwnerIdInput {
+    after: String
+    first: Int
+    ownerId: ID!
   }
 
   input GetConversationBetweenInput {
@@ -111,8 +158,14 @@ const typeDefs = gql`
   }
 
   input GetUserByIdInput {
-    id: ID!
+    authenticatedUserId: ID
     returnUserIfBlocked: Boolean
+    userId: ID!
+  }
+
+  input GetUserByUsernameInput {
+    authenticatedUserId: ID
+    username: String!
   }
 
   input HidePostInput {
@@ -120,13 +173,34 @@ const typeDefs = gql`
     userId: ID!
   }
 
+  input PostCommentsInput {
+    after: String
+    first: Int
+    postId: ID!
+  }
+
   input RemoveCommentReactionInput {
     commentId: ID!
     userId: ID!
   }
 
+  input RemovePostInput {
+    postId: ID!
+    userId: ID!
+  }
+
   input RemovePostReactionInput {
     postId: ID!
+    userId: ID!
+  }
+
+  input RemovePostSharesInput {
+    postId: ID!
+    userId: ID!
+  }
+
+  input RemoveSavedPostCollectionInput {
+    collectionId: ID!
     userId: ID!
   }
 
@@ -136,7 +210,13 @@ const typeDefs = gql`
   }
 
   input SavePostInput {
+    collectionId: ID!
     postId: ID!
+    userId: ID!
+  }
+
+  input SavedPostCollectionCountInput {
+    collectionId: ID!
     userId: ID!
   }
 
@@ -145,8 +225,20 @@ const typeDefs = gql`
     sender: ID!
   }
 
+  input SharePostInput {
+    ownerId: ID!
+    postId: ID!
+    receiverId: ID!
+    visibility: Permission!
+  }
+
+  input UnsavePostInput {
+    postId: ID!
+    userId: ID!
+  }
+
   input UpdateConversationEmojiInput {
-    emoji: Emoji!
+    emojiName: String!
     first: ID!
     second: ID!
   }
@@ -164,6 +256,13 @@ const typeDefs = gql`
     theme: ConversationTheme!
   }
 
+  input UpdateSavedPostCollectionInput {
+    collectionId: ID!
+    name: String
+    userId: ID!
+    visibility: Permission
+  }
+
   input UpdateUserPlaceInput {
     city: String!
     from: String!
@@ -172,6 +271,20 @@ const typeDefs = gql`
     to: String
     userId: ID!
     visibility: Permission!
+  }
+
+  input UserFriendsByIdInput {
+    after: String
+    first: Int
+    id: ID!
+  }
+
+  input UserPostsByIdInput {
+    after: String
+    before: String
+    first: Int
+    last: Int
+    userId: ID!
   }
 
   type BlockUserResult {
@@ -203,6 +316,18 @@ const typeDefs = gql`
     replies: [Comment!]!
     repliesCount: Int!
     text: String!
+    topLevelParentId: ID
+  }
+
+  type CommentsEdge {
+    node: Comment!
+    cursor: String!
+  }
+
+  type CommentsResult {
+    edges: [CommentsEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
   }
 
   type CommentReaction {
@@ -259,9 +384,10 @@ const typeDefs = gql`
     sender: ID!
   }
 
-  type HidePostResult {
-    postId: ID!
-    userId: ID!
+  type FriendsPostsByOwnerIdResult {
+    edges: [PostsEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
   }
 
   type HighSchoolEducation {
@@ -281,15 +407,27 @@ const typeDefs = gql`
   }
 
   type Message {
-    id: ID!
     dateTime: String!
     emoji: Emoji
+    id: ID!
     parentId: ID
     reactions: [Reaction!]!
     receiverId: ID!
     replies: [Message!]!
     senderId: ID!
     text: String
+  }
+
+  type MessagesWithUserId {
+    messages: [Message!]!
+    userId: ID!
+  }
+
+  type PageInfo {
+    endCursor: String
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
   }
 
   type Place {
@@ -319,8 +457,37 @@ const typeDefs = gql`
     receiverId: ID!
     shares: [Share!]!
     text: String
+    topLevelCommentsCount: Int!
     video: String
     visibility: Permission!
+  }
+
+  type PostWithSavedCollectionID {
+    canComment: Permission!
+    canReact: Permission!
+    canShare: Permission!
+    comments: [Comment!]!
+    commentsCount: Int!
+    dateTime: String!
+    id: ID!
+    owner: User!
+    ownerId: ID!
+    parentId: ID
+    photos: [PostPhoto!]!
+    reactions: [PostReaction!]!
+    receiver: User!
+    receiverId: ID!
+    savedCollectionId: ID!
+    shares: [Share!]!
+    text: String
+    topLevelCommentsCount: Int!
+    video: String
+    visibility: Permission!
+  }
+
+  type PostsEdge {
+    node: Post!
+    cursor: String!
   }
 
   type PostPhoto {
@@ -369,8 +536,17 @@ const typeDefs = gql`
   }
 
   type SavedPost {
+    collectionId: ID!
+    id: ID!
     postId: ID!
     userId: ID!
+  }
+
+  type SavedPostCollection {
+    id: String!
+    isChecked: Boolean
+    name: String!
+    visibility: Permission!
   }
 
   type Share {
@@ -383,27 +559,50 @@ const typeDefs = gql`
     id: ID!
     biography: String
     birthDate: String
+    blockedUsers: [User!]!
+    coverPhoto: CoverPhoto
     coverPhotos: [CoverPhoto!]!
     educationHistory: [EducationResult!]!
     email: String!
     firstName: String!
+    followedByUsers: [User!]!
     followingUsers: [User!]!
     friends: [User!]!
     friendshipRequests: [FriendshipRequest!]!
     hiddenPosts: [Post!]!
     lastName: String!
-    messages: [Message!]!
+    messages: [MessagesWithUserId!]!
+    photos: [UserPhoto!]!
     placesHistory: [Place!]!
     posts: [Post!]!
+    profilePhoto: ProfilePhoto
     profilePhotos: [ProfilePhoto!]!
     relationshipStatus: RelationshipStatus
-    savedPosts: [Post!]!
+    savedPosts: [PostWithSavedCollectionID!]!
     username: String!
     workHistory: [Work!]!
   }
 
   type UserError {
     message: String!
+  }
+
+  type UserPhoto {
+    id: ID!
+    comments: [Comment!]!
+    dateTime: String!
+    description: String
+    ownerId: ID!
+    reactions: [Reaction!]!
+    shares: [Share!]!
+    url: String!
+    visibility: Permission!
+  }
+
+  type UserPostsByIdResult {
+    edges: [PostsEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
   }
 
   type UserWithMessage {
@@ -437,24 +636,28 @@ const typeDefs = gql`
   }
 
   type Query {
-    authenticatedUser: User
     comment(id: ID!): Comment
     commentReactions(commentId: ID!): [Reaction!]
-    commentReplies(commentId: ID!): [Comment!]
+    commentReplies(input: CommentRepliesInput!): CommentsResult!
     comments: [Comment!]
     conversationBetween(input: GetConversationBetweenInput!): Conversation
     friendshipSuggestionsById(id: ID!): [User!]
-    friendsPostsByOwnerId(ownerId: ID!): [Post!]
+    friendsPostsByOwnerId(
+      input: FriendsPostsByOwnerIdInput!
+    ): FriendsPostsByOwnerIdResult!
     messagesBetween(input: GetMessagesBetweenInput!): [Message!]!
     post(id: ID!): Post
-    postComments(postId: ID!): [Comment!]
+    postComments(input: PostCommentsInput!): CommentsResult!
     posts: [Post!]
     postsByOwnerId(ownerId: ID!): [Post!]
+    savedPostCollectionCount(input: SavedPostCollectionCountInput!): Int!
+    savedPostCollections(userId: ID!): [SavedPostCollection!]!
     userBlockedList(id: ID!): [User!]
     userById(input: GetUserByIdInput!): UserByIdResult
-    userByUsername(username: String!): UserByUsernameResult
-    userFriendsById(id: ID!): [User!]
+    userByUsername(input: GetUserByUsernameInput!): UserByUsernameResult
+    userFriendsById(input: UserFriendsByIdInput!): [User!]!
     userFriendsByUsername(username: String!): [User!]
+    userPostsById(input: UserPostsByIdInput!): UserPostsByIdResult!
     userPostReaction(input: GetUserPostReactionInput!): PostReaction
     users: [User!]
   }
@@ -464,42 +667,59 @@ const typeDefs = gql`
     addCommentReaction(input: AddCommentReactionInput!): CommentReaction
     addMessage(input: AddMessageInput!): Message
     addPostReaction(input: AddPostReactionInput!): PostReaction
+    addSavedPostCollection(
+      input: AddSavedPostCollectionInput!
+    ): SavedPostCollection
     addUserCollegeEducation(
       input: AddUserCollegeEducationInput!
     ): CollegeEducation
+    addUserCoverPhoto(input: AddUserCoverPhotoInput!): CoverPhoto
     addUserFriend(input: AddUserFriendInput!): Friendship
     addUserHighSchoolEducation(
       input: AddUserHighSchoolEducationInput!
     ): HighSchoolEducation
+    addUserPhoto(input: AddUserPhotoInput!): UserPhoto
     addUserPlace(input: AddUserPlaceInput!): Place
+    addUserProfilePhoto(input: AddUserProfilePhotoInput!): ProfilePhoto
     addUserRelationshipStatus(
       input: AddUserRelationshipStatusInput!
     ): RelationshipStatus
     addUserWorkplace(input: AddUserWorkplaceInput!): Work
     blockUser(input: BlockUserInput!): BlockUserResult
+    changeUserCoverPhoto(input: ChangeUserCoverPhotoInput!): CoverPhoto
+    changeUserProfilePhoto(input: ChangeUserProfilePhotoInput!): ProfilePhoto
     createPost(input: CreatePostInput!): Post
     followUser(input: FollowUserInput!): FollowRelationship
-    hidePost(input: HidePostInput!): HidePostResult
+    hidePost(input: HidePostInput!): Post
     removeComment(id: ID!): Comment
     removeCommentReaction(input: RemoveCommentReactionInput!): CommentReaction
-    removePost(id: ID!): Post
+    removeCommentReplies(id: ID!): [Comment!]
+    removePost(input: RemovePostInput!): ID
     removePostReaction(input: RemovePostReactionInput!): PostReaction
+    removePostShares(input: RemovePostSharesInput!): [Post!]
+    removeSavedPostCollection(
+      input: RemoveSavedPostCollectionInput!
+    ): SavedPostCollection
     removeUserFriend(input: AddUserFriendInput!): Friendship
     removeUserFriendshipRequest(
       input: RemoveUserFriendshipRequestInput!
     ): FriendshipRequest
-    savePost(input: SavePostInput!): SavedPost
+    savePost(input: SavePostInput!): PostWithSavedCollectionID
     sendUserFriendshipRequest(
       input: SendUserFriendshipRequestInput!
     ): FriendshipRequest
+    sharePost(input: SharePostInput!): Post
     unblockUser(input: BlockUserInput!): BlockUserResult
     unfollowUser(input: FollowUserInput!): FollowRelationship
-    unsavePost(input: SavePostInput!): SavedPost
+    unsavePost(input: UnsavePostInput!): SavedPost
     updateConversationEmoji(input: UpdateConversationEmojiInput!): Conversation
     updateConversationNickname(
       input: UpdateConversationNicknameInput!
     ): Conversation
     updateConversationTheme(input: UpdateConversationThemeInput!): Conversation
+    updateSavedPostCollection(
+      input: UpdateSavedPostCollectionInput!
+    ): SavedPostCollection
     updateUserPlace(input: UpdateUserPlaceInput!): Place
   }
 

@@ -1,18 +1,20 @@
-import { useMutation } from "@apollo/client";
+import { gql, useMutation } from "@apollo/client";
 import { Divider } from "@mui/material";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Dropdown, VisibilityModal } from "components";
 import { Permission } from "enums";
+import { Colors } from "environment";
+import { ADD_USER_PLACE } from "helpers";
 import {
-  AddUserPlaceData,
-  ADD_USER_PLACE,
-  GET_USER_BY_USERNAME,
-} from "helpers";
-import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
+  usePeriodDropdownItems,
+  useScrollLock,
+  useVisibilityModalItems,
+} from "hooks";
 import { Date as CustomDate, User } from "models";
+import { useAuthenticationStore, useModalStore, useSettingsStore } from "store";
 
 import { Button, Container, Form, Input, Label } from "../Form.style";
 
@@ -103,9 +105,32 @@ interface Props {
 }
 
 export function AddPlace({ user, onCancelClick, onSaveClick }: Props) {
-  const [addUserPlace] = useMutation<AddUserPlaceData>(ADD_USER_PLACE);
+  const { authenticatedUser } = useAuthenticationStore();
+  const { isVisibilityModalOpen, closeVisibilityModal, openVisibilityModal } =
+    useModalStore();
+  const [addUserPlace] = useMutation(ADD_USER_PLACE, {
+    update: (cache, { data }) => {
+      cache.modify({
+        fields: {
+          placesHistory: (existingHistory = []) => {
+            const newPlaceRef = cache.writeFragment({
+              data: data?.addUserPlace,
+              fragment: gql`
+                fragment NewPlace on Place {
+                  id
+                }
+              `,
+            });
 
-  const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
+            return [...existingHistory, newPlaceRef];
+          },
+        },
+        id: cache.identify({ ...authenticatedUser }),
+      });
+    },
+  });
+  const { lockScroll, unlockScroll } = useScrollLock();
+  const { theme } = useSettingsStore();
 
   const {
     control,
@@ -122,7 +147,7 @@ export function AddPlace({ user, onCancelClick, onSaveClick }: Props) {
   });
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     const { city, from, isCurrent, to, visibility } = data;
-    const { id: userId, username } = user;
+    const { id: userId } = user;
 
     const fromMonthAsNumber =
       new Date(`${from.month} ${from.day}, ${from.year}`).getMonth() + 1;
@@ -148,7 +173,7 @@ export function AddPlace({ user, onCancelClick, onSaveClick }: Props) {
         )
           .getTime()
           .toString()
-      : null;
+      : undefined;
 
     addUserPlace({
       variables: {
@@ -165,9 +190,6 @@ export function AddPlace({ user, onCancelClick, onSaveClick }: Props) {
         reset();
         onSaveClick();
       },
-      refetchQueries: [
-        { query: GET_USER_BY_USERNAME, variables: { username } },
-      ],
     });
   };
 
@@ -185,6 +207,9 @@ export function AddPlace({ user, onCancelClick, onSaveClick }: Props) {
     to: toMemoized,
   });
   const visibilityModalItems = useVisibilityModalItems();
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -387,7 +412,7 @@ export function AddPlace({ user, onCancelClick, onSaveClick }: Props) {
           </>
         )}
       </Container.Dates>
-      <Divider color="Onyx" />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <Container.Buttons.Element>
         <Controller
           control={control}
@@ -403,7 +428,8 @@ export function AddPlace({ user, onCancelClick, onSaveClick }: Props) {
             return (
               <Button.Visibility
                 onClick={() => {
-                  setIsVisibilityModalOpen((prev) => !prev);
+                  lockScroll();
+                  openVisibilityModal();
                 }}
               >
                 {Icon && <Icon />}
@@ -429,7 +455,8 @@ export function AddPlace({ user, onCancelClick, onSaveClick }: Props) {
           items={visibilityModalItems}
           selectedItem={getValues("visibility")}
           onCloseClick={() => {
-            setIsVisibilityModalOpen((prev) => !prev);
+            unlockScroll();
+            closeVisibilityModal();
           }}
           onDoneClick={(item) => {
             setValue("visibility", item, { shouldValidate: true });

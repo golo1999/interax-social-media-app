@@ -6,14 +6,16 @@ import { BsSaveFill } from "react-icons/bs";
 import { MdOndemandVideo, MdPlayCircle } from "react-icons/md";
 
 import { Header, Navigation } from "components";
+import { Colors } from "environment";
 import { useHeaderItems } from "hooks";
 import { NavigationItem } from "models";
-import { useAuthenticationStore } from "store";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { Container } from "./WatchPage.style";
 
 export function WatchPage() {
   const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
 
   const headerItems = useHeaderItems();
   const NAVIGATION_ITEMS = useMemo<NavigationItem[]>(
@@ -35,6 +37,9 @@ export function WatchPage() {
     }
   }
 
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
+
   return (
     <Container.Main>
       <Header items={headerItems} selectedItem={headerItems[1]} />
@@ -46,7 +51,10 @@ export function WatchPage() {
             onItemSelected={handleNavigationItemClick}
           />
         </Container.Navigation>
-        <Divider color="Onyx" orientation="vertical" />
+        <Divider
+          orientation="vertical"
+          sx={{ borderColor: Colors[dividerColor] }}
+        />
         <Container.NavigationItem></Container.NavigationItem>
       </Container.Content>
     </Container.Main>

@@ -1,0 +1,1 @@
+export { SavedCollectionModal } from "./SavedCollectionModal";

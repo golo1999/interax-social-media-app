@@ -36,8 +36,13 @@ export const Container = {
   `,
   Comments: styled.div`
     align-items: center;
+    cursor: pointer;
     display: flex;
     gap: 4px;
+
+    &:hover {
+      text-decoration: underline;
+    }
   `,
   CommentsReactionsShares: styled.div`
     display: flex;
@@ -76,7 +81,6 @@ export const Container = {
     gap: 1em;
   `,
   PostText: styled.div`
-    line-height: 21px;
     position: relative;
   `,
   Shares: styled.div`
@@ -98,8 +102,11 @@ type PostTextProps = {
 
 export const Text = {
   CommentsCount: styled.p`
+    align-items: center;
     color: ${Colors.GraniteGray};
+    display: flex;
     font-size: 15px;
+    gap: 4px;
     line-height: 20px;
   `,
   DateTime: styled.p<ThemeProps>`
@@ -157,8 +164,11 @@ export const Text = {
     }
   `,
   SharesCount: styled.p`
+    align-items: center;
     color: ${Colors.GraniteGray};
+    display: flex;
     font-size: 15px;
+    gap: 4px;
     line-height: 20px;
   `,
 };

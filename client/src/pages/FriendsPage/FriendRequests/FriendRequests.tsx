@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 
 import {
   ADD_USER_FRIEND,
-  AddUserFriendData,
-  GET_AUTHENTICATED_USER,
   REMOVE_USER_FRIENDSHIP_REQUEST,
   RemoveUserFriendRequestData,
 } from "helpers";
@@ -39,7 +37,7 @@ export function FriendRequests({
   onSeeMoreClick,
 }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const [addUserFriend] = useMutation<AddUserFriendData>(ADD_USER_FRIEND);
+  const [addUserFriend] = useMutation(ADD_USER_FRIEND);
   const [removeUserFriendRequest] = useMutation<RemoveUserFriendRequestData>(
     REMOVE_USER_FRIENDSHIP_REQUEST
   );
@@ -62,9 +60,8 @@ export function FriendRequests({
         onCompleted: () => {
           addUserFriend({
             variables: {
-              input: { first: authenticatedUserId, second: userId },
+              input: { first: authenticatedUserId!, second: userId },
             },
-            refetchQueries: [{ query: GET_AUTHENTICATED_USER }],
           });
         },
       });
@@ -84,7 +81,6 @@ export function FriendRequests({
             sender: authenticatedUserId,
           },
         },
-        refetchQueries: [{ query: GET_AUTHENTICATED_USER }],
       });
     }
   }
@@ -143,7 +139,7 @@ export function FriendRequests({
           )}
         </>
       ) : (
-        <SectionNoData>
+        <SectionNoData {...themeProps}>
           There are no received friendship requests to show.
         </SectionNoData>
       )}

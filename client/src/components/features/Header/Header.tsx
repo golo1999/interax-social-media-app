@@ -6,6 +6,7 @@ import { useAuthenticationStore, useSettingsStore } from "store";
 import { AuthenticatedHeader } from "./AuthenticatedHeader";
 import { Container } from "./Header.style";
 import { NotAuthenticatedHeader } from "./NotAuthenticatedHeader";
+import { Colors } from "environment";
 
 interface Props {
   items: IconItem[];
@@ -18,12 +19,11 @@ export function Header({ items, selectedItem }: Props) {
 
   const isAuthenticated = !!authenticatedUser;
 
-  const dividerColor =
-    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
+  const themeProps = { isAuthenticated, theme };
 
   return (
-    <Container.Main isAuthenticated={isAuthenticated} theme={theme}>
-      <Container.Top>
+    <Container.Main {...themeProps}>
+      <Container.Top {...themeProps}>
         {isAuthenticated ? (
           <AuthenticatedHeader
             authenticatedUser={authenticatedUser}
@@ -34,7 +34,7 @@ export function Header({ items, selectedItem }: Props) {
           <NotAuthenticatedHeader />
         )}
       </Container.Top>
-      <Divider color={dividerColor} />
+      {theme === "DARK" && <Divider sx={{ borderColor: Colors.Arsenic }} />}
     </Container.Main>
   );
 }

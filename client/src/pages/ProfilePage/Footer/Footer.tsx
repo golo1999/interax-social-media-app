@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { User } from "models";
 
 import { Button, Container, Text } from "./Footer.style";
+import { useCallback } from "react";
 
 interface Props {
   user: User;
@@ -11,13 +12,15 @@ interface Props {
 export function Footer({ user }: Props) {
   const navigate = useNavigate();
 
-  function handleCreateNewAccountButtonClick() {
-    navigate("/registration");
-  }
+  const handleCreateNewAccountButtonClick = useCallback(
+    () => navigate("/registration"),
+    [navigate]
+  );
 
-  function handleLoginButtonClick() {
-    navigate("/login");
-  }
+  const handleLoginButtonClick = useCallback(
+    () => navigate("/login"),
+    [navigate]
+  );
 
   const { firstName, lastName } = user;
 

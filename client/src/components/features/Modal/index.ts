@@ -1,5 +1,10 @@
+export { ConfirmationModal } from "./ConfirmationModal";
 export { CreatePostModal } from "./CreatePostModal";
 export { EmojisModal } from "./EmojisModal";
 export { NicknamesModal } from "./NicknamesModal";
+export { PhotoModal } from "./PhotoModal";
+export { SavePostModal } from "./SavePostModal";
+export { SavedCollectionModal } from "./SavedCollectionModal";
 export { ThemesModal } from "./ThemesModal";
+export { ViewPostModal } from "./ViewPostModal";
 export * from "./VisibilityModal";

@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { Container, Navbar, UserPhoto } from "components";
 import { Colors } from "environment";
 import {
-  AddUserFriendData,
   ADD_USER_FRIEND,
   GET_USER_BY_USERNAME,
   RemoveUserFriendRequestData,
@@ -27,7 +26,7 @@ interface Props {
 
 export function Friends({ user }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const [addUserFriend] = useMutation<AddUserFriendData>(ADD_USER_FRIEND);
+  const [addUserFriend] = useMutation(ADD_USER_FRIEND);
   const [removeUserFriendRequest] = useMutation<RemoveUserFriendRequestData>(
     REMOVE_USER_FRIENDSHIP_REQUEST
   );
@@ -112,63 +111,51 @@ export function Friends({ user }: Props) {
               gridTemplateColumns: "repeat(2, 1fr)",
             }}
           >
-            {friends.map((friend, index) => {
-              return (
-                <Friend
-                  key={index}
-                  authenticatedUser={authenticatedUser}
-                  user={friend}
-                  // onAddFriendClick={() => {
-                  //   addUserFriend({
-                  //     variables: {
-                  //       input: {
-                  //         first: authenticatedUser?.id,
-                  //         second: friend.id,
-                  //       },
-                  //     },
-                  //     refetchQueries: [
-                  //       {
-                  //         query: GET_USER_BY_USERNAME,
-                  //         variables: { username: authenticatedUser?.username },
-                  //       },
-                  //     ],
-                  //   });
-                  // }}
-                  onAddFriendClick={() => {
-                    sendUserFriendRequest({
-                      variables: {
-                        input: {
-                          receiver: friend.id,
-                          sender: authenticatedUser?.id,
+            {friends.map((friend, index) => (
+              <Friend
+                key={index}
+                authenticatedUser={authenticatedUser}
+                user={friend}
+                onAddFriendClick={() =>
+                  sendUserFriendRequest({
+                    variables: {
+                      input: {
+                        receiver: friend.id,
+                        sender: authenticatedUser?.id,
+                      },
+                    },
+                    refetchQueries: [
+                      {
+                        query: GET_USER_BY_USERNAME,
+                        variables: {
+                          authenticatedUserId: authenticatedUser?.id,
+                          username: authenticatedUser?.username,
                         },
                       },
-                      refetchQueries: [
-                        {
-                          query: GET_USER_BY_USERNAME,
-                          variables: { username: authenticatedUser?.username },
-                        },
-                      ],
-                    });
-                  }}
-                  onRemoveFriendRequestClick={() => {
-                    removeUserFriendRequest({
-                      variables: {
-                        input: {
-                          receiver: friend.id,
-                          sender: authenticatedUser?.id,
+                    ],
+                  })
+                }
+                onRemoveFriendRequestClick={() =>
+                  removeUserFriendRequest({
+                    variables: {
+                      input: {
+                        receiver: friend.id,
+                        sender: authenticatedUser?.id,
+                      },
+                    },
+                    refetchQueries: [
+                      {
+                        query: GET_USER_BY_USERNAME,
+                        variables: {
+                          authenticatedUserId: authenticatedUser?.id,
+                          username: authenticatedUser?.username,
                         },
                       },
-                      refetchQueries: [
-                        {
-                          query: GET_USER_BY_USERNAME,
-                          variables: { username: authenticatedUser?.username },
-                        },
-                      ],
-                    });
-                  }}
-                />
-              );
-            })}
+                    ],
+                  })
+                }
+              />
+            ))}
           </div>
         </>
       ) : (
@@ -179,7 +166,7 @@ export function Friends({ user }: Props) {
 }
 
 interface FriendProps {
-  authenticatedUser: User | null;
+  authenticatedUser: User | null | undefined;
   user: User;
   onAddFriendClick: () => void;
   onRemoveFriendRequestClick: () => void;

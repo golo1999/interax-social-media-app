@@ -46,8 +46,11 @@ export const Container = {
   `,
 };
 
-export const Description = styled.span`
-  color: ${Colors.PhilippineSilver};
+export const Description = styled.span<ThemeProps>`
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.PhilippineSilver
+      : Colors.DarkJungleGreen};
   font-size: 12px;
   font-weight: 400;
 `;

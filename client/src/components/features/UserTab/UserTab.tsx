@@ -8,7 +8,7 @@ interface Props {
   containerSize?: string;
   iconSize?: string;
   isSelected?: boolean;
-  user: User | null;
+  user: User | null | undefined;
   onClick?: () => void;
 }
 

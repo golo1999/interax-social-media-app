@@ -4,9 +4,8 @@ import { Fragment, useEffect } from "react";
 import styled from "styled-components";
 
 import { UserPhoto } from "components";
-import { useMessagesStore } from "store";
+import { useAuthenticationStore, useMessagesStore } from "store";
 import {
-  GetUserByIdData,
   GET_USER_BY_ID,
   instanceOfUserError,
   instanceOfUserWithMessage,
@@ -24,17 +23,23 @@ const Container = styled.div`
 `;
 
 export function ChatHeads() {
+  const { authenticatedUser } = useAuthenticationStore();
   const { activeMessageBoxes } = useMessagesStore();
 
   return (
     <Container>
-      {activeMessageBoxes.map((item, index) => {
-        if (item.visibility === "VISIBLE") {
-          return <Fragment key={index} />;
-        }
+      {activeMessageBoxes
+        .filter(
+          (messageBox) =>
+            messageBox.authenticatedUserId === authenticatedUser!.id
+        )
+        .map((item, index) => {
+          if (item.visibility === "VISIBLE") {
+            return <Fragment key={index} />;
+          }
 
-        return <ChatHead key={index} userId={item.userId} />;
-      })}
+          return <ChatHead key={index} userId={item.userId} />;
+        })}
     </Container>
   );
 }
@@ -44,18 +49,25 @@ interface ChatHeadProps {
 }
 
 function ChatHead({ userId }: ChatHeadProps) {
+  const { authenticatedUser } = useAuthenticationStore();
   const [fetchUserById, { data: user = { userById: null } }] =
-    useLazyQuery<GetUserByIdData>(GET_USER_BY_ID);
+    useLazyQuery(GET_USER_BY_ID);
   const { maximizeMessageBox } = useMessagesStore();
 
   useEffect(() => {
     fetchUserById({
-      variables: { input: { id: userId, returnUserIfBlocked: true } },
+      variables: {
+        input: {
+          authenticatedUserId: authenticatedUser?.id,
+          returnUserIfBlocked: true,
+          userId,
+        },
+      },
     });
-  }, [userId, fetchUserById]);
+  }, [authenticatedUser, userId, fetchUserById]);
 
   function handlePhotoClick() {
-    maximizeMessageBox(userId);
+    maximizeMessageBox(authenticatedUser!.id, userId);
   }
 
   if (!user.userById || instanceOfUserError(user.userById)) {
@@ -66,6 +78,7 @@ function ChatHead({ userId }: ChatHeadProps) {
     <UserPhoto
       containerSize="3em"
       iconSize="1.5em"
+      isChatHead
       user={
         instanceOfUserWithMessage(user.userById)
           ? user.userById.user

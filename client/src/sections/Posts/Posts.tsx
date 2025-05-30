@@ -1,84 +1,99 @@
-import { useLazyQuery } from "@apollo/client";
+import { useSuspenseQuery } from "@apollo/client";
 
-import { CSSProperties, useEffect } from "react";
+import { Fragment, Suspense, useMemo } from "react";
+import styled from "styled-components";
 
 import { UserPost } from "components";
 import { Colors } from "environment";
 import {
-  GetAuthenticatedUserData,
-  GetFriendsPostsByUserIdData,
-  GET_AUTHENTICATED_USER_WITH_FRIENDS,
   GET_FRIENDS_POSTS_BY_USER_ID,
+  GetFriendsPostsByOwnerIdResult,
 } from "helpers";
+import { LoadingPage } from "pages";
+import { useAuthenticationStore } from "store";
 
-interface Props {
-  style?: CSSProperties;
+const Container = {
+  NoContent: styled.div`
+    padding-top: 3rem;
+  `,
+  Posts: styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+  `,
+};
+
+const Text = {
+  NoContent: styled.p`
+    color: ${Colors.LightGray};
+  `,
+};
+
+export function Posts() {
+  return (
+    <Suspense
+      fallback={
+        <Container.NoContent>
+          <LoadingPage />
+        </Container.NoContent>
+      }
+    >
+      <LoadingPosts />
+    </Suspense>
+  );
 }
 
-export function Posts({ style }: Props) {
-  const [fetchAuthenticatedUser, { data: authenticatedUserData }] =
-    useLazyQuery<GetAuthenticatedUserData>(GET_AUTHENTICATED_USER_WITH_FRIENDS);
-  const [
-    fetchFriendsPostsByUserId,
-    {
-      called,
-      data: friendsPostsByUserIdData = { friendsPostsByOwnerId: null },
-      loading,
-    },
-  ] = useLazyQuery<GetFriendsPostsByUserIdData>(GET_FRIENDS_POSTS_BY_USER_ID);
+function LoadingPosts() {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { data } = useSuspenseQuery(GET_FRIENDS_POSTS_BY_USER_ID, {
+    variables: { input: { ownerId: authenticatedUser!.id } },
+  });
+  const { friendsPostsByOwnerId } = data;
 
-  useEffect(() => {
-    fetchAuthenticatedUser();
-
-    if (authenticatedUserData) {
-      const { id: authenticatedUserId } =
-        authenticatedUserData.authenticatedUser;
-
-      fetchFriendsPostsByUserId({
-        variables: { ownerId: authenticatedUserId },
-      });
-    }
-  }, [
-    authenticatedUserData,
-    fetchAuthenticatedUser,
-    fetchFriendsPostsByUserId,
-  ]);
-
-  if (called && loading) {
+  if (friendsPostsByOwnerId.totalCount === 0) {
     return (
-      <section style={style}>
-        <p style={{ color: Colors.LightGray }}>Loading...</p>
-      </section>
+      <Container.NoContent>
+        <Text.NoContent>No posts found...</Text.NoContent>
+      </Container.NoContent>
     );
   }
 
-  if (!friendsPostsByUserIdData.friendsPostsByOwnerId) {
-    return (
-      <section style={style}>
-        <p style={{ color: Colors.LightGray }}>No posts found...</p>
-      </section>
-    );
-  }
+  return <SuccessPosts posts={friendsPostsByOwnerId} />;
+}
 
-  function getContent() {
-    if (called && loading) {
-      return <p style={{ color: Colors.LightGray }}>Loading...</p>;
-    }
+interface SuccessProps {
+  posts: GetFriendsPostsByOwnerIdResult;
+}
 
-    const friendsPosts = friendsPostsByUserIdData.friendsPostsByOwnerId;
+function SuccessPosts({ posts }: SuccessProps) {
+  const { edges } = posts;
 
-    if (!friendsPosts || friendsPosts.length === 0) {
-      return <p style={{ color: Colors.LightGray }}>No posts found...</p>;
-    }
+  const { authenticatedUser } = useAuthenticationStore();
 
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "1em" }}>
-        {friendsPosts.map((post, index) => (
-          <UserPost data={post} key={index} />
-        ))}
-      </div>
-    );
-  }
+  const displayedPosts = useMemo(
+    () =>
+      edges.map(({ cursor, node: { id: postId } }) => {
+        const isHidden =
+          authenticatedUser?.hiddenPosts.some(({ id }) => id === cursor) ||
+          false;
+        console.log({ cursor, isHidden });
 
-  return <section style={style}>{getContent()}</section>;
+        if (isHidden) {
+          return <Fragment key={postId} />;
+        }
+
+        return (
+          <UserPost
+            key={postId}
+            postId={postId}
+            onPostShared={() => {
+              // TODO
+            }}
+          />
+        );
+      }),
+    [authenticatedUser?.hiddenPosts, edges]
+  );
+
+  return <Container.Posts>{displayedPosts}</Container.Posts>;
 }

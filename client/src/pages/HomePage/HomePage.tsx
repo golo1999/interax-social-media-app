@@ -1,3 +1,5 @@
+import { Bookmark } from "@mui/icons-material";
+
 import { useMemo } from "react";
 import { AiFillShop } from "react-icons/ai";
 import { HiUsers, HiUserGroup } from "react-icons/hi";
@@ -24,6 +26,11 @@ export function HomePage() {
         name: "FRIENDS",
         startIcon: HiUsers,
         onClick: () => navigate("/friends"),
+      },
+      {
+        name: "SAVED",
+        startIcon: Bookmark,
+        onClick: () => navigate("/saved"),
       },
       {
         name: "GROUPS",

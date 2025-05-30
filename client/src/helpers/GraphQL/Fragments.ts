@@ -66,6 +66,7 @@ export const COMMENT_DATA = gql`
     }
     repliesCount
     text
+    topLevelParentId
   }
 `;
 
@@ -120,6 +121,96 @@ export const POST_DATA = gql`
       firstName
       id
       lastName
+      profilePhoto {
+        comments {
+          ...CommentData
+        }
+        dateTime
+        description
+        isCurrent
+        id
+        ownerId
+        url
+        visibility
+      }
+      profilePhotos {
+        comments {
+          ...CommentData
+        }
+        dateTime
+        description
+        isCurrent
+        id
+        ownerId
+        url
+        visibility
+      }
+      username
+    }
+    ownerId
+    parentId
+    photos {
+      id
+      ownerId
+      postId
+      text
+      url
+    }
+    reactions {
+      dateTime
+      id
+      postId
+      reactionType
+      userId
+    }
+    receiver {
+      firstName
+      id
+      lastName
+      profilePhotos {
+        comments {
+          ...CommentData
+        }
+        dateTime
+        description
+        isCurrent
+        id
+        ownerId
+        url
+        visibility
+      }
+      username
+    }
+    receiverId
+    shares {
+      owner {
+        firstName
+        lastName
+        username
+      }
+    }
+    text
+    topLevelCommentsCount
+    video
+    visibility
+  }
+`;
+
+export const POST_WITH_SAVED_COLLECTION_ID_DATA = gql`
+  fragment PostWithSavedCollectionIdData on PostWithSavedCollectionID {
+    canComment
+    canReact
+    canShare
+    comments {
+      ...CommentData
+    }
+    commentsCount
+    dateTime
+    id
+    owner {
+      firstName
+      id
+      lastName
       profilePhotos {
         comments {
           ...CommentData
@@ -151,6 +242,7 @@ export const POST_DATA = gql`
       userId
     }
     receiverId
+    savedCollectionId
     shares {
       owner {
         firstName
@@ -168,6 +260,24 @@ export const USER_DATA = gql`
   fragment UserData on User {
     biography
     birthDate
+    blockedUsers {
+      firstName
+      id
+      lastName
+      username
+    }
+    coverPhoto {
+      comments {
+        ...CommentData
+      }
+      dateTime
+      description
+      isCurrent
+      id
+      ownerId
+      url
+      visibility
+    }
     coverPhotos {
       comments {
         ...CommentData
@@ -190,6 +300,10 @@ export const USER_DATA = gql`
     }
     email
     firstName
+    followedByUsers {
+      id
+      username
+    }
     followingUsers {
       id
       username
@@ -204,6 +318,18 @@ export const USER_DATA = gql`
       }
       id
       lastName
+      profilePhoto {
+        comments {
+          ...CommentData
+        }
+        dateTime
+        description
+        isCurrent
+        id
+        ownerId
+        url
+        visibility
+      }
       profilePhotos {
         comments {
           ...CommentData
@@ -228,24 +354,11 @@ export const USER_DATA = gql`
     id
     lastName
     messages {
-      dateTime
-      id
-      parentId
-      reactions {
+      messages {
         dateTime
+        emoji
         id
-        owner {
-          firstName
-          id
-          lastName
-          username
-        }
-        type
-      }
-      receiverId
-      replies {
-        dateTime
-        id
+        parentId
         reactions {
           dateTime
           id
@@ -258,17 +371,57 @@ export const USER_DATA = gql`
           type
         }
         receiverId
+        replies {
+          dateTime
+          id
+          reactions {
+            dateTime
+            id
+            owner {
+              firstName
+              id
+              lastName
+              username
+            }
+            type
+          }
+          receiverId
+          senderId
+          text
+        }
         senderId
         text
       }
-      senderId
-      text
+      userId
+    }
+    photos {
+      comments {
+        ...CommentData
+      }
+      dateTime
+      description
+      id
+      ownerId
+      url
+      visibility
     }
     placesHistory {
       ...PlaceData
     }
     posts {
       ...PostData
+    }
+    profilePhoto {
+      comments {
+        ...CommentData
+      }
+      dateTime
+      description
+      isCurrent
+      id
+      ownerId
+      url
+      visibility
     }
     profilePhotos {
       comments {
@@ -287,7 +440,7 @@ export const USER_DATA = gql`
       visibility
     }
     savedPosts {
-      ...PostData
+      ...PostWithSavedCollectionIdData
     }
     username
     workHistory {

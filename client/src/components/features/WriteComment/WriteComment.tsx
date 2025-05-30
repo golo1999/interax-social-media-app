@@ -1,26 +1,46 @@
 import { CSSProperties, MutableRefObject, useRef } from "react";
 import { MdCancel, MdSend } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
 
 import { UserPhoto } from "components";
 import { Colors } from "environment";
-import { useAuthenticationStore } from "store";
+import { useAuthenticationStore, useSettingsStore } from "store";
+import { Theme } from "types";
 
-const containerStyle: CSSProperties = {
-  alignItems: "center",
-  display: "flex",
-  gap: "0.5em",
-};
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
+}
+
+const Container = styled.div`
+  align-items: center;
+  display: flex;
+  gap: 0.5em;
+`;
 
 const iconStyle: CSSProperties = { userSelect: "none" };
 
-const inputStyle: CSSProperties = {
-  backgroundColor: Colors.BlackOlive,
-  borderRadius: "20px",
-  color: Colors.LightGray,
-  flex: 1,
-  padding: "10px 15px",
-};
+const Input = styled.input<ThemeProps>`
+  background-color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.BlackOlive
+      : Colors.AntiFlashWhite};
+  border-radius: 20px;
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.MetallicSilver
+      : Colors.DarkLiver};
+  flex: 1;
+  padding: 10px 15px;
+
+  &:hover {
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.DarkLiver
+        : Colors.Platinum};
+  }
+`;
 
 interface Props {
   autoFocus?: boolean;
@@ -38,9 +58,9 @@ export function WriteComment({
   onSendClick,
 }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
-  const inputRef = useRef() as MutableRefObject<HTMLInputElement>;
-
   const navigate = useNavigate();
+  const inputRef = useRef() as MutableRefObject<HTMLInputElement>;
+  const { theme } = useSettingsStore();
 
   function handleSendClick() {
     const comment = inputRef.current.value;
@@ -55,16 +75,17 @@ export function WriteComment({
   }
 
   return (
-    <div style={{ ...containerStyle, ...style }}>
+    <Container style={style}>
       <UserPhoto
         user={authenticatedUser}
         onPhotoClick={() => navigate(`/${authenticatedUser?.username}`)}
       />
-      <input
+      <Input
+        $isAuthenticated={!!authenticatedUser}
+        $theme={theme}
         autoFocus={autoFocus}
         placeholder={placeholder}
         ref={inputRef}
-        style={inputStyle}
         type="text"
       />
       {onCancelClick && (
@@ -81,6 +102,6 @@ export function WriteComment({
         style={iconStyle}
         onClick={handleSendClick}
       />
-    </div>
+    </Container>
   );
 }

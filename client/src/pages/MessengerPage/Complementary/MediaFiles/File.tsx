@@ -4,6 +4,7 @@ import { FiFileText } from "react-icons/fi";
 
 import { Colors } from "environment";
 import { File as FileModel } from "models";
+import { useAuthenticationStore, useSettingsStore } from "store";
 
 import { formatSize } from "./File.helpers";
 import { Container, Name, Size } from "./File.style";
@@ -14,7 +15,13 @@ interface Props {
 }
 
 export function File({ isDividerVisible, item }: Props) {
+  const { authenticatedUser } = useAuthenticationStore();
+  const { theme } = useSettingsStore();
+
   const { name, size } = item;
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <>
@@ -27,7 +34,9 @@ export function File({ isDividerVisible, item }: Props) {
           <Size>{formatSize(size)}</Size>
         </Container.Details>
       </Container.Main>
-      {isDividerVisible && <Divider color="Onyx" />}
+      {isDividerVisible && (
+        <Divider sx={{ borderColor: Colors[dividerColor] }} />
+      )}
     </>
   );
 }

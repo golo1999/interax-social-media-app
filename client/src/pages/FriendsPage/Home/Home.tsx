@@ -2,6 +2,7 @@ import { Divider } from "@mui/material";
 
 import styled from "styled-components";
 
+import { Colors } from "environment";
 import { FriendshipRequest, User } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
 
@@ -49,7 +50,7 @@ export function Home({
         onSeeAllClick={onFriendRequestsSeeAllClick}
         onSeeMoreClick={onFriendRequestsSeeMoreClick}
       />
-      <Divider color={dividerColor} />
+      <Divider sx={{ borderColor: Colors[dividerColor] }} />
       <Suggestions
         displayedSuggestions={displayedSuggestions}
         suggestions={suggestions}

@@ -1,7 +1,10 @@
+import { SvgIconTypeMap } from "@mui/material";
+import { OverridableComponent } from "@mui/material/OverridableComponent";
+
 import { IconType } from "react-icons";
 
 import { CollegeEducation, HighSchoolEducation } from "./Education";
-import { Message } from "./Message";
+import { Message, MessagesWithUserId } from "./Message";
 import { Place } from "./Place";
 
 import {
@@ -13,6 +16,8 @@ import {
   RelationshipStatusType,
 } from "enums";
 import { NotificationType } from "types";
+
+export type BlockUserResult = { blockedUserId: string; userId: string };
 
 export type Comment = {
   __typename?: "Comment";
@@ -27,6 +32,7 @@ export type Comment = {
   replies: Comment[];
   repliesCount: number;
   text: string;
+  topLevelParentId: string | null;
 };
 
 export type CommentReaction = {
@@ -83,6 +89,12 @@ export type File = {
   size: number;
 };
 
+export type FollowRelationship = {
+  __typename?: "FollowRelationship";
+  followingUserId: string;
+  userId: string;
+};
+
 export type Friendship = {
   first: string;
   second: string;
@@ -100,9 +112,9 @@ export type Media = {
 };
 
 export type NavigationItem = {
-  endIcon?: IconType;
+  endIcon?: IconType | OverridableComponent<SvgIconTypeMap>;
   name: string;
-  startIcon: IconType;
+  startIcon: IconType | OverridableComponent<SvgIconTypeMap>;
   onClick?: () => void;
 };
 
@@ -131,9 +143,12 @@ export type Post = {
   receiverId: string;
   shares: Share[];
   text: string | null;
+  topLevelCommentsCount: number;
   video: string | null;
   visibility: Permission;
 };
+
+export type PostWithSavedCollectionID = Post & { savedCollectionId: string };
 
 export type PostPhoto = {
   __typename?: "PostPhoto";
@@ -184,6 +199,21 @@ export type RelationshipStatus = {
   visibility: Permission;
 };
 
+export type SavedPost = {
+  __typename?: "SavedPost";
+  collectionId: string;
+  id: string;
+  postId: string;
+  userId: string;
+};
+
+export type SavedPostCollection = {
+  id: string;
+  isChecked?: boolean;
+  name: string;
+  visibility: Permission;
+};
+
 export type Share = {
   __typename?: "Share";
   id: string;
@@ -203,21 +233,26 @@ export type User = {
   id: string;
   biography: string | null;
   birthDate: string | null;
+  blockedUsers: User[];
+  coverPhoto: CoverPhoto | null;
   coverPhotos: CoverPhoto[];
   educationHistory: (CollegeEducation | HighSchoolEducation)[];
   email: string;
   firstName: string;
+  followedByUsers: User[];
   followingUsers: User[];
   friends: User[];
   friendshipRequests: FriendshipRequest[];
   hiddenPosts: Post[];
   lastName: string;
-  messages: Message[];
+  messages: MessagesWithUserId[];
+  photos: UserPhoto[];
   placesHistory: Place[];
   posts: Post[];
+  profilePhoto: ProfilePhoto | null;
   profilePhotos: ProfilePhoto[];
   relationshipStatus: RelationshipStatus | null;
-  savedPosts: Post[];
+  savedPosts: PostWithSavedCollectionID[];
   username: string;
   workHistory: Work[];
 };
@@ -225,6 +260,19 @@ export type User = {
 export type UserError = {
   __typename?: "UserError";
   message: string;
+};
+
+export type UserPhoto = {
+  __typename?: "UserPhoto";
+  id: string;
+  comments: Comment[];
+  dateTime: string;
+  description: string | null;
+  ownerId: string;
+  reactions: Reaction[];
+  shares: Share[];
+  url: string;
+  visibility: Permission;
 };
 
 export type UserWithMessage = {

@@ -1,4 +1,4 @@
-import { useMutation } from "@apollo/client";
+import { gql, useMutation } from "@apollo/client";
 import { Divider } from "@mui/material";
 
 import { useState } from "react";
@@ -6,13 +6,15 @@ import { Controller, Resolver, SubmitHandler, useForm } from "react-hook-form";
 
 import { Dropdown, VisibilityModal } from "components";
 import { Permission } from "enums";
+import { Colors } from "environment";
+import { ADD_USER_COLLEGE_EDUCATION } from "helpers";
 import {
-  AddCollegeEducationData,
-  ADD_USER_COLLEGE_EDUCATION,
-  GET_USER_BY_USERNAME,
-} from "helpers";
-import { usePeriodDropdownItems, useVisibilityModalItems } from "hooks";
+  usePeriodDropdownItems,
+  useScrollLock,
+  useVisibilityModalItems,
+} from "hooks";
 import { Date as CustomDate, User } from "models";
+import { useAuthenticationStore, useModalStore, useSettingsStore } from "store";
 
 import { Button, Container, Form, Input, Label } from "../Form.style";
 
@@ -113,11 +115,32 @@ interface Props {
 }
 
 export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
-  const [addCollegeEducation] = useMutation<AddCollegeEducationData>(
-    ADD_USER_COLLEGE_EDUCATION
-  );
+  const { authenticatedUser } = useAuthenticationStore();
+  const { isVisibilityModalOpen, closeVisibilityModal, openVisibilityModal } =
+    useModalStore();
+  const [addCollegeEducation] = useMutation(ADD_USER_COLLEGE_EDUCATION, {
+    update: (cache, { data }) => {
+      cache.modify({
+        fields: {
+          educationHistory: (existingHistory = []) => {
+            const newCollegeEducationRef = cache.writeFragment({
+              data: data?.addUserCollegeEducation,
+              fragment: gql`
+                fragment NewCollegeEducation on CollegeEducation {
+                  id
+                }
+              `,
+            });
 
-  const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
+            return [...existingHistory, newCollegeEducationRef];
+          },
+        },
+        id: cache.identify({ ...authenticatedUser }),
+      });
+    },
+  });
+  const { lockScroll, unlockScroll } = useScrollLock();
+  const { theme } = useSettingsStore();
   const [selectedDropdownItems, setSelectedDropdownItems] = useState({
     from: {
       month: DEFAULT_FORM_VALUES.from.month,
@@ -142,9 +165,10 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
     mode: "onChange",
     resolver,
   });
+
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     const { degree, from, graduated, school, to, visibility } = data;
-    const { id: userId, username } = user;
+    const { id: userId } = user;
 
     const fromMonthAsNumber =
       new Date(`${from.month} ${from.day}, ${from.year}`).getMonth() + 1;
@@ -170,7 +194,7 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
         )
           .getTime()
           .toString()
-      : null;
+      : undefined;
 
     addCollegeEducation({
       variables: {
@@ -188,9 +212,6 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
         reset();
         onSaveClick();
       },
-      refetchQueries: [
-        { query: GET_USER_BY_USERNAME, variables: { username } },
-      ],
     });
   };
 
@@ -201,6 +222,9 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
   const visibilityModalItems = useVisibilityModalItems();
 
   const { graduated } = getValues();
+
+  const dividerColor =
+    !!authenticatedUser && theme === "DARK" ? "Arsenic" : "LightGray";
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -407,7 +431,7 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
         isValid={!errors.degree}
         placeholder="Degree"
       />
-      <Divider color="Onyx" />
+      <Divider sx={{ borderColors: Colors[dividerColor] }} />
       <Container.Buttons.Element>
         <Controller
           control={control}
@@ -423,7 +447,8 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
             return (
               <Button.Visibility
                 onClick={() => {
-                  setIsVisibilityModalOpen((prev) => !prev);
+                  lockScroll();
+                  openVisibilityModal();
                 }}
               >
                 {Icon && <Icon />}
@@ -449,7 +474,8 @@ export function AddCollege({ user, onCancelClick, onSaveClick }: Props) {
           items={visibilityModalItems}
           selectedItem={getValues("visibility")}
           onCloseClick={() => {
-            setIsVisibilityModalOpen((prev) => !prev);
+            unlockScroll();
+            closeVisibilityModal();
           }}
           onDoneClick={(item) => {
             setValue("visibility", item, { shouldValidate: true });

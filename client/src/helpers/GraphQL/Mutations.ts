@@ -1,19 +1,28 @@
-import { gql } from "@apollo/client";
+import { TypedDocumentNode, gql } from "@apollo/client";
 
+import { ConversationTheme, Emoji, Permission } from "enums";
 import {
-  Comment,
-  Conversation,
+  BlockUserResult,
   CollegeEducation,
+  Comment,
+  CommentReaction,
+  Conversation,
+  CoverPhoto,
+  FollowRelationship,
   Friendship,
   FriendshipRequest,
   HighSchoolEducation,
   Message,
   Place,
   Post,
-  RelationshipStatus,
-  Work,
-  CommentReaction,
   PostReaction,
+  PostWithSavedCollectionID,
+  ProfilePhoto,
+  RelationshipStatus,
+  SavedPost,
+  SavedPostCollection,
+  UserPhoto,
+  Work,
 } from "models";
 
 import {
@@ -21,13 +30,27 @@ import {
   CONVERSATION_DATA,
   PLACE_DATA,
   POST_DATA,
+  POST_WITH_SAVED_COLLECTION_ID_DATA,
 } from "./Fragments";
 
-export interface AddCommentData {
+interface AddCommentData {
   addComment: Comment | null;
 }
 
-export const ADD_COMMENT = gql`
+interface AddCommentVariables {
+  input: {
+    commentOwnerId: string;
+    parentId?: string;
+    postId: string;
+    text: string;
+    topLevelParentId?: string;
+  };
+}
+
+export const ADD_COMMENT: TypedDocumentNode<
+  AddCommentData,
+  AddCommentVariables
+> = gql`
   mutation AddComment($input: AddCommentInput!) {
     addComment(input: $input) {
       dateTime
@@ -39,6 +62,7 @@ export const ADD_COMMENT = gql`
         lastName
         username
       }
+      parentId
       reactions {
         reactionType
       }
@@ -46,6 +70,7 @@ export const ADD_COMMENT = gql`
         text
       }
       text
+      topLevelParentId
     }
   }
 `;
@@ -57,25 +82,33 @@ export interface AddCommentReactionData {
 export const ADD_COMMENT_REACTION = gql`
   mutation AddCommentReaction($input: AddCommentReactionInput!) {
     addCommentReaction(input: $input) {
-      id
+      commentId
       dateTime
-      owner {
-        email
-        firstName
-        id
-        lastName
-        username
-      }
-      type
+      id
+      reactionType
+      userId
     }
   }
 `;
 
-export interface AddMessageData {
+interface AddMessageData {
   addMessage: Message | null;
 }
 
-export const ADD_MESSAGE = gql`
+interface AddMessageVariables {
+  input: {
+    emoji?: Emoji;
+    parentId?: string;
+    receiverId: string;
+    senderId: string;
+    text?: string;
+  };
+}
+
+export const ADD_MESSAGE: TypedDocumentNode<
+  AddMessageData,
+  AddMessageVariables
+> = gql`
   mutation AddMessage($input: AddMessageInput!) {
     addMessage(input: $input) {
       dateTime
@@ -123,11 +156,51 @@ export const ADD_POST_REACTION = gql`
   }
 `;
 
-export interface AddCollegeEducationData {
+interface AddSavedPostCollectionData {
+  addSavedPostCollection: SavedPostCollection | null;
+}
+
+interface AddSavedPostCollectionVariables {
+  input: {
+    name: string;
+    userId: string;
+    visibility: Permission;
+  };
+}
+
+export const ADD_SAVED_POST_COLLECTION: TypedDocumentNode<
+  AddSavedPostCollectionData,
+  AddSavedPostCollectionVariables
+> = gql`
+  mutation AddSavedPostCollection($input: AddSavedPostCollectionInput!) {
+    addSavedPostCollection(input: $input) {
+      id
+      name
+      visibility
+    }
+  }
+`;
+
+interface AddCollegeEducationData {
   addUserCollegeEducation: CollegeEducation | null;
 }
 
-export const ADD_USER_COLLEGE_EDUCATION = gql`
+interface AddCollegeEducationVariables {
+  input: {
+    degree: string;
+    from: string;
+    graduated: boolean;
+    school: string;
+    to?: string;
+    userId: string;
+    visibility: Permission;
+  };
+}
+
+export const ADD_USER_COLLEGE_EDUCATION: TypedDocumentNode<
+  AddCollegeEducationData,
+  AddCollegeEducationVariables
+> = gql`
   mutation AddUserCollegeEducation($input: AddUserCollegeEducationInput!) {
     addUserCollegeEducation(input: $input) {
       degree
@@ -143,11 +216,18 @@ export const ADD_USER_COLLEGE_EDUCATION = gql`
   }
 `;
 
-export interface AddUserFriendData {
+interface AddUserFriendData {
   addUserFriend: Friendship | null;
 }
 
-export const ADD_USER_FRIEND = gql`
+interface AddUserFriendVariables {
+  input: { first: string; second: string };
+}
+
+export const ADD_USER_FRIEND: TypedDocumentNode<
+  AddUserFriendData,
+  AddUserFriendVariables
+> = gql`
   mutation AddUserFriend($input: AddUserFriendInput!) {
     addUserFriend(input: $input) {
       first
@@ -156,11 +236,25 @@ export const ADD_USER_FRIEND = gql`
   }
 `;
 
-export interface AddHighSchoolEducationData {
+interface AddHighSchoolEducationData {
   addUserHighSchoolEducation: HighSchoolEducation | null;
 }
 
-export const ADD_USER_HIGH_SCHOOL_EDUCATION = gql`
+interface AddHighSchoolEducationVariables {
+  input: {
+    from: string;
+    graduated: boolean;
+    school: string;
+    to?: string;
+    userId: string;
+    visibility: Permission;
+  };
+}
+
+export const ADD_USER_HIGH_SCHOOL_EDUCATION: TypedDocumentNode<
+  AddHighSchoolEducationData,
+  AddHighSchoolEducationVariables
+> = gql`
   mutation AddUserHighSchoolEducation(
     $input: AddUserHighSchoolEducationInput!
   ) {
@@ -177,11 +271,25 @@ export const ADD_USER_HIGH_SCHOOL_EDUCATION = gql`
   }
 `;
 
-export interface AddUserPlaceData {
+interface AddUserPlaceData {
   addUserPlace: Place | null;
 }
 
-export const ADD_USER_PLACE = gql`
+interface AddUserPlaceVariables {
+  input: {
+    city: string;
+    from: string;
+    isCurrent: boolean;
+    to?: string;
+    userId: string;
+    visibility: Permission;
+  };
+}
+
+export const ADD_USER_PLACE: TypedDocumentNode<
+  AddUserPlaceData,
+  AddUserPlaceVariables
+> = gql`
   mutation AddUserPlace($input: AddUserPlaceInput!) {
     addUserPlace(input: $input) {
       city
@@ -194,11 +302,104 @@ export const ADD_USER_PLACE = gql`
   }
 `;
 
-export interface AddRelationshipStatusData {
+interface AddUserCoverPhotoData {
+  addUserCoverPhoto: CoverPhoto | null;
+}
+
+interface AddUserCoverPhotoVariables {
+  input: {
+    ownerId: string;
+    url: string;
+    visibility: Permission;
+  };
+}
+
+export const ADD_USER_COVER_PHOTO: TypedDocumentNode<
+  AddUserCoverPhotoData,
+  AddUserCoverPhotoVariables
+> = gql`
+  mutation AddUserCoverPhoto($input: AddUserCoverPhotoInput!) {
+    addUserCoverPhoto(input: $input) {
+      dateTime
+      id
+      ownerId
+      url
+      visibility
+    }
+  }
+`;
+
+interface AddUserPhotoData {
+  addUserPhoto: UserPhoto | null;
+}
+
+interface AddUserPhotoVariables {
+  input: {
+    ownerId: string;
+    url: string;
+    visibility: Permission;
+  };
+}
+
+export const ADD_USER_PHOTO: TypedDocumentNode<
+  AddUserPhotoData,
+  AddUserPhotoVariables
+> = gql`
+  mutation AddUserPhoto($input: AddUserPhotoInput!) {
+    addUserPhoto(input: $input) {
+      dateTime
+      description
+      id
+      ownerId
+      url
+      visibility
+    }
+  }
+`;
+
+interface AddUserProfilePhotoData {
+  addUserProfilePhoto: ProfilePhoto | null;
+}
+
+interface AddUserProfilePhotoVariables {
+  input: {
+    ownerId: string;
+    url: string;
+    visibility: Permission;
+  };
+}
+
+export const ADD_USER_PROFILE_PHOTO: TypedDocumentNode<
+  AddUserProfilePhotoData,
+  AddUserProfilePhotoVariables
+> = gql`
+  mutation AddUserProfilePhoto($input: AddUserProfilePhotoInput!) {
+    addUserProfilePhoto(input: $input) {
+      dateTime
+      id
+      ownerId
+      url
+      visibility
+    }
+  }
+`;
+
+interface AddUserRelationshipStatusData {
   addUserRelationshipStatus: RelationshipStatus | null;
 }
 
-export const ADD_USER_RELATIONSHIP_STATUS = gql`
+interface AddUserRelationshipStatusVariables {
+  input: {
+    status: RelationshipStatus;
+    userId: string;
+    visibility: Permission;
+  };
+}
+
+export const ADD_USER_RELATIONSHIP_STATUS: TypedDocumentNode<
+  AddUserRelationshipStatusData,
+  AddUserRelationshipStatusVariables
+> = gql`
   mutation AddUserRelationshipStatus($input: AddUserRelationshipStatusInput!) {
     addUserRelationshipStatus(input: $input) {
       status
@@ -207,11 +408,26 @@ export const ADD_USER_RELATIONSHIP_STATUS = gql`
   }
 `;
 
-export interface AddUserWorkplaceData {
+interface AddUserWorkplaceData {
   addUserWorkplace: Work | null;
 }
 
-export const ADD_USER_WORKPLACE = gql`
+interface AddUserWorkplaceVariables {
+  input: {
+    company: string;
+    from: string;
+    isCurrent: boolean;
+    position: string;
+    to?: string;
+    userId: string;
+    visibility: Permission;
+  };
+}
+
+export const ADD_USER_WORKPLACE: TypedDocumentNode<
+  AddUserWorkplaceData,
+  AddUserWorkplaceVariables
+> = gql`
   mutation AddUserWorkplace($input: AddUserWorkplaceInput!) {
     addUserWorkplace(input: $input) {
       company
@@ -225,12 +441,64 @@ export const ADD_USER_WORKPLACE = gql`
 `;
 
 export interface BlockUserData {
-  blockUser: string | null;
+  blockUser: BlockUserResult | null;
 }
 
 export const BLOCK_USER = gql`
   mutation BlockUser($input: BlockUserInput!) {
-    blockUser(input: $input)
+    blockUser(input: $input) {
+      blockedUserId
+      userId
+    }
+  }
+`;
+
+interface ChangeUserCoverPhotoData {
+  changeUserCoverPhoto: CoverPhoto | null;
+}
+
+interface ChangeUserCoverPhotoVariables {
+  input: {
+    url: string;
+    userId: string;
+  };
+}
+
+export const CHANGE_USER_COVER_PHOTO: TypedDocumentNode<
+  ChangeUserCoverPhotoData,
+  ChangeUserCoverPhotoVariables
+> = gql`
+  mutation ChangeUserCoverPhoto($input: ChangeUserCoverPhotoInput!) {
+    changeUserCoverPhoto(input: $input) {
+      dateTime
+      id
+      ownerId
+      url
+      visibility
+    }
+  }
+`;
+
+interface ChangeUserProfilePhotoData {
+  changeUserProfilePhoto: ProfilePhoto | null;
+}
+
+interface ChangeUserProfilePhotoVariables {
+  input: { url: string; userId: string };
+}
+
+export const CHANGE_USER_PROFILE_PHOTO: TypedDocumentNode<
+  ChangeUserProfilePhotoData,
+  ChangeUserProfilePhotoVariables
+> = gql`
+  mutation ChangeUserProfilePhoto($input: ChangeUserProfilePhotoInput!) {
+    changeUserProfilePhoto(input: $input) {
+      dateTime
+      id
+      ownerId
+      url
+      visibility
+    }
   }
 `;
 
@@ -248,23 +516,37 @@ export const CREATE_POST = gql`
   }
 `;
 
-export interface FollowUserData {
-  followUser: string | null;
+interface FollowUserData {
+  followUser: FollowRelationship | null;
 }
 
-export const FOLLOW_USER = gql`
+interface FollowUserVariables {
+  input: { followingUserId: string; userId: string };
+}
+
+export const FOLLOW_USER: TypedDocumentNode<
+  FollowUserData,
+  FollowUserVariables
+> = gql`
   mutation FollowUser($input: FollowUserInput!) {
-    followUser(input: $input)
+    followUser(input: $input) {
+      followingUserId
+      userId
+    }
   }
 `;
 
 export interface HidePostData {
-  hidePost: string | null;
+  hidePost: Post | null;
 }
 
 export const HIDE_POST = gql`
+  ${COMMENT_DATA}
+  ${POST_DATA}
   mutation HidePost($input: HidePostInput!) {
-    hidePost(input: $input)
+    hidePost(input: $input) {
+      ...PostData
+    }
   }
 `;
 
@@ -297,17 +579,20 @@ export const REMOVE_COMMENT_REACTION = gql`
   }
 `;
 
-export interface RemovePostData {
-  removePost: Post | null;
+interface RemovePostData {
+  removePost: string | null;
 }
 
-export const REMOVE_POST = gql`
-  ${COMMENT_DATA}
-  ${POST_DATA}
-  mutation RemovePost($id: ID!) {
-    removePost(id: $id) {
-      ...PostData
-    }
+interface RemovePostVariables {
+  input: { postId: string; userId: string };
+}
+
+export const REMOVE_POST: TypedDocumentNode<
+  RemovePostData,
+  RemovePostVariables
+> = gql`
+  mutation RemovePost($input: RemovePostInput!) {
+    removePost(input: $input)
   }
 `;
 
@@ -327,11 +612,56 @@ export const REMOVE_POST_REACTION = gql`
   }
 `;
 
-export interface RemoveUserFriendData {
+interface RemovePostSharesData {
+  removePostShares: Post[] | null;
+}
+
+interface RemovePostSharesVariables {
+  input: { postId: string; userId: string };
+}
+
+export const REMOVE_POST_SHARES: TypedDocumentNode<
+  RemovePostSharesData,
+  RemovePostSharesVariables
+> = gql`
+  ${COMMENT_DATA}
+  ${POST_DATA}
+  mutation RemovePostShares($input: RemovePostSharesInput!) {
+    removePostShares(input: $input) {
+      ...PostData
+    }
+  }
+`;
+
+interface RemoveSavedPostCollectionData {
+  removeSavedPostCollection: SavedPostCollection | null;
+}
+
+interface RemoveSavedPostCollectionVariables {
+  input: { collectionId: string; userId: string };
+}
+
+export const REMOVE_SAVED_POST_COLLECTION: TypedDocumentNode<
+  RemoveSavedPostCollectionData,
+  RemoveSavedPostCollectionVariables
+> = gql`
+  mutation RemoveSavedPostCollection($input: RemoveSavedPostCollectionInput!) {
+    removeSavedPostCollection(input: $input) {
+      id
+      name
+      visibility
+    }
+  }
+`;
+
+interface RemoveUserFriendData {
   removeUserFriend: Friendship | null;
 }
 
-export const REMOVE_USER_FRIEND = gql`
+export const REMOVE_USER_FRIEND: TypedDocumentNode<
+  RemoveUserFriendData,
+  AddUserFriendVariables
+> = gql`
   mutation RemoveUserFriend($input: AddUserFriendInput!) {
     removeUserFriend(input: $input) {
       first
@@ -355,13 +685,24 @@ export const REMOVE_USER_FRIENDSHIP_REQUEST = gql`
   }
 `;
 
-export interface SavePostData {
-  savePost: string | null;
+interface SavePostData {
+  savePost: PostWithSavedCollectionID | null;
 }
 
-export const SAVE_POST = gql`
+interface SavePostVariables {
+  input: { collectionId: string; postId: string; userId: string };
+}
+
+export const SAVE_POST: TypedDocumentNode<
+  SavePostData,
+  SavePostVariables
+> = gql`
+  ${COMMENT_DATA}
+  ${POST_WITH_SAVED_COLLECTION_ID_DATA}
   mutation SavePost($input: SavePostInput!) {
-    savePost(input: $input)
+    savePost(input: $input) {
+      ...PostWithSavedCollectionIdData
+    }
   }
 `;
 
@@ -378,41 +719,83 @@ export const SEND_USER_FRIENDSHIP_REQUEST = gql`
   }
 `;
 
+export interface SharePostData {
+  sharePost: Post[] | null;
+}
+
+export const SHARE_POST = gql`
+  ${COMMENT_DATA}
+  ${POST_DATA}
+  mutation SharePost($input: SharePostInput!) {
+    sharePost(input: $input) {
+      ...PostData
+    }
+  }
+`;
+
 export interface UnblockUserData {
-  unblockUser: string | null;
+  unblockUser: BlockUserResult | null;
 }
 
 export const UNBLOCK_USER = gql`
   mutation UnblockUser($input: BlockUserInput!) {
-    unblockUser(input: $input)
+    unblockUser(input: $input) {
+      blockedUserId
+      userId
+    }
   }
 `;
 
-export interface UnfollowUserData {
-  unfollowUser: string | null;
+interface UnfollowUserData {
+  unfollowUser: FollowRelationship | null;
 }
 
-export const UNFOLLOW_USER = gql`
+export const UNFOLLOW_USER: TypedDocumentNode<
+  UnfollowUserData,
+  FollowUserVariables
+> = gql`
   mutation UnfollowUser($input: FollowUserInput!) {
-    unfollowUser(input: $input)
+    unfollowUser(input: $input) {
+      followingUserId
+      userId
+    }
   }
 `;
 
-export interface UnsavePostData {
-  unsavePost: string | null;
+interface UnsavePostData {
+  unsavePost: SavedPost | null;
 }
 
-export const UNSAVE_POST = gql`
-  mutation UnsavePost($input: SavePostInput!) {
-    unsavePost(input: $input)
+interface UnsavePostVariables {
+  input: { postId: string; userId: string };
+}
+
+export const UNSAVE_POST: TypedDocumentNode<
+  UnsavePostData,
+  UnsavePostVariables
+> = gql`
+  mutation UnsavePost($input: UnsavePostInput!) {
+    unsavePost(input: $input) {
+      collectionId
+      id
+      postId
+      userId
+    }
   }
 `;
 
-export interface UpdateConversationEmojiData {
+interface UpdateConversationEmojiData {
   updateConversationEmoji: Conversation | null;
 }
 
-export const UPDATE_CONVERSATION_EMOJI = gql`
+interface UpdateConversationEmojiVariables {
+  input: { emojiName: string; first: string; second: string };
+}
+
+export const UPDATE_CONVERSATION_EMOJI: TypedDocumentNode<
+  UpdateConversationEmojiData,
+  UpdateConversationEmojiVariables
+> = gql`
   ${CONVERSATION_DATA}
   mutation UpdateConversationEmoji($input: UpdateConversationEmojiInput!) {
     updateConversationEmoji(input: $input) {
@@ -421,11 +804,18 @@ export const UPDATE_CONVERSATION_EMOJI = gql`
   }
 `;
 
-export interface UpdateConversationNicknameData {
+interface UpdateConversationNicknameData {
   updateConversationNickname: Conversation | null;
 }
 
-export const UPDATE_CONVERSATION_NICKNAME = gql`
+interface UpdateConversationNicknameVariables {
+  input: { first: string; nickname?: string; second: string; userId: string };
+}
+
+export const UPDATE_CONVERSATION_NICKNAME: TypedDocumentNode<
+  UpdateConversationNicknameData,
+  UpdateConversationNicknameVariables
+> = gql`
   ${CONVERSATION_DATA}
   mutation UpdateConversationNickname(
     $input: UpdateConversationNicknameInput!
@@ -436,15 +826,48 @@ export const UPDATE_CONVERSATION_NICKNAME = gql`
   }
 `;
 
-export interface UpdateConversationThemeData {
+interface UpdateConversationThemeData {
   updateConversationTheme: Conversation | null;
 }
 
-export const UPDATE_CONVERSATION_THEME = gql`
+interface UpdateConversationThemeVariables {
+  input: { first: string; second: string; theme: ConversationTheme };
+}
+
+export const UPDATE_CONVERSATION_THEME: TypedDocumentNode<
+  UpdateConversationThemeData,
+  UpdateConversationThemeVariables
+> = gql`
   ${CONVERSATION_DATA}
   mutation UpdateConversationTheme($input: UpdateConversationThemeInput!) {
     updateConversationTheme(input: $input) {
       ...ConversationData
+    }
+  }
+`;
+
+interface UpdateSavedPostCollectionData {
+  updateSavedPostCollection: SavedPostCollection | null;
+}
+
+interface UpdateSavedPostCollectionVariables {
+  input: {
+    collectionId: string;
+    name?: string;
+    userId: string;
+    visibility?: Permission;
+  };
+}
+
+export const UPDATE_SAVED_POST_COLLECTION: TypedDocumentNode<
+  UpdateSavedPostCollectionData,
+  UpdateSavedPostCollectionVariables
+> = gql`
+  mutation UpdateSavedPostCollection($input: UpdateSavedPostCollectionInput!) {
+    updateSavedPostCollection(input: $input) {
+      id
+      name
+      visibility
     }
   }
 `;

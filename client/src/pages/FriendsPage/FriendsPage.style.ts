@@ -81,8 +81,11 @@ export const SectionHeader = styled.div`
   justify-content: space-between;
 `;
 
-export const SectionNoData = styled.p`
-  color: ${Colors.Platinum};
+export const SectionNoData = styled.p<ThemeProps>`
+  color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.Platinum
+      : Colors.DarkCharcoal};
 `;
 
 export const SectionTitle = styled.span<ThemeProps>`

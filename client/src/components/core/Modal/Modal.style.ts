@@ -1,43 +1,66 @@
 import styled, { css } from "styled-components";
 
 import { Colors } from "environment";
-import { FlexAlignItems, FlexDirection, FlexJustifyContent } from "types";
+import {
+  FlexAlignItems,
+  FlexDirection,
+  FlexJustifyContent,
+  Theme,
+} from "types";
 
-export const Background = styled.div`
+interface ThemeProps {
+  $isAuthenticated: boolean;
+  $theme: Theme;
+}
+
+type BackgroundProps = {
+  $scrollPosition: number;
+} & ThemeProps;
+
+export const Background = styled.div<BackgroundProps>`
   align-items: center;
-  background-color: rgb(14, 14, 14, 0.9);
+  background-color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? "rgb(14, 14, 14, 0.9)"
+      : "rgb(228, 230, 235, 0.9)"};
   display: flex;
   height: 100vh;
   justify-content: center;
   left: 0;
   position: absolute;
-  top: 0;
+  top: ${({ $scrollPosition }) => $scrollPosition}px;
   width: 100vw;
+  z-index: 9999;
 `;
 
-interface ContainerProps {
+type ContainerProps = {
+  maxHeight?: string;
   minHeight?: string;
   width?: string;
-}
+} & ThemeProps;
 
 export const Container = styled.div<ContainerProps>`
-  background-color: ${Colors.RaisinBlack};
+  background-color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK" ? Colors.RaisinBlack : Colors.White};
   border-radius: 5px;
   box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
   display: flex;
   flex-direction: column;
   /* min-height: 50vh; */
   min-height: ${({ minHeight }) => minHeight || "fit-content"};
-  max-height: 75vh;
+  max-height: ${({ maxHeight }) => maxHeight || "90vh"};
   /* width: 550px; */
   width: ${({ width }) => width || "fit-content"};
 `;
 
-type IconContainerProps = { isHidden?: boolean };
+type IconContainerProps = { isHidden?: boolean } & ThemeProps;
 
 export const IconContainer = styled.span<IconContainerProps>`
   align-items: center;
-  background-color: ${Colors.BlackOlive};
+  background-color: ${({ $isAuthenticated, $theme }) =>
+    $isAuthenticated && $theme === "DARK"
+      ? Colors.BlackOlive
+      : Colors.AntiFlashWhite};
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -46,7 +69,10 @@ export const IconContainer = styled.span<IconContainerProps>`
   width: fit-content;
 
   &:hover {
-    background-color: ${Colors.DarkLiver};
+    background-color: ${({ $isAuthenticated, $theme }) =>
+      $isAuthenticated && $theme === "DARK"
+        ? Colors.DarkLiver
+        : Colors.Platinum};
   }
 `;
 

@@ -1,6 +1,5 @@
 import styled from "styled-components";
 
-import { ChatHeads } from "components";
 import { Contacts } from "sections";
 
 const Container = styled.div.attrs({ role: "complementary" })`
@@ -15,7 +14,6 @@ export function Complementary() {
   return (
     <Container>
       <Contacts />
-      <ChatHeads />
     </Container>
   );
 }
