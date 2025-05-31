@@ -10,13 +10,21 @@ import { MdMoreHoriz } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
 import { Colors } from "environment";
+import { useOutsideClick } from "hooks";
 import { Notification as NotificationModel } from "models";
 import { useAuthenticationStore, useSettingsStore } from "store";
 import { NotificationsListContent } from "types";
 
 import { Notification } from "./Notification";
-import { Container, Header, Option, SeeAll } from "./NotificationsList.style";
+import {
+  Background,
+  Container,
+  Header,
+  Option,
+  SeeAll,
+} from "./NotificationsList.style";
 import { Popup } from "./Popup";
+import { ConditionalWrapper } from "components/core";
 
 interface Props {
   isModal?: boolean;
@@ -26,9 +34,15 @@ export function NotificationsList({ isModal }: Props) {
   const { authenticatedUser } = useAuthenticationStore();
   const navigate = useNavigate();
   const notificationsListRef = useRef() as MutableRefObject<HTMLDivElement>;
-  const { theme, closeNotificationsList } = useSettingsStore();
+  const { isNotificationListVisible, theme, closeNotificationsList } =
+    useSettingsStore();
   const [content, setContent] = useState<NotificationsListContent>("ALL");
   const [isPopupVisible, setIsPopupVisible] = useState(false);
+
+  useOutsideClick({
+    ref: notificationsListRef,
+    handle: closeNotificationsList,
+  });
 
   function handleMoreOptionsIconClick() {
     setIsPopupVisible((value) => !value);
@@ -162,60 +176,65 @@ export function NotificationsList({ isModal }: Props) {
       : Colors.GraniteGray;
 
   return (
-    <Container.Main.Outer
-      {...themeProps}
-      isModal={isModal}
-      ref={notificationsListRef}
+    <ConditionalWrapper
+      condition={isNotificationListVisible && isModal}
+      wrapper={(children) => <Background>{children}</Background>}
     >
-      <Container.Main.Inner {...themeProps} isModal={isModal}>
-        <Header.Element>
-          <Header.Title {...themeProps}>Notifications</Header.Title>
-          <Header.IconsContainer>
-            <Container.Icon
+      <Container.Main.Outer
+        {...themeProps}
+        isModal={isModal}
+        ref={notificationsListRef}
+      >
+        <Container.Main.Inner {...themeProps} isModal={isModal}>
+          <Header.Element>
+            <Header.Title {...themeProps}>Notifications</Header.Title>
+            <Header.IconsContainer>
+              <Container.Icon
+                {...themeProps}
+                onClick={handleMoreOptionsIconClick}
+              >
+                <MdMoreHoriz color={moreOptionsIconColor} size="20px" />
+              </Container.Icon>
+            </Header.IconsContainer>
+            {/* {isPopupVisible && <Popup isModal={isModal} />} */}
+          </Header.Element>
+          <Container.Options>
+            <Option
               {...themeProps}
-              onClick={handleMoreOptionsIconClick}
+              isSelected={content === "ALL"}
+              onClick={() => {
+                if (content !== "ALL") {
+                  setContent("ALL");
+                }
+              }}
             >
-              <MdMoreHoriz color={moreOptionsIconColor} size="20px" />
-            </Container.Icon>
-          </Header.IconsContainer>
-          {/* {isPopupVisible && <Popup isModal={isModal} />} */}
-        </Header.Element>
-        <Container.Options>
-          <Option
-            {...themeProps}
-            isSelected={content === "ALL"}
-            onClick={() => {
-              if (content !== "ALL") {
-                setContent("ALL");
-              }
-            }}
-          >
-            All
-          </Option>
-          <Option
-            {...themeProps}
-            isSelected={content === "UNREAD"}
-            onClick={() => {
-              if (content !== "UNREAD") {
-                setContent("UNREAD");
-              }
-            }}
-          >
-            Unread
-          </Option>
-        </Container.Options>
-        <Container.Content>
-          {isModal && (
-            <Container.SeeAll>
-              <SeeAll {...themeProps} onClick={handleSeeAllClick}>
-                See all
-              </SeeAll>
-            </Container.SeeAll>
-          )}
-          <ul>{renderedNotifications}</ul>
-        </Container.Content>
-      </Container.Main.Inner>
-      {isPopupVisible && <Popup isModal={isModal} />}
-    </Container.Main.Outer>
+              All
+            </Option>
+            <Option
+              {...themeProps}
+              isSelected={content === "UNREAD"}
+              onClick={() => {
+                if (content !== "UNREAD") {
+                  setContent("UNREAD");
+                }
+              }}
+            >
+              Unread
+            </Option>
+          </Container.Options>
+          <Container.Content>
+            {isModal && (
+              <Container.SeeAll>
+                <SeeAll {...themeProps} onClick={handleSeeAllClick}>
+                  See all
+                </SeeAll>
+              </Container.SeeAll>
+            )}
+            <ul>{renderedNotifications}</ul>
+          </Container.Content>
+        </Container.Main.Inner>
+        {isPopupVisible && <Popup isModal={isModal} />}
+      </Container.Main.Outer>
+    </ConditionalWrapper>
   );
 }

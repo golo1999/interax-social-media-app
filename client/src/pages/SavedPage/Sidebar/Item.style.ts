@@ -19,7 +19,7 @@ export const Container = {
       $isSelected &&
       `background-color: ${
         $isAuthenticated && $theme === "DARK"
-          ? Colors.SonicSilver
+          ? Colors.BlackOlive
           : Colors.AntiFlashWhite
       };`};
     border-radius: 8px;
@@ -33,7 +33,7 @@ export const Container = {
         !$isSelected &&
         `background-color: ${
           $isAuthenticated && $theme === "DARK"
-            ? Colors.SonicSilver
+            ? Colors.BlackOlive
             : Colors.AntiFlashWhite
         };`};
     }

@@ -8,6 +8,15 @@ interface ThemeProps {
   $theme: Theme;
 }
 
+export const Background = styled.div`
+  background-color: transparent;
+  height: 100vh;
+  inset: 0;
+  position: fixed;
+  width: 100%;
+  z-index: 9999;
+`;
+
 type MainContainerProps = { isModal?: boolean } & ThemeProps;
 
 export const Container = {

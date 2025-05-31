@@ -6,8 +6,13 @@ import { Colors } from "environment";
 const Container = styled.div`
   align-items: center;
   color: ${Colors.BrilliantAzure};
+  cursor: pointer;
   display: flex;
   gap: 0.5em;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 interface TextProps {
