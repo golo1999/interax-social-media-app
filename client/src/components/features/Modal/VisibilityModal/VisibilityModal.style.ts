@@ -92,7 +92,7 @@ export const ListItem = {
         !isSelected &&
         `background-color: ${
           $isAuthenticated && $theme === "DARK"
-            ? Colors.BlackOlive
+            ? Colors.DarkCharcoal
             : Colors.AntiFlashWhite
         };`}
     }

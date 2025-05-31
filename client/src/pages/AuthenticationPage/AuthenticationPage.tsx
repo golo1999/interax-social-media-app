@@ -140,7 +140,7 @@ export function AuthenticationPage() {
                 }
                 focusedPlaceholderColor="LightGray"
                 fontSize="17px"
-                hoveredBorderColor={errors.email ? "RedCrayola" : "SonicSilver"}
+                hoveredBorderColor={errors.email ? "RedCrayola" : "BlackOlive"}
                 padding="14px 16px"
                 placeholder="Email address"
                 placeholderColor="PhilippineSilver"
@@ -169,7 +169,7 @@ export function AuthenticationPage() {
                 focusedPlaceholderColor="LightGray"
                 fontSize="17px"
                 hoveredBorderColor={
-                  errors.password ? "RedCrayola" : "SonicSilver"
+                  errors.password ? "RedCrayola" : "BlackOlive"
                 }
                 padding="14px 16px"
                 placeholder="Password"

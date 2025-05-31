@@ -361,7 +361,7 @@ export function RegistrationPage() {
 
               return (
                 <RadioButton
-                  color="SonicSilver"
+                  color="BlackOlive"
                   isChecked={gender === "Female"}
                   label="Female"
                   labelPosition="start"
@@ -384,7 +384,7 @@ export function RegistrationPage() {
 
               return (
                 <RadioButton
-                  color="SonicSilver"
+                  color="BlackOlive"
                   isChecked={gender === "Male"}
                   label="Male"
                   labelPosition="start"

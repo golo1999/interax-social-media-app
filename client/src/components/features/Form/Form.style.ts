@@ -17,9 +17,14 @@ export const Button = {
     background-color: ${Colors.BlackOlive};
     border-radius: 5px;
     color: ${Colors.LightGray};
+    cursor: pointer;
     font-size: medium;
     font-weight: bold;
     padding: 0.5em;
+
+    &:hover {
+      background-color: ${Colors.DarkLiver};
+    }
   `,
   Submit: styled.input.attrs({ type: "submit" })`
     background-color: ${({ disabled }) =>
@@ -37,11 +42,16 @@ export const Button = {
     background-color: ${Colors.BlackOlive};
     border-radius: 5px;
     color: ${Colors.LightGray};
+    cursor: pointer;
     display: flex;
     font-size: medium;
     font-weight: bold;
     gap: 0.2em;
     padding: 0.5em;
+
+    &:hover {
+      background-color: ${Colors.DarkLiver};
+    }
   `,
 };
 

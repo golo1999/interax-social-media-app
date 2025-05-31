@@ -39,8 +39,12 @@ export function RadioButton({
     [label]
   );
   const radioStyle: CSSProperties = useMemo(() => {
-    return { cursor: "default", padding: 0 };
-  }, []);
+    return {
+      color: !isChecked ? Colors.PhilippineGray : undefined,
+      cursor: "default",
+      padding: 0,
+    };
+  }, [isChecked]);
 
   return (
     <Wrapper style={wrapperStyle} onClick={onChange}>

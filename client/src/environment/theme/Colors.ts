@@ -51,7 +51,6 @@ export const Colors = {
   SilverChalice: "#ABADB1",
   SilverSand: "#BCC0C4",
   SlimyGreen: "#119F16",
-  SonicSilver: "#3A3B3C",
   SpanishGray: "#90949C",
   SunsetOrange: "#F25C54",
   SweetBrown: "#AA3232",

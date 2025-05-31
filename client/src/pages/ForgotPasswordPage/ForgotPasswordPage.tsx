@@ -119,7 +119,7 @@ function NotAuthenticatedForgotPasswordPage() {
                 }
                 focusedPlaceholderColor="LightGray"
                 fontSize="17px"
-                hoveredBorderColor={errors.email ? "RedCrayola" : "SonicSilver"}
+                hoveredBorderColor={errors.email ? "RedCrayola" : "BlackOlive"}
                 padding="14px 16px"
                 placeholder="Email address"
                 placeholderColor="PhilippineSilver"
